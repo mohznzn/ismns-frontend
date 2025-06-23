@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function TestPageContent() {
+export default function TestClient() {
   const searchParams = useSearchParams();
   const qcmId = searchParams.get("qcm_id");
 
@@ -16,8 +16,8 @@ export default function TestPageContent() {
   useEffect(() => {
     if (qcmId) {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_qcm/${qcmId}`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.questions) {
             setQuestions(data.questions);
           }
@@ -31,11 +31,11 @@ export default function TestPageContent() {
     setAnswers({ ...answers, [currentIndex]: choice });
 
     if (choice === correct) {
-      setScore(prev => prev + 1);
+      setScore((prev) => prev + 1);
     }
 
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev) => prev + 1);
     } else {
       setShowScore(true);
     }
@@ -43,6 +43,7 @@ export default function TestPageContent() {
 
   if (!qcmId) return <p>❌ Aucun QCM ID fourni.</p>;
   if (!questions.length) return <p>📦 Chargement des questions...</p>;
+
   if (showScore) {
     return (
       <div className="p-4">
