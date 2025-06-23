@@ -1,14 +1,9 @@
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 
-const TestClient = dynamic(() => import('../../components/TestClient'), { ssr: false });
+const TestClient = dynamic(() => import('../../components/TestClient'), {
+  ssr: false, // Empêche le rendu côté serveur
+});
 
 export default function TestPage() {
-  return (
-    <Suspense fallback={<p>Chargement…</p>}>
-      <TestClient />
-    </Suspense>
-  );
+  return <TestClient />;
 }
-
-

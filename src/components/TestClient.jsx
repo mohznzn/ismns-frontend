@@ -16,8 +16,8 @@ export default function TestClient() {
   useEffect(() => {
     if (qcmId) {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_qcm/${qcmId}`)
-        .then((res) => res.json())
-        .then((data) => {
+        .then(res => res.json())
+        .then(data => {
           if (data.questions) {
             setQuestions(data.questions);
           }
@@ -31,11 +31,11 @@ export default function TestClient() {
     setAnswers({ ...answers, [currentIndex]: choice });
 
     if (choice === correct) {
-      setScore((prev) => prev + 1);
+      setScore(prev => prev + 1);
     }
 
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+      setCurrentIndex(prev => prev + 1);
     } else {
       setShowScore(true);
     }
