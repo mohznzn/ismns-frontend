@@ -43,7 +43,6 @@ export default function TestClient() {
 
   if (!qcmId) return <p>❌ Aucun QCM ID fourni.</p>;
   if (!questions.length) return <p>📦 Chargement des questions...</p>;
-
   if (showScore) {
     return (
       <div className="p-4">
