@@ -1,14 +1,8 @@
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
+// ❌ Ne pas utiliser dynamic ici
+// ✅ Utiliser un composant intermédiaire client
 
-const TestClient = dynamic(() => import("../../components/TestClient"), {
-  ssr: false,
-});
+import TestPageWrapper from "./TestPageWrapper";
 
 export default function Page() {
-  return (
-    <Suspense fallback={<p>Chargement du test...</p>}>
-      <TestClient />
-    </Suspense>
-  );
+  return <TestPageWrapper />;
 }
