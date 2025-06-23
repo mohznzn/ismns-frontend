@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -62,7 +63,7 @@ export default function TestPage() {
         {current.options.map((opt, idx) => (
           <button
             key={idx}
-            onClick={() => handleAnswer(String.fromCharCode(65 + idx))} // A, B, C, D
+            onClick={() => handleAnswer(String.fromCharCode(65 + idx))}
             className="border rounded p-2 hover:bg-blue-100"
           >
             {String.fromCharCode(65 + idx)}) {opt}
