@@ -15,7 +15,7 @@ export default function Home() {
 
 
     try {
-      const res = await fetch("http://localhost:8000/generate_qcm", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate_qcm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
