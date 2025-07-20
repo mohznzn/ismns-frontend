@@ -15,7 +15,7 @@ export default function Home() {
 
 
     try {
-      const res = await fetch(`https://ton-backend.onrender.com/generate_qcm`, {
+      const res = await fetch(`https://ismns-backend.onrender.com/generate_qcm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
