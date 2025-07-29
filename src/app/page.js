@@ -41,7 +41,7 @@ export default function Home() {
     setQuestions([]);
 
     try {
-      const res = await fetch(`https://ismns-backend.onrender.com/generer_questions`, {
+      const res = await fetch(`https://ismns-backend.onrender.com/generer_questions_chapitre`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ theme, chapitre }),
