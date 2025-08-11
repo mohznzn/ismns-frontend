@@ -16,7 +16,7 @@ export default function Home() {
     setSelectedChapitre(null);
 
     try {
-      const res = await fetch(`https://ismns-backend.onrender.com/get_chapters`, {
+      const res = await fetch(`https://ismns-backend.onrender.com/generer_chapitres`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ theme }),
