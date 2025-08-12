@@ -1,4 +1,3 @@
-'use client';
 import { useState } from 'react';
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;

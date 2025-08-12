@@ -1,10 +1,12 @@
-'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export default function ReviewPage({ params }) {
-  const { id } = params;
+export default function ReviewPage() {
+  const router = useRouter();
+  const { id } = router.query;
+
   const [qcm, setQcm] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +15,7 @@ export default function ReviewPage({ params }) {
   const [shareUrl, setShareUrl] = useState(null);
 
   useEffect(() => {
+    if (!id) return;
     const load = async () => {
       try {
         const res = await fetch(`${BACKEND}/qcm/${id}/admin`);
@@ -43,6 +46,7 @@ export default function ReviewPage({ params }) {
     }
   };
 
+  if (!id) return null;
   if (loading) return <div style={{padding:24}}>Loading...</div>;
   if (error) return <div style={{padding:24, color:'red'}}>Error: {error}</div>;
 
@@ -68,7 +72,6 @@ export default function ReviewPage({ params }) {
             <summary>Explanation (admin only)</summary>
             <p>{q.explanation}</p>
           </details>
-          {/* V2: Edit / Regenerate per question */}
         </div>
       ))}
 
