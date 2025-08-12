@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+'use client';
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 export default function ReviewPage() {
-  const router = useRouter();
-  const { id } = router.query;
-
+  const { id } = useParams();                    // ✅ App Router: récupère l'id
   const [qcm, setQcm] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +72,7 @@ export default function ReviewPage() {
             <summary>Explanation (admin only)</summary>
             <p>{q.explanation}</p>
           </details>
+          {/* V2: Edit / Regenerate per question */}
         </div>
       ))}
 
