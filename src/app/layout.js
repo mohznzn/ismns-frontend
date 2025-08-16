@@ -22,17 +22,9 @@ export default function RootLayout({ children }) {
 
             {/* Liens utiles recruteur */}
             <div className="flex items-center gap-6 text-sm">
-              {/* Créer un nouveau QCM */}
               <Link href="/admin/qcm/new" className="hover:text-blue-600">New QCM</Link>
-
-              {/* Liste de tous les QCM (hub admin) */}
               <Link href="/admin/qcm" className="hover:text-blue-600">My QCMs</Link>
-
-              {/* Accès rapide aux résultats (même hub, tu sélectionnes un QCM et cliques 'View results') */}
-              <Link href="/admin/qcm" className="hover:text-blue-600">Results</Link>
-
-              {/* (Optionnel) page d’aide partage, si tu en crées une plus tard */}
-              {/* <Link href="/admin/help" className="hover:text-blue-600">Help</Link> */}
+              <Link href="/admin/results" className="hover:text-blue-600">Results</Link>
             </div>
           </nav>
         </header>
