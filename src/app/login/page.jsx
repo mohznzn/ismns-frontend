@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth } from "@/lib/api";
 import Link from "next/link";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
@@ -15,13 +16,16 @@ export default function LoginPage() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); setErr("");
+    setLoading(true);
+    setErr("");
     try {
       await auth.login(email, pw);
       router.replace(next);
     } catch (e) {
       setErr(e?.data?.error || e.message || "Login failed");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,17 +39,23 @@ export default function LoginPage() {
           <div>
             <label className="block text-sm mb-1">Email</label>
             <input
-              type="email" value={email} onChange={(e)=>setEmail(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
-              placeholder="you@company.com" required
+              placeholder="you@company.com"
+              required
             />
           </div>
           <div>
             <label className="block text-sm mb-1">Password</label>
             <input
-              type="password" value={pw} onChange={(e)=>setPw(e.target.value)}
+              type="password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
               className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
-              placeholder="••••••••" required
+              placeholder="••••••••"
+              required
             />
           </div>
           <button
@@ -64,5 +74,14 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // ⬇️ Obligatoire avec Next 15 quand on utilise useSearchParams
+  return (
+    <Suspense fallback={<div className="p-6">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
