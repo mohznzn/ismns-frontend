@@ -1,61 +1,80 @@
-// src/app/register/page.jsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/useAuth";
+import { auth } from "@/lib/api";
+import Link from "next/link";
 
 export default function RegisterPage() {
-  const { register } = useAuth();
-  const router = useRouter();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setErr(""); setLoading(true);
+  const onSubmit = async (evt) => {
+    evt.preventDefault();                 // ← évite d’utiliser “e” partout
+    setLoading(true);
+    setErr("");
     try {
-      await register(email, password);
-      router.push("/admin/myqcms");
-    } catch (e) {
-      setErr(e.message || "Register failed");
+      await auth.register(email, pw);
+      router.replace("/admin/myqcms");
+    } catch (error) {
+      console.error("register error:", error);
+      setErr(error?.data?.error || error?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white shadow rounded-2xl p-6">
-        <h1 className="text-2xl font-bold mb-2">Create your account</h1>
-        <p className="text-sm text-gray-600 mb-6">Register to start generating QCMs.</p>
+        <h1 className="text-2xl font-bold mb-1">Create your account</h1>
+        <p className="text-sm text-gray-500 mb-4">
+          Register to start generating QCMs.
+        </p>
 
-        {!!err && <p className="text-sm text-red-600 mb-4">{err}</p>}
+        {err && <div className="mb-3 text-sm text-red-600">{err}</div>}
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
             <label className="block text-sm mb-1">Email</label>
             <input
-              className="w-full border rounded-lg px-3 py-2"
-              type="email" value={email} onChange={(e)=>setEmail(e.target.value)} required
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
+              placeholder="you@company.com"
+              required
             />
           </div>
           <div>
             <label className="block text-sm mb-1">Password</label>
             <input
-              className="w-full border rounded-lg px-3 py-2"
-              type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required
+              type="password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
+              placeholder="••••••••"
+              required
+              minLength={8}
             />
           </div>
           <button
             disabled={loading}
-            className="w-full mt-2 rounded-xl bg-black text-white py-2.5 hover:bg-gray-800 disabled:opacity-50"
+            className="w-full mt-2 px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-800 disabled:opacity-40"
           >
             {loading ? "Creating…" : "Register"}
           </button>
         </form>
+
+        <div className="mt-4 text-sm text-gray-600">
+          Already have an account?{" "}
+          <Link className="text-blue-600 hover:underline" href="/login">
+            Sign in
+          </Link>
+        </div>
       </div>
     </div>
   );
