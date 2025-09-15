@@ -5,20 +5,11 @@ import Link from "next/link";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL; // ex: https://ismns-backend.onrender.com
 
-type QcmItem = {
-  id: string;
-  language: string;
-  status: "draft" | "published" | string;
-  skills_count: number;
-  attempts_count: number;
-  share_token?: string | null;
-};
-
 export default function MyQCMsPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [items, setItems] = useState<QcmItem[]>([]);
-  const [status, setStatus] = useState<"all" | "draft" | "published">("all");
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState("all"); // "all" | "draft" | "published"
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -30,7 +21,7 @@ export default function MyQCMsPage() {
     });
   }, [items, status, query]);
 
-  const shareUrlFor = (token?: string | null) =>
+  const shareUrlFor = (token) =>
     token ? `${window.location.origin}/invite?token=${token}` : "";
 
   const load = async () => {
@@ -42,13 +33,13 @@ export default function MyQCMsPage() {
     setLoading(true);
     try {
       const r = await fetch(`${BACKEND}/admin/qcms`, {
-        credentials: "include", // << ENVOIE LE COOKIE 'sid'
+        credentials: "include", // envoie le cookie 'sid'
       });
       if (!r.ok) throw new Error(`API ${r.status}`);
       const data = await r.json();
       setItems(data.items || []);
       setErr("");
-    } catch (e: any) {
+    } catch (e) {
       setErr(e?.message || "Failed to load QCMs");
     } finally {
       setLoading(false);
@@ -57,26 +48,25 @@ export default function MyQCMsPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onPublish = async (qcmId: string) => {
+  const onPublish = async (qcmId) => {
     try {
       const r = await fetch(`${BACKEND}/qcm/${qcmId}/publish`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // << indispensable ici aussi
+        credentials: "include", // indispensable ici aussi si tu relies par cookie
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data?.error || "Publish failed");
       alert(`Share link ready:\n${data.share_url}`);
       load();
-    } catch (e: any) {
+    } catch (e) {
       alert(e?.message || "Publish failed");
     }
   };
 
-  const copy = async (text: string) => {
+  const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
       alert("Copied!");
@@ -93,7 +83,7 @@ export default function MyQCMsPage() {
         <div className="flex gap-2">
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as any)}
+            onChange={(e) => setStatus(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm"
           >
             <option value="all">All statuses</option>
