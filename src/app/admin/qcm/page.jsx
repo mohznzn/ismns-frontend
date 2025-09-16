@@ -32,7 +32,7 @@ export default function MyQCMsPage() {
     }
     setLoading(true);
     try {
-      const r = await fetch(`${BACKEND}/admin/qcms`, {
+      const r = await fetch(`${BACKEND}/admin/qcm`, {
         credentials: "include", // envoie le cookie 'sid'
       });
       if (!r.ok) throw new Error(`API ${r.status}`);

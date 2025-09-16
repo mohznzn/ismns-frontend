@@ -139,7 +139,7 @@ export const admin = {
     apiPost(`/qcm/${encodeURIComponent(qcmId)}/question/${encodeURIComponent(qid)}/regenerate`, {}),
 
   // Mes QCMs (listés, filtrés par owner côté backend)
-  listMyQcms: () => apiGet(`/admin/qcms`),
+  listMyQcms: () => apiGet(`/admin/qcm`),
 
   // Liste d’attempts (avec filtres/pagination)
   listAttempts: (params = {}) =>
