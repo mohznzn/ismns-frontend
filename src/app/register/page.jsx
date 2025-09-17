@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/api";
+import { useAuth } from "@/lib/useAuth";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -10,15 +11,18 @@ export default function RegisterPage() {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  const onSubmit = async (evt) => {
-    evt.preventDefault();                 // ← évite d’utiliser “e” partout
+  const router = useRouter();
+  const { refresh } = useAuth(); // ✅ pour mettre à jour le header après inscription
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setErr("");
     try {
-      await auth.register(email, pw);
-      router.replace("/admin/myqcms");
+      await auth.register(email, pw); // crée le compte + session côté API
+      await refresh();                // ✅ met à jour le contexte (user non-null)
+      router.replace("/admin/qcm");   // ✅ route corrigée
     } catch (error) {
       console.error("register error:", error);
       setErr(error?.data?.error || error?.message || "Registration failed");

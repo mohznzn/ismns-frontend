@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth } from "@/lib/api";
+import { useAuth } from "@/lib/useAuth";
 import Link from "next/link";
 
 function LoginForm() {
@@ -10,19 +11,27 @@ function LoginForm() {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "/admin/myqcms";
+  const { refresh } = useAuth(); // ✅ pour maj le header après login
+
+  // ✅ route par défaut corrigée + on n'autorise que des chemins internes
+  const next = (() => {
+    const n = search.get("next") || "/admin/qcm";
+    return n.startsWith("/") ? n : "/admin/qcm";
+  })();
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErr("");
     try {
-      await auth.login(email, pw);
-      router.replace(next);
+      await auth.login(email, pw); // pose le cookie côté API
+      await refresh();             // ✅ met à jour le contexte Auth (user rempli)
+      router.replace(next);        // redirection
     } catch (e) {
-      setErr(e?.data?.error || e.message || "Login failed");
+      setErr(e?.data?.error || e?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -78,7 +87,7 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  // ⬇️ Obligatoire avec Next 15 quand on utilise useSearchParams
+  // Obligatoire avec Next 15 quand on utilise useSearchParams
   return (
     <Suspense fallback={<div className="p-6">Loading…</div>}>
       <LoginForm />
