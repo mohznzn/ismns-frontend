@@ -41,12 +41,23 @@ export default function ReviewQcmPage() {
   const shareUrl = useMemo(() => {
     if (!qcm?.share_token) return null;
     // lien public côté frontend
+    if (typeof window === "undefined") return null;
     return `${window.location.origin}/invite?token=${qcm.share_token}`;
   }, [qcm?.share_token]);
 
   const copy = async (text) => {
     try {
-      await navigator.clipboard.writeText(text);
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
       alert("Link copied!");
     } catch {
       alert("Copy failed");
@@ -56,19 +67,14 @@ export default function ReviewQcmPage() {
   const onPublish = async () => {
     try {
       setPublishing(true);
-      const res = await admin.publishQcm(id); // renvoie { share_url, token }
-      // mets à jour l’état local pour refléter la publication
+      const res = await admin.publishQcm(id); // { share_url, token }
       setQcm((prev) =>
         prev
           ? { ...prev, status: "published", share_token: res?.token || prev.share_token }
           : prev
       );
-      if (res?.share_url) {
-        // propose tout de suite la copie
-        await copy(res.share_url);
-      } else if (shareUrl) {
-        await copy(shareUrl);
-      }
+      const url = res?.share_url || shareUrl;
+      if (url) await copy(url);
     } catch (e) {
       alert(e?.message || "Publish failed");
     } finally {
@@ -107,11 +113,18 @@ export default function ReviewQcmPage() {
           <span className="px-2 py-1 rounded-lg border bg-white">
             Language: <span className="font-medium">{qcm.language}</span>
           </span>
+
           <span className="px-2 py-1 rounded-lg border bg-white">
             Status: <span className="font-medium capitalize">{qcm.status}</span>
           </span>
 
-          {/* Actions de publication / lien */}
+          <span className="px-2 py-1 rounded-lg border bg-white">
+            Questions:{" "}
+            <span className="font-medium">
+              {questions.length}
+            </span>
+          </span>
+
           {qcm.status === "draft" ? (
             <button
               onClick={onPublish}
@@ -166,9 +179,9 @@ export default function ReviewQcmPage() {
                 </div>
                 <button
                   onClick={() => onRegenerate(q.id)}
-                  disabled={q.__regenLoading}
+                  disabled={q.__regenLoading || qcm.status !== "draft"}
                   className="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
-                  title="Regenerate this question"
+                  title={qcm.status === "draft" ? "Regenerate this question" : "Disabled on published QCM"}
                 >
                   {q.__regenLoading ? "Regenerating…" : "Regenerate"}
                 </button>
