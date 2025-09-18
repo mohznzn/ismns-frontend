@@ -1,8 +1,9 @@
 // src/lib/api.js
 
-// Base URL du backend (Render/local)
-export const BACKEND =
-  (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000").replace(/\/+$/, "");
+// Base URL du backend (Render/local) — on supprime les / finaux
+export const BACKEND = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000")
+  .trim()
+  .replace(/\/+$/, "");
 
 // -------- Utils bas niveau --------
 function isJsonResponse(res) {
@@ -20,38 +21,40 @@ async function parse(res) {
   }
 }
 
-async function handle(res) {
-  const data = await parse(res);
-  if (!res.ok) {
-    // Remonte un message utile si fourni par le backend
-    const msg =
-      (data && (data.message || data.error || data.detail)) ||
-      `HTTP ${res.status}`;
-    const err = new Error(msg);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-  return data;
+function buildError(res, data) {
+  const msg =
+    (data && (data.message || data.error || data.detail)) ||
+    `HTTP ${res.status}`;
+  const err = new Error(msg);
+  err.status = res.status;
+  err.data = data;
+  return err;
 }
 
 /**
  * Appel générique fetch avec:
- * - credentials: "include" (cookies d’auth sid)
+ * - credentials: "include" (cookies d’auth `sid`)
  * - cache: "no-store"
- * - merge headers
+ * - Accept: application/json
+ * - merge headers utilisateur
  */
 async function apiFetch(path, init = {}) {
+  if (!BACKEND) throw new Error("NEXT_PUBLIC_BACKEND_URL is not set");
+
   const res = await fetch(`${BACKEND}${path}`, {
     method: "GET",
     cache: "no-store",
-    credentials: "include", // IMPORTANT pour envoyer le cookie 'sid'
+    credentials: "include",
     ...init,
     headers: {
+      Accept: "application/json",
       ...(init.headers || {}),
     },
   });
-  return handle(res);
+
+  const data = await parse(res);
+  if (!res.ok) throw buildError(res, data);
+  return data;
 }
 
 // -------- Méthodes HTTP courtes --------
@@ -103,53 +106,51 @@ export const auth = {
 
 // ================= PUBLIC / CANDIDAT =================
 export const publicApi = {
-  // Récupérer un QCM public via token d’invitation
   getQcmByToken: (token) => apiGet(`/public/qcm/${encodeURIComponent(token)}`),
-
-  // Commencer une tentative (optionnel: candidate_email)
   startAttempt: ({ token, candidate_email }) =>
     apiPost(`/attempts/start`, { token, candidate_email }),
-
-  // Sauvegarder une réponse
   saveAnswer: (attemptId, { question_id, option_id }) =>
     apiPost(`/attempts/${encodeURIComponent(attemptId)}/answer`, {
       question_id,
       option_id,
     }),
-
-  // Finir la tentative (calcule le score)
   finishAttempt: (attemptId) =>
     apiPost(`/attempts/${encodeURIComponent(attemptId)}/finish`, {}),
 };
 
 // ================= ADMIN (protégé par cookie) =================
 export const admin = {
-  // Créer un draft à partir d’une JD
-  createDraftFromJD: ({ job_description, language = "en", num_questions = 12 }) =>
-    apiPost(`/qcm/create_draft_from_jd`, { job_description, language, num_questions }),
+  createDraftFromJD: ({
+    job_description,
+    language = "en",
+    num_questions = 12,
+  }) =>
+    apiPost(`/qcm/create_draft_from_jd`, {
+      job_description,
+      language,
+      num_questions,
+    }),
 
-  // Publier un QCM (retourne share_url + token)
-  publishQcm: (qcmId) => apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, {}),
+  publishQcm: (qcmId) =>
+    apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, {}),
 
-  // Détail admin d’un QCM (questions + options + explications)
   getQcmAdmin: (qcmId) => apiGet(`/qcm/${encodeURIComponent(qcmId)}/admin`),
 
-  // Regénérer une question
   regenerateQuestion: (qcmId, qid) =>
-    apiPost(`/qcm/${encodeURIComponent(qcmId)}/question/${encodeURIComponent(qid)}/regenerate`, {}),
+    apiPost(
+      `/qcm/${encodeURIComponent(qcmId)}/question/${encodeURIComponent(qid)}/regenerate`,
+      {}
+    ),
 
-  // Mes QCMs (listés, filtrés par owner côté backend)
   listMyQcms: () => apiGet(`/admin/qcm`),
 
-  // Liste d’attempts (avec filtres/pagination)
-  listAttempts: (params = {}) =>
-    apiGet(withQuery(`/admin/attempts`, params)),
+  listAttempts: (params = {}) => apiGet(withQuery(`/admin/attempts`, params)),
 
-  // Résultats pour un QCM
-  getQcmResults: (qcmId) => apiGet(`/admin/qcm/${encodeURIComponent(qcmId)}/results`),
+  getQcmResults: (qcmId) =>
+    apiGet(`/admin/qcm/${encodeURIComponent(qcmId)}/results`),
 
-  // Détail d’une tentative
-  getAttemptDetail: (attemptId) => apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}`),
+  getAttemptDetail: (attemptId) =>
+    apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}`),
 };
 
 // ================= Storage local tentative (candidat) =================
