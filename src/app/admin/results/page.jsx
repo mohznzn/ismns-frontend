@@ -1,69 +1,77 @@
+// src/app/admin/results/page.jsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { admin } from "@/lib/api";
 
 export default function ResultsPage() {
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const [rows, setRows] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [loadingQcms, setLoadingQcms] = useState(true);
+  const [loadingAttempts, setLoadingAttempts] = useState(true);
+  const [error, setError] = useState("");
 
   const [qcms, setQcms] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+
+  // Filtres / pagination
   const [qcmId, setQcmId] = useState("");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("all");
-  const [orderBy, setOrderBy] = useState("started_at");
-  const [orderDir, setOrderDir] = useState("desc");
+  const [status, setStatus] = useState("all");            // all | finished | ongoing
+  const [orderBy, setOrderBy] = useState("started_at");   // started_at | finished_at | score
+  const [orderDir, setOrderDir] = useState("desc");       // asc | desc
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(total / pageSize)),
     [total, pageSize]
   );
 
-  // Load QCMs for filter
-  useEffect(() => {
-    fetch(`${BACKEND}/admin/qcms`)
-      .then((r) => r.ok ? r.json() : Promise.reject(r))
-      .then((d) => setQcms(d.items || []))
-      .catch(() => {});
+  // Charge la liste des QCMs (pour le select)
+  const loadQcms = useCallback(async () => {
+    try {
+      setLoadingQcms(true);
+      setError("");
+      const data = await admin.listMyQcms();          // -> credentials: "include"
+      setQcms(data.items || []);
+    } catch (e) {
+      setError(e?.message || "Failed to load QCMs");
+    } finally {
+      setLoadingQcms(false);
+    }
   }, []);
 
-  const load = () => {
-    setLoading(true);
-    const p = new URLSearchParams({
-      page: String(page),
-      page_size: String(pageSize),
-      status,
-      order_by: orderBy,
-      order_dir: orderDir,
-    });
-    if (qcmId) p.set("qcm_id", qcmId);
-    if (email) p.set("email", email);
+  // Charge les attempts selon les filtres
+  const loadAttempts = useCallback(async () => {
+    try {
+      setLoadingAttempts(true);
+      setError("");
+      const data = await admin.listAttempts({
+        qcm_id: qcmId || undefined,
+        email: email || undefined,
+        status,
+        order_by: orderBy,
+        order_dir: orderDir,
+        page,
+        page_size: pageSize,
+      });
+      setRows(data.items || []);
+      setTotal(data.total || 0);
+    } catch (e) {
+      setError(e?.message || "Failed to load results");
+    } finally {
+      setLoadingAttempts(false);
+    }
+  }, [qcmId, email, status, orderBy, orderDir, page, pageSize]);
 
-    fetch(`${BACKEND}/admin/attempts?${p.toString()}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`API ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
-        setRows(data.items || []);
-        setTotal(data.total || 0);
-        setErr("");
-      })
-      .catch((e) => setErr(e.message || "Failed to load results"))
-      .finally(() => setLoading(false));
-  };
-
-  // refetch when filters change
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, qcmId, email, status, orderBy, orderDir]);
+    loadQcms();
+  }, [loadQcms]);
+
+  useEffect(() => {
+    loadAttempts();
+  }, [loadAttempts]);
 
   return (
     <div className="space-y-6">
@@ -74,11 +82,12 @@ export default function ResultsPage() {
           value={qcmId}
           onChange={(e) => { setQcmId(e.target.value); setPage(1); }}
           className="border rounded-lg px-3 py-2 text-sm"
+          disabled={loadingQcms}
         >
           <option value="">All QCMs</option>
           {qcms.map((q) => (
             <option key={q.id} value={q.id}>
-              {q.id} ({q.language})
+              {q.id} ({q.language}) • {q.status}
             </option>
           ))}
         </select>
@@ -130,10 +139,10 @@ export default function ResultsPage() {
         </select>
       </div>
 
-      {loading ? (
+      {loadingAttempts ? (
         <div className="text-gray-600">Loading…</div>
-      ) : err ? (
-        <div className="text-red-600">Error: {err}</div>
+      ) : error ? (
+        <div className="text-red-600">Error: {error}</div>
       ) : rows.length === 0 ? (
         <div className="text-gray-500">No attempts.</div>
       ) : (
@@ -147,24 +156,31 @@ export default function ResultsPage() {
             <div className="col-span-2 px-3 py-2">Dates</div>
           </div>
           {rows.map((a) => (
-            <div key={a.attempt_id} className="grid grid-cols-12 gap-0 border-b last:border-0 text-sm">
+            <div
+              key={a.attempt_id}
+              className="grid grid-cols-12 gap-0 border-b last:border-0 text-sm"
+            >
               <div className="col-span-3 px-3 py-3">
-                <Link href={`/admin/attempts/${a.attempt_id}`} className="font-medium hover:underline">
+                <Link
+                  href={`/admin/attempts/${a.attempt_id}`}
+                  className="font-medium hover:underline"
+                >
                   {a.attempt_id}
                 </Link>
               </div>
               <div className="col-span-3 px-3 py-3">
                 <div className="font-medium">{a.qcm_id}</div>
-                <Link
-                  href={`/admin/qcm/${a.qcm_id}/results`}
-                  className="text-gray-500 hover:underline"
-                >
-                  QCM results
-                </Link>
+                {/* On évite les liens vers des pages non créées pour ne pas générer de 404/_rsc */}
               </div>
-              <div className="col-span-2 px-3 py-3">{a.candidate_email || <span className="text-gray-400">—</span>}</div>
-              <div className="col-span-1 px-3 py-3 text-right">{a.score ?? 0}%</div>
-              <div className="col-span-1 px-3 py-3 text-right">{a.duration_s ? `${a.duration_s}s` : "—"}</div>
+              <div className="col-span-2 px-3 py-3">
+                {a.candidate_email || <span className="text-gray-400">—</span>}
+              </div>
+              <div className="col-span-1 px-3 py-3 text-right">
+                {a.score ?? 0}%
+              </div>
+              <div className="col-span-1 px-3 py-3 text-right">
+                {a.duration_s ? `${a.duration_s}s` : "—"}
+              </div>
               <div className="col-span-2 px-3 py-3 text-xs text-gray-600">
                 <div>Start: {a.started_at || "—"}</div>
                 <div>Finish: {a.finished_at || "—"}</div>
