@@ -57,12 +57,6 @@ export default function NewQcmPage() {
               <option value="es">Español</option>
             </select>
           </div>
-
-          <div className="flex items-end">
-            <div className="text-sm text-gray-600">
-              The draft will contain <span className="font-semibold">20</span> questions.
-            </div>
-          </div>
         </div>
 
         <div>
