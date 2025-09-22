@@ -16,21 +16,27 @@ export default function NewQcmPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
     try {
       const data = await admin.createDraftFromJD({
-        job_description: jobDescription,
+        job_description: jobDescription.trim(),
         language,
         // pas de num_questions : backend fixe 20
       });
+
       const id = data?.qcm_id;
       if (!id) throw new Error("Missing qcm_id in response");
       router.replace(`/admin/qcm/${id}/review`);
     } catch (err) {
-      setError(
+      // Montre le message détaillé du backend si disponible
+      const apiMsg =
+        err?.data?.message ||
         err?.data?.error ||
-          err?.message ||
-          `API error ${err?.status || ""}`.trim()
-      );
+        err?.message ||
+        `API error ${err?.status || ""}`.trim();
+
+      console.error("create_draft_from_jd error:", err);
+      setError(apiMsg);
     } finally {
       setLoading(false);
     }
