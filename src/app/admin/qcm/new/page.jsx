@@ -1,24 +1,16 @@
 // src/app/admin/qcm/new/page.jsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { admin } from "@/lib/api";
 
 export default function NewQcmPage() {
   const [jobDescription, setJobDescription] = useState("");
   const [language, setLanguage] = useState("en");
-  const [numQuestionsRaw, setNumQuestionsRaw] = useState("12"); // texte saisi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-
-  // Valide et convertit en entier
-  const numQuestions = useMemo(() => {
-    // n'accepte que les entiers positifs
-    const n = Number(numQuestionsRaw);
-    return Number.isInteger(n) && n > 0 ? n : null;
-  }, [numQuestionsRaw]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +20,7 @@ export default function NewQcmPage() {
       const data = await admin.createDraftFromJD({
         job_description: jobDescription,
         language,
-        num_questions: numQuestions ?? 12,
+        // pas de num_questions : backend fixe 20
       });
       const id = data?.qcm_id;
       if (!id) throw new Error("Missing qcm_id in response");
@@ -42,11 +34,6 @@ export default function NewQcmPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // empêche la molette de changer le number input quand il est focus
-  const preventWheel = (e) => {
-    e.currentTarget.blur();
   };
 
   return (
@@ -71,30 +58,10 @@ export default function NewQcmPage() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm mb-1"># of questions</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              step="1"
-              min="1"
-              // optionnel: tu peux mettre un max raisonnable, ex. 50
-              // max="50"
-              value={numQuestionsRaw}
-              onChange={(e) => {
-                // autorise la frappe libre mais garde le texte brut
-                // (on laisse la validation à numQuestions)
-                setNumQuestionsRaw(e.target.value.trim());
-              }}
-              onWheel={preventWheel}
-              className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-              placeholder="12"
-            />
-            {!numQuestions && numQuestionsRaw !== "" && (
-              <p className="mt-1 text-xs text-red-600">
-                Please enter a whole number &gt; 0.
-              </p>
-            )}
+          <div className="flex items-end">
+            <div className="text-sm text-gray-600">
+              The draft will contain <span className="font-semibold">20</span> questions.
+            </div>
           </div>
         </div>
 
@@ -117,7 +84,7 @@ export default function NewQcmPage() {
         <div className="pt-2">
           <button
             type="submit"
-            disabled={loading || !jobDescription.trim() || !numQuestions}
+            disabled={loading || !jobDescription.trim()}
             className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-40"
           >
             {loading ? "Generating…" : "Generate draft"}

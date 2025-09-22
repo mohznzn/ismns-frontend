@@ -40,6 +40,7 @@ export default function ReviewQcmPage() {
 
   const shareUrl = useMemo(() => {
     if (!qcm?.share_token) return null;
+    // lien public côté frontend
     if (typeof window === "undefined") return null;
     return `${window.location.origin}/invite?token=${qcm.share_token}`;
   }, [qcm?.share_token]);
@@ -49,6 +50,7 @@ export default function ReviewQcmPage() {
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
       } else {
+        // Fallback
         const ta = document.createElement("textarea");
         ta.value = text;
         document.body.appendChild(ta);
