@@ -1,18 +1,27 @@
 // src/lib/api.js
 
-// Base URL du backend (Render/local) — on supprime les / finaux
-export const BACKEND = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000")
-  .trim()
-  .replace(/\/+$/, "");
+// -------- Base URL backend --------
+function sanitizeBase(url) {
+  const u = (url || "").trim().replace(/\/+$/, "");
+  if (!u) return "";
+  if (/^https?:\/\//i.test(u)) return u;
+  // si l'env fournit juste un host, on force https
+  return `https://${u}`;
+}
 
-// -------- Utils bas niveau --------
-function isJsonResponse(res) {
+// Priorité à NEXT_PUBLIC_API_BASE, sinon NEXT_PUBLIC_BACKEND_URL, sinon localhost
+export const API_BASE = sanitizeBase(
+  process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+);
+
+// -------- Utils --------
+function isJson(res) {
   const ct = res.headers.get("content-type") || "";
   return ct.includes("application/json");
 }
 
 async function parse(res) {
-  if (isJsonResponse(res)) return res.json();
+  if (isJson(res)) return res.json();
   const text = await res.text();
   try {
     return text ? JSON.parse(text) : null;
@@ -31,20 +40,14 @@ function buildError(res, data) {
   return err;
 }
 
-/**
- * Appel générique fetch avec:
- * - credentials: "include" (cookies d’auth `sid`)
- * - cache: "no-store"
- * - Accept: application/json
- * - merge headers utilisateur
- */
+// -------- Fetch générique (avec cookies) --------
 async function apiFetch(path, init = {}) {
-  if (!BACKEND) throw new Error("NEXT_PUBLIC_BACKEND_URL is not set");
+  if (!API_BASE) throw new Error("API base URL is not set");
 
-  const res = await fetch(`${BACKEND}${path}`, {
+  const res = await fetch(`${API_BASE}${path}`, {
     method: "GET",
     cache: "no-store",
-    credentials: "include",
+    credentials: "include", // ⬅️ indispensable pour le cookie de session
     ...init,
     headers: {
       Accept: "application/json",
@@ -57,12 +60,12 @@ async function apiFetch(path, init = {}) {
   return data;
 }
 
-// -------- Méthodes HTTP courtes --------
-export async function apiGet(path, { headers, ...init } = {}) {
+// -------- Helpers HTTP --------
+export function apiGet(path, { headers, ...init } = {}) {
   return apiFetch(path, { method: "GET", headers, ...init });
 }
 
-export async function apiPost(path, body, { headers, ...init } = {}) {
+export function apiPost(path, body, { headers, ...init } = {}) {
   return apiFetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(headers || {}) },
@@ -71,7 +74,7 @@ export async function apiPost(path, body, { headers, ...init } = {}) {
   });
 }
 
-export async function apiPatch(path, body, { headers, ...init } = {}) {
+export function apiPatch(path, body, { headers, ...init } = {}) {
   return apiFetch(path, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...(headers || {}) },
@@ -80,11 +83,11 @@ export async function apiPatch(path, body, { headers, ...init } = {}) {
   });
 }
 
-export async function apiDelete(path, { headers, ...init } = {}) {
+export function apiDelete(path, { headers, ...init } = {}) {
   return apiFetch(path, { method: "DELETE", headers, ...init });
 }
 
-// -------- Helpers querystring --------
+// -------- Querystring helper --------
 function withQuery(path, params) {
   if (!params) return path;
   const usp = new URLSearchParams();
@@ -120,15 +123,11 @@ export const publicApi = {
 
 // ================= ADMIN (protégé par cookie) =================
 export const admin = {
-  createDraftFromJD: ({
-    job_description,
-    language = "en",
-    num_questions = 12,
-  }) =>
+  createDraftFromJD: ({ job_description, language = "en" }) =>
     apiPost(`/qcm/create_draft_from_jd`, {
       job_description,
       language,
-      num_questions,
+      // ⬅️ pas de num_questions : le backend force 20
     }),
 
   publishQcm: (qcmId) =>
@@ -146,6 +145,7 @@ export const admin = {
 
   listAttempts: (params = {}) => apiGet(withQuery(`/admin/attempts`, params)),
 
+  // si tu as des routes de résultats, garde-les, sinon commente-les
   getQcmResults: (qcmId) =>
     apiGet(`/admin/qcm/${encodeURIComponent(qcmId)}/results`),
 
