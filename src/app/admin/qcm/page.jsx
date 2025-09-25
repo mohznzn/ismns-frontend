@@ -15,8 +15,8 @@ export default function MyQCMsPage() {
   const filtered = useMemo(() => {
     return items.filter((q) => {
       const okStatus = status === "all" ? true : q.status === status;
-      const qtext = `${q.id} ${q.language} ${q.status}`.toLowerCase();
-      const okQuery = qtext.includes(query.toLowerCase());
+      const haystack = `${q.jd_preview || ""} ${q.language} ${q.status}`.toLowerCase();
+      const okQuery = haystack.includes(query.toLowerCase());
       return okStatus && okQuery;
     });
   }, [items, status, query]);
@@ -55,7 +55,7 @@ export default function MyQCMsPage() {
       const r = await fetch(`${BACKEND}/qcm/${qcmId}/publish`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // indispensable ici aussi si tu relies par cookie
+        credentials: "include",
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data?.error || "Publish failed");
@@ -93,7 +93,7 @@ export default function MyQCMsPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search..."
+            placeholder="Search by job description..."
             className="border rounded-lg px-3 py-2 text-sm w-56"
           />
         </div>
@@ -115,11 +115,18 @@ export default function MyQCMsPage() {
             return (
               <div key={q.id} className="bg-white shadow rounded-2xl p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm text-gray-500">QCM</div>
-                    <div className="font-semibold break-all">{q.id}</div>
+                  {/* Bloc gauche : aperçu de la JD (remplace l'affichage de l'ID) */}
+                  <div className="min-w-0 max-w-2xl">
+                    <div className="text-sm text-gray-500">Job description</div>
+                    <div
+                      className="font-medium text-gray-900 truncate"
+                      title={q.jd_preview || ""}
+                    >
+                      {q.jd_preview || "—"}
+                    </div>
                   </div>
 
+                  {/* Métadonnées */}
                   <div className="text-sm">
                     <div>
                       <span className="text-gray-500">Language: </span>
@@ -142,6 +149,7 @@ export default function MyQCMsPage() {
                     </div>
                   </div>
 
+                  {/* Actions */}
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/admin/qcm/${q.id}/review`}

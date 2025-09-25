@@ -23,7 +23,7 @@ export default function QcmResultsPage() {
       try {
         const data = await admin.getQcmResults(id);
         if (!alive) return;
-        setQcm(data.qcm);
+        setQcm(data.qcm);            // ⚠️ backend peut maintenant renvoyer { id, language, status, jd_preview }
         setItems(data.items || []);
       } catch (err) {
         if (!alive) return;
@@ -47,8 +47,7 @@ export default function QcmResultsPage() {
     return (items || []).filter((it) => {
       const txt = `${it.candidate_email || ""} ${it.status || ""}`.toLowerCase();
       const okQuery = q ? txt.includes(q) : true;
-      const okStatus =
-        status === "all" ? true : (it.status || "") === status;
+      const okStatus = status === "all" ? true : (it.status || "") === status;
       return okQuery && okStatus;
     });
   }, [items, query, status]);
@@ -71,9 +70,17 @@ export default function QcmResultsPage() {
       <div className="bg-white shadow rounded-2xl p-6">
         {qcm ? (
           <div className="grid gap-4 sm:grid-cols-3 text-sm">
-            <div>
-              <div className="text-gray-500">QCM</div>
-              <div className="font-mono break-all">{qcm.id}</div>
+            <div className="min-w-0">
+              <div className="text-gray-500">Job description</div>
+              {/* On affiche jd_preview si présent, sinon on retombe sur l’ID pour ne pas casser l’UI */}
+              <div
+                className={`${
+                  qcm.jd_preview ? "font-medium text-gray-900 truncate" : "font-mono break-all"
+                }`}
+                title={qcm.jd_preview || qcm.id}
+              >
+                {qcm.jd_preview || qcm.id}
+              </div>
             </div>
             <div>
               <div className="text-gray-500">Language</div>
