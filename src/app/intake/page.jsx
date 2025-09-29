@@ -1,11 +1,27 @@
 // src/app/intake/page.jsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { publicApi } from "@/lib/api";
 
 export default function IntakePage() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <IntakeInner />
+    </Suspense>
+  );
+}
+
+function PageFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
+      Loading…
+    </div>
+  );
+}
+
+function IntakeInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const attemptId = useMemo(() => sp.get("attempt_id") || "", [sp]);
@@ -56,7 +72,7 @@ export default function IntakePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Next steps</h1>
-          {/* Si tu veux : <button onClick={() => router.back()} className="text-sm underline hover:opacity-80">← Back</button> */}
+          {/* <button onClick={() => router.back()} className="text-sm underline hover:opacity-80">← Back</button> */}
         </div>
 
         {/* Content card */}
