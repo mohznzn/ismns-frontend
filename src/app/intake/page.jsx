@@ -1,0 +1,173 @@
+// src/app/intake/page.jsx
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { publicApi } from "@/lib/api";
+
+export default function IntakePage() {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const attemptId = useMemo(() => sp.get("attempt_id") || "", [sp]);
+
+  const [salaryAmount, setSalaryAmount] = useState("");
+  const [salaryCurrency, setSalaryCurrency] = useState("EUR");
+  const [salaryPeriod, setSalaryPeriod] = useState("year"); // "year" | "month"
+  const [availability, setAvailability] = useState("");
+  const [cvUrl, setCvUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [ok, setOk] = useState(false);
+
+  useEffect(() => {
+    if (!attemptId) setErr("Missing attempt_id");
+  }, [attemptId]);
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!attemptId) return;
+    setLoading(true);
+    setErr("");
+    try {
+      const payload = {
+        salary_amount: salaryAmount ? Number(salaryAmount) : null,
+        salary_currency: salaryCurrency,
+        salary_period: salaryPeriod,
+        availability_text: availability?.trim() || "",
+        cv_url: cvUrl?.trim() || "",
+      };
+      await publicApi.submitIntake(attemptId, payload);
+      setOk(true);
+    } catch (e) {
+      setErr(
+        e?.data?.message ||
+          e?.data?.error ||
+          e?.message ||
+          `API error ${e?.status || ""}`.trim()
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Next steps</h1>
+          {/* Si tu veux : <button onClick={() => router.back()} className="text-sm underline hover:opacity-80">← Back</button> */}
+        </div>
+
+        {/* Content card */}
+        <div className="bg-white shadow rounded-2xl p-6">
+          {!attemptId ? (
+            <div className="text-sm text-red-600">Missing attempt_id.</div>
+          ) : ok ? (
+            <div className="space-y-3">
+              <div className="text-green-700 font-medium">
+                Merci ! Vos informations ont bien été envoyées. Nous revenons vers vous très vite.
+              </div>
+              <div>
+                <button
+                  onClick={() => router.replace("/")}
+                  className="mt-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                >
+                  Retour à l’accueil
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="space-y-5">
+              {err && (
+                <div className="text-sm text-red-600">
+                  API error: {err}
+                </div>
+              )}
+
+              {/* Salary */}
+              <div>
+                <label className="block text-sm mb-1 font-medium">
+                  Prétentions salariales
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    step="1"
+                    min="0"
+                    placeholder="ex: 45000"
+                    value={salaryAmount}
+                    onChange={(e) => setSalaryAmount(e.target.value)}
+                    className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                  />
+                  <select
+                    value={salaryCurrency}
+                    onChange={(e) => setSalaryCurrency(e.target.value)}
+                    className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                  >
+                    <option>EUR</option>
+                    <option>USD</option>
+                    <option>GBP</option>
+                  </select>
+                  <select
+                    value={salaryPeriod}
+                    onChange={(e) => setSalaryPeriod(e.target.value)}
+                    className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                  >
+                    <option value="year">/an</option>
+                    <option value="month">/mois</option>
+                  </select>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Indiquez un montant brut (ex: 45 000 EUR/an).
+                </p>
+              </div>
+
+              {/* Availability */}
+              <div>
+                <label className="block text-sm mb-1 font-medium">
+                  Disponibilités (texte libre)
+                </label>
+                <textarea
+                  rows={4}
+                  value={availability}
+                  onChange={(e) => setAvailability(e.target.value)}
+                  placeholder="Ex: Semaine prochaine, mar–jeu 14h–18h, fuseau Europe/Paris"
+                  className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+              </div>
+
+              {/* CV URL */}
+              <div>
+                <label className="block text-sm mb-1 font-medium">
+                  CV (lien)
+                </label>
+                <input
+                  type="url"
+                  value={cvUrl}
+                  onChange={(e) => setCvUrl(e.target.value)}
+                  placeholder="Lien Drive/Dropbox vers votre CV"
+                  className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  (MVP) Collez l’URL de votre CV. L’upload direct arrive bientôt.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-40"
+                >
+                  {loading ? "Envoi…" : "Envoyer"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

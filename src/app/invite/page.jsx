@@ -1,11 +1,13 @@
+// src/app/invite/page.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL; // ex: https://ismns-backend.onrender.com
 
 export default function InvitePage() {
+  const router = useRouter();
   const search = useSearchParams();
   const token = useMemo(() => search.get("token") || "", [search]);
 
@@ -22,7 +24,7 @@ export default function InvitePage() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({}); // { questionId: optionId }
   const [finishing, setFinishing] = useState(false);
-  const [result, setResult] = useState(null); // {score, correct_count, total_questions, duration_s}
+  const [result, setResult] = useState(null); // {score, correct_count, total_questions, duration_s, passed?}
 
   // Charge l'épreuve publique via le token
   useEffect(() => {
@@ -103,7 +105,7 @@ export default function InvitePage() {
     }
   };
 
-  // termine la tentative et affiche le score (sans corrections)
+  // termine la tentative
   const onFinish = async () => {
     if (!attemptId) return;
     try {
@@ -114,7 +116,14 @@ export default function InvitePage() {
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
       if (!res.ok) throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
-      // data contient { score, correct_count, total_questions, duration_s, ... }
+
+      // ⬇️ Nouveau: si le backend renvoie passed=true, on redirige vers /intake
+      if (data?.passed) {
+        router.replace(`/intake?attempt_id=${encodeURIComponent(attemptId)}`);
+        return;
+      }
+
+      // sinon on reste sur l'écran de score "merci"
       setResult(data);
     } catch (e) {
       alert(`Finish failed:\n${e.message}`);
@@ -148,7 +157,7 @@ export default function InvitePage() {
 
   if (!qcmMeta) return null;
 
-  // Écran final (après finish) — score uniquement côté candidat
+  // Écran final (après finish) — montré uniquement si "passed" est false/absent
   if (result) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -163,7 +172,7 @@ export default function InvitePage() {
               Duration: {result.duration_s}s
             </div>
             <p className="text-sm text-gray-500">
-              Detailed corrections are only available to the recruiter.
+              Thank you! We’ll get back to you soon.
             </p>
           </div>
         </div>

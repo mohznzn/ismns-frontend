@@ -11,7 +11,9 @@ function sanitizeBase(url) {
 
 // Priorité à NEXT_PUBLIC_API_BASE, sinon NEXT_PUBLIC_BACKEND_URL, sinon localhost
 export const API_BASE = sanitizeBase(
-  process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+  process.env.NEXT_PUBLIC_API_BASE ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "http://localhost:8000"
 );
 
 // -------- Utils --------
@@ -110,15 +112,29 @@ export const auth = {
 // ================= PUBLIC / CANDIDAT =================
 export const publicApi = {
   getQcmByToken: (token) => apiGet(`/public/qcm/${encodeURIComponent(token)}`),
+
   startAttempt: ({ token, candidate_email }) =>
     apiPost(`/attempts/start`, { token, candidate_email }),
+
   saveAnswer: (attemptId, { question_id, option_id }) =>
     apiPost(`/attempts/${encodeURIComponent(attemptId)}/answer`, {
       question_id,
       option_id,
     }),
+
+  // Renvoie maintenant aussi { passed, pass_threshold, ... }
   finishAttempt: (attemptId) =>
     apiPost(`/attempts/${encodeURIComponent(attemptId)}/finish`, {}),
+
+  // Nouveau : envoi du formulaire post-QCM (intake)
+  intakeAttempt: (attemptId, { full_name, availability, salary_expectation, cv_url, notes } = {}) =>
+    apiPost(`/attempts/${encodeURIComponent(attemptId)}/intake`, {
+      full_name,
+      availability,
+      salary_expectation,
+      cv_url,
+      notes,
+    }),
 };
 
 // ================= ADMIN (protégé par cookie) =================
@@ -145,7 +161,6 @@ export const admin = {
 
   listAttempts: (params = {}) => apiGet(withQuery(`/admin/attempts`, params)),
 
-  // si tu as des routes de résultats, garde-les, sinon commente-les
   getQcmResults: (qcmId) =>
     apiGet(`/admin/qcm/${encodeURIComponent(qcmId)}/results`),
 
