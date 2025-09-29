@@ -23,18 +23,25 @@ export default function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <nav className="mx-auto max-w-6xl h-14 px-4 flex items-center justify-between">
-        <Link href="/" className="font-semibold hover:opacity-80">ISMNS</Link>
+        {/* Logo / Brand */}
+        <Link href="/" className="font-semibold tracking-tight hover:opacity-80">
+          ISMNS
+        </Link>
 
-        {/* Pendant le chargement de l'état d'auth, on évite d'afficher Login/Register */}
+        {/* Zone actions à droite */}
         {loading ? (
-          <div className="h-5 w-40 rounded bg-gray-100 animate-pulse" />
+          // Placeholders stables pour éviter le “trou” pendant /auth/me
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-20 rounded-lg bg-gray-100 animate-pulse" />
+            <div className="h-8 w-20 rounded-lg bg-gray-100 animate-pulse" />
+            <div className="h-8 w-20 rounded-lg bg-gray-100 animate-pulse" />
+            <div className="h-8 w-24 rounded-lg bg-gray-100 animate-pulse" />
+          </div>
         ) : user ? (
           <div className="flex items-center gap-6 text-sm">
-            {/* Garde la route qui correspond à ta page de création */}
             <Link href="/admin/qcm/new" className="hover:text-blue-600">New QCM</Link>
-            {/* ✅ route corrigée : la liste est sur /admin/qcm */}
             <Link href="/admin/qcm" className="hover:text-blue-600">My QCMs</Link>
             <Link href="/admin/results" className="hover:text-blue-600">Results</Link>
             <button
