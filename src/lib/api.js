@@ -5,7 +5,6 @@ function sanitizeBase(url) {
   const u = (url || "").trim().replace(/\/+$/, "");
   if (!u) return "";
   if (/^https?:\/\//i.test(u)) return u;
-  // si l'env fournit juste un host, on force https
   return `https://${u}`;
 }
 
@@ -49,7 +48,7 @@ async function apiFetch(path, init = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "GET",
     cache: "no-store",
-    credentials: "include", // ⬅️ indispensable pour le cookie de session
+    credentials: "include", // indispensable pour le cookie de session
     ...init,
     headers: {
       Accept: "application/json",
@@ -101,6 +100,27 @@ function withQuery(path, params) {
   return q ? `${path}?${q}` : path;
 }
 
+// -------- Mapping helper pour /attempts/:id/intake --------
+function mapIntakeFromUI(p = {}) {
+  // p peut venir de la page: { salary_amount, salary_currency, salary_period, availability_text, cv_url, ... }
+  const amount = p.salary_amount ? String(p.salary_amount).trim() : "";
+  const curr = (p.salary_currency || "").trim();
+  const per = (p.salary_period || "").trim(); // "month" | "year"
+  const salary_expectation =
+    p.salary_expectation ||
+    (amount
+      ? `${amount}${curr ? " " + curr : ""}${per ? "/" + per : ""}`
+      : "");
+
+  return {
+    full_name: (p.full_name || "").trim(),
+    availability: (p.availability || p.availability_text || "").trim(),
+    salary_expectation: salary_expectation.trim(),
+    cv_url: (p.cv_url || "").trim(),
+    notes: (p.notes || "").trim(),
+  };
+}
+
 // ================= AUTH =================
 export const auth = {
   me: () => apiGet(`/auth/me`),
@@ -122,19 +142,20 @@ export const publicApi = {
       option_id,
     }),
 
-  // Renvoie maintenant aussi { passed, pass_threshold, ... }
+  // Renvoie { score, passed, pass_threshold, ... }
   finishAttempt: (attemptId) =>
     apiPost(`/attempts/${encodeURIComponent(attemptId)}/finish`, {}),
 
-  // Nouveau : envoi du formulaire post-QCM (intake)
-  intakeAttempt: (attemptId, { full_name, availability, salary_expectation, cv_url, notes } = {}) =>
-    apiPost(`/attempts/${encodeURIComponent(attemptId)}/intake`, {
-      full_name,
-      availability,
-      salary_expectation,
-      cv_url,
-      notes,
-    }),
+  // Nom "canonique" (si tu veux l'utiliser ailleurs)
+  intakeAttempt: (attemptId, payload = {}) =>
+    apiPost(`/attempts/${encodeURIComponent(attemptId)}/intake`, payload),
+
+  // ✅ Alias pour être compatible avec ta page actuelle
+  submitIntake: (attemptId, uiPayload = {}) =>
+    apiPost(
+      `/attempts/${encodeURIComponent(attemptId)}/intake`,
+      mapIntakeFromUI(uiPayload)
+    ),
 };
 
 // ================= ADMIN (protégé par cookie) =================
@@ -143,7 +164,6 @@ export const admin = {
     apiPost(`/qcm/create_draft_from_jd`, {
       job_description,
       language,
-      // ⬅️ pas de num_questions : le backend force 20
     }),
 
   publishQcm: (qcmId) =>
@@ -153,7 +173,9 @@ export const admin = {
 
   regenerateQuestion: (qcmId, qid) =>
     apiPost(
-      `/qcm/${encodeURIComponent(qcmId)}/question/${encodeURIComponent(qid)}/regenerate`,
+      `/qcm/${encodeURIComponent(qcmId)}/question/${encodeURIComponent(
+        qid
+      )}/regenerate`,
       {}
     ),
 
