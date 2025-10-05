@@ -13,7 +13,8 @@ export default function QcmResultsPage() {
   const [qcm, setQcm] = useState(null);
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all"); // all | finished | ongoing
+  // all | ongoing | finished | passed | failed
+  const [status, setStatus] = useState("all");
 
   useEffect(() => {
     let alive = true;
@@ -23,8 +24,8 @@ export default function QcmResultsPage() {
       try {
         const data = await admin.getQcmResults(id);
         if (!alive) return;
-        setQcm(data.qcm);            // ⚠️ backend peut maintenant renvoyer { id, language, status, jd_preview }
-        setItems(data.items || []);
+        setQcm(data.qcm);              // { id, language, status, jd_preview, pass_threshold }
+        setItems(data.items || []);    // chaque item a potentiellement { passed: boolean } si fini
       } catch (err) {
         if (!alive) return;
         setError(
@@ -42,12 +43,23 @@ export default function QcmResultsPage() {
     };
   }, [id]);
 
+  // statut dérivé (Ongoing / Passed / Failed / Finished fallback)
+  const derivedStatus = (it) => {
+    const base = (it.status || "").toLowerCase();
+    if (base === "finished") {
+      if (typeof it.passed === "boolean") return it.passed ? "passed" : "failed";
+      return "finished";
+    }
+    return base || "—";
+  };
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (items || []).filter((it) => {
       const txt = `${it.candidate_email || ""} ${it.status || ""}`.toLowerCase();
       const okQuery = q ? txt.includes(q) : true;
-      const okStatus = status === "all" ? true : (it.status || "") === status;
+      const st = derivedStatus(it);
+      const okStatus = status === "all" ? true : st === status;
       return okQuery && okStatus;
     });
   }, [items, query, status]);
@@ -69,10 +81,9 @@ export default function QcmResultsPage() {
       {/* QCM meta */}
       <div className="bg-white shadow rounded-2xl p-6">
         {qcm ? (
-          <div className="grid gap-4 sm:grid-cols-3 text-sm">
-            <div className="min-w-0">
+          <div className="grid gap-4 sm:grid-cols-4 text-sm">
+            <div className="min-w-0 sm:col-span-2">
               <div className="text-gray-500">Job description</div>
-              {/* On affiche jd_preview si présent, sinon on retombe sur l’ID pour ne pas casser l’UI */}
               <div
                 className={`${
                   qcm.jd_preview ? "font-medium text-gray-900 truncate" : "font-mono break-all"
@@ -89,6 +100,11 @@ export default function QcmResultsPage() {
             <div>
               <div className="text-gray-500">Status</div>
               <StatusBadge value={qcm.status} />
+              {typeof qcm.pass_threshold === "number" && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Pass threshold: <strong>{qcm.pass_threshold}%</strong>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -105,8 +121,10 @@ export default function QcmResultsPage() {
             className="border rounded-lg px-3 py-2 text-sm"
           >
             <option value="all">All statuses</option>
-            <option value="finished">Finished</option>
             <option value="ongoing">Ongoing</option>
+            <option value="passed">Passed</option>
+            <option value="failed">Failed</option>
+            <option value="finished">Finished (unknown)</option>
           </select>
           <input
             value={query}
@@ -154,27 +172,32 @@ export default function QcmResultsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((it) => (
-                    <tr key={it.attempt_id} className="border-b">
-                      <Td>{it.candidate_email || "—"}</Td>
-                      <Td>
-                        <StatusBadge value={it.status} />
-                      </Td>
-                      <Td>{isNil(it.score) ? "—" : `${it.score}%`}</Td>
-                      <Td>{formatDate(it.started_at)}</Td>
-                      <Td>{formatDate(it.finished_at)}</Td>
-                      <Td>{formatDuration(it.duration_s)}</Td>
-                      <Td>
-                        <Link
-                          href={`/admin/attempt/${it.attempt_id}`}
-                          className="underline hover:opacity-80"
-                          prefetch={false}
-                        >
-                          View
-                        </Link>
-                      </Td>
-                    </tr>
-                  ))
+                  filtered.map((it) => {
+                    const st = derivedStatus(it);
+                    return (
+                      <tr key={it.attempt_id} className="border-b">
+                        <Td>{it.candidate_email || "—"}</Td>
+                        <Td>
+                          <AttemptBadge status={st} />
+                        </Td>
+                        <Td>{isNil(it.score) ? "—" : `${it.score}%`}</Td>
+                        <Td>{formatDate(it.started_at)}</Td>
+                        <Td>{formatDate(it.finished_at)}</Td>
+                        <Td>{formatDuration(it.duration_s)}</Td>
+                        <Td className="space-x-3">
+                          {/* Lien vers la page de rapport détaillé */}
+                          <Link
+                            href={`/admin/attempt/${it.attempt_id}`}
+                            className="underline hover:opacity-80"
+                            prefetch={false}
+                          >
+                            Report
+                          </Link>
+                          {/* (si tu veux garder “View”, tu peux le dupliquer ici) */}
+                        </Td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -190,10 +213,11 @@ export default function QcmResultsPage() {
 function Th({ children }) {
   return <th className="py-2 px-4 font-medium text-gray-700">{children}</th>;
 }
-function Td({ children }) {
-  return <td className="py-2 px-4">{children}</td>;
+function Td({ children, className = "" }) {
+  return <td className={`py-2 px-4 ${className}`}>{children}</td>;
 }
 
+// Badge pour le QCM (draft/published) et pour l’ancienne “finished/ongoing”
 function StatusBadge({ value }) {
   const v = (value || "").toLowerCase();
   const cls =
@@ -202,6 +226,21 @@ function StatusBadge({ value }) {
       : v === "draft" || v === "ongoing"
       ? "bg-yellow-100 text-yellow-800"
       : "bg-gray-100 text-gray-800";
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${cls}`}>
+      {capitalize(v || "—")}
+    </span>
+  );
+}
+
+// Nouveau badge spécifique aux tentatives (Passed/Failed/Ongoing/Finished)
+function AttemptBadge({ status }) {
+  const v = (status || "").toLowerCase();
+  let cls = "bg-gray-100 text-gray-800";
+  if (v === "passed") cls = "bg-green-100 text-green-800";
+  else if (v === "failed") cls = "bg-red-100 text-red-800";
+  else if (v === "ongoing") cls = "bg-yellow-100 text-yellow-800";
+  else if (v === "finished") cls = "bg-blue-100 text-blue-800";
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${cls}`}>
       {capitalize(v || "—")}
@@ -251,11 +290,12 @@ function downloadCsv(rows) {
   const header = [
     "attempt_id",
     "candidate_email",
-    "status",
+    "status_derived", // passed|failed|ongoing|finished
     "score",
     "started_at",
     "finished_at",
     "duration_s",
+    "passed",         // bool pour Excel/BI
   ];
   const lines = [
     toCsvRow(header),
@@ -263,11 +303,14 @@ function downloadCsv(rows) {
       toCsvRow([
         r.attempt_id,
         r.candidate_email || "",
-        r.status || "",
+        (r.status || "").toLowerCase() === "finished"
+          ? (typeof r.passed === "boolean" ? (r.passed ? "passed" : "failed") : "finished")
+          : (r.status || ""),
         isNil(r.score) ? "" : r.score,
         r.started_at || "",
         r.finished_at || "",
         isNil(r.duration_s) ? "" : r.duration_s,
+        typeof r.passed === "boolean" ? r.passed : "",
       ])
     ),
   ];
