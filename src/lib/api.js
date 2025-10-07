@@ -200,6 +200,10 @@ export const admin = {
 
   getAttemptDetail: (attemptId) =>
     apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}`),
+
+  // ⇩⇩ NOUVEAU : rapport consolidé (score, CV, matching) ⇩⇩
+  getAttemptReport: (attemptId) =>
+    apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}/report`),
 };
 
 // ================= Storage local tentative (candidat) =================

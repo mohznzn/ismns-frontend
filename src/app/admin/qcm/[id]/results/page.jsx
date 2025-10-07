@@ -1,7 +1,7 @@
 // src/app/admin/qcm/[id]/results/page.jsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { admin } from "@/lib/api";
@@ -16,6 +16,9 @@ export default function QcmResultsPage() {
   // all | ongoing | finished | passed | failed
   const [status, setStatus] = useState("all");
 
+  // petit cache en mémoire pour éviter de re-fetch le CV si on clique plusieurs fois
+  const cvCacheRef = useRef(new Map()); // attemptId -> url string | null
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -25,7 +28,7 @@ export default function QcmResultsPage() {
         const data = await admin.getQcmResults(id);
         if (!alive) return;
         setQcm(data.qcm);              // { id, language, status, jd_preview, pass_threshold }
-        setItems(data.items || []);    // chaque item a potentiellement { passed: boolean } si fini
+        setItems(data.items || []);    // items => { attempt_id, candidate_email, status, score, ... passed? }
       } catch (err) {
         if (!alive) return;
         setError(
@@ -63,6 +66,39 @@ export default function QcmResultsPage() {
       return okQuery && okStatus;
     });
   }, [items, query, status]);
+
+  // Ouvre / télécharge le CV : upload (download_url) > lien (cv_url)
+  async function openCv(attemptId) {
+    try {
+      // cache first
+      if (cvCacheRef.current.has(attemptId)) {
+        const cached = cvCacheRef.current.get(attemptId);
+        if (cached) window.open(cached, "_blank", "noopener,noreferrer");
+        else alert("No CV provided by candidate.");
+        return;
+      }
+
+      const detail = await admin.getAttemptDetail(attemptId);
+      const intake = detail?.intake || null;
+
+      // nouvel upload (backend) : intake.cv.download_url + filename
+      const uploadedUrl = intake?.cv?.download_url || intake?.cv_download_url;
+      // ancien MVP : lien direct
+      const legacyUrl = intake?.cv_url;
+
+      const url = uploadedUrl || legacyUrl || null;
+      cvCacheRef.current.set(attemptId, url);
+
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        alert("No CV provided by candidate.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e?.data?.message || e?.message || "Unable to open CV.");
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -185,15 +221,21 @@ export default function QcmResultsPage() {
                         <Td>{formatDate(it.finished_at)}</Td>
                         <Td>{formatDuration(it.duration_s)}</Td>
                         <Td className="space-x-3">
-                          {/* Lien vers la page de rapport détaillé */}
+                          {/* Rapport détaillé (score + CV + matching JD) */}
                           <Link
-                            href={`/admin/attempt/${it.attempt_id}`}
+                            href={`/admin/attempt/${it.attempt_id}/report`}
                             className="underline hover:opacity-80"
                             prefetch={false}
                           >
                             Report
                           </Link>
-                          {/* (si tu veux garder “View”, tu peux le dupliquer ici) */}
+                          {/* Ouvrir / télécharger le CV */}
+                          <button
+                            onClick={() => openCv(it.attempt_id)}
+                            className="underline hover:opacity-80"
+                          >
+                            CV
+                          </button>
                         </Td>
                       </tr>
                     );
