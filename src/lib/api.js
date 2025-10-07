@@ -75,6 +75,17 @@ export function apiPost(path, body, { headers, ...init } = {}) {
   });
 }
 
+// multipart/form-data (NE PAS fixer Content-Type)
+export function apiPostForm(path, formData, { headers, ...init } = {}) {
+  return apiFetch(path, {
+    method: "POST",
+    // Pas de 'Content-Type' ici: le navigateur ajoute boundary + type automatiquement
+    body: formData,
+    headers,
+    ...init,
+  });
+}
+
 export function apiPatch(path, body, { headers, ...init } = {}) {
   return apiFetch(path, {
     method: "PATCH",
@@ -98,27 +109,6 @@ function withQuery(path, params) {
   });
   const q = usp.toString();
   return q ? `${path}?${q}` : path;
-}
-
-// -------- Mapping helper pour /attempts/:id/intake --------
-function mapIntakeFromUI(p = {}) {
-  // p peut venir de la page: { salary_amount, salary_currency, salary_period, availability_text, cv_url, ... }
-  const amount = p.salary_amount ? String(p.salary_amount).trim() : "";
-  const curr = (p.salary_currency || "").trim();
-  const per = (p.salary_period || "").trim(); // "month" | "year"
-  const salary_expectation =
-    p.salary_expectation ||
-    (amount
-      ? `${amount}${curr ? " " + curr : ""}${per ? "/" + per : ""}`
-      : "");
-
-  return {
-    full_name: (p.full_name || "").trim(),
-    availability: (p.availability || p.availability_text || "").trim(),
-    salary_expectation: salary_expectation.trim(),
-    cv_url: (p.cv_url || "").trim(),
-    notes: (p.notes || "").trim(),
-  };
 }
 
 // ================= AUTH =================
@@ -146,16 +136,38 @@ export const publicApi = {
   finishAttempt: (attemptId) =>
     apiPost(`/attempts/${encodeURIComponent(attemptId)}/finish`, {}),
 
-  // Nom "canonique" (si tu veux l'utiliser ailleurs)
-  intakeAttempt: (attemptId, payload = {}) =>
-    apiPost(`/attempts/${encodeURIComponent(attemptId)}/intake`, payload),
+  /**
+   * Envoi du formulaire post-QCM avec upload de CV (multipart).
+   * payload attendu:
+   * {
+   *   salary_amount: number|null,
+   *   salary_currency: "EUR"|"USD"|...,
+   *   salary_period: "year"|"month",
+   *   availability_text: string,
+   *   cv_file: File (OBLIGATOIRE)
+   * }
+   */
+  intakeAttempt: async (attemptId, payload = {}) => {
+    const path = `/attempts/${encodeURIComponent(attemptId)}/intake`;
+    const fd = new FormData();
 
-  // ✅ Alias pour être compatible avec ta page actuelle
-  submitIntake: (attemptId, uiPayload = {}) =>
-    apiPost(
-      `/attempts/${encodeURIComponent(attemptId)}/intake`,
-      mapIntakeFromUI(uiPayload)
-    ),
+    fd.append("salary_amount", payload.salary_amount ?? "");
+    fd.append("salary_currency", payload.salary_currency ?? "");
+    fd.append("salary_period", payload.salary_period ?? "");
+    fd.append("availability_text", payload.availability_text ?? "");
+
+    const file = payload.cv_file;
+    if (!(file instanceof File)) {
+      throw new Error("cv_file manquant (fichier requis)");
+    }
+    fd.append("cv_file", file);
+
+    return apiPostForm(path, fd);
+  },
+
+  // Compat: ancien nom utilisé par certaines pages -> délègue au nouveau
+  submitIntake: (attemptId, payload = {}) =>
+    publicApi.intakeAttempt(attemptId, payload),
 };
 
 // ================= ADMIN (protégé par cookie) =================
