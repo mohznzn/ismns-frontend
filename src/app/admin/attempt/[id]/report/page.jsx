@@ -12,8 +12,7 @@ export default function AttemptReportPage() {
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [attemptDetail, setAttemptDetail] = useState(null); // { attempt, intake, answers }
-  const [qcmMeta, setQcmMeta] = useState(null); // { id, language, status, pass_threshold, jd_preview }
+  const [report, setReport] = useState(null); // payload de /admin/attempts/:id/report
 
   useEffect(() => {
     let alive = true;
@@ -21,24 +20,9 @@ export default function AttemptReportPage() {
       setLoading(true);
       setErr("");
       try {
-        // 1) Détails de la tentative
-        const detail = await admin.getAttemptDetail(id);
+        const data = await admin.getAttemptReport(id);
         if (!alive) return;
-        setAttemptDetail(detail);
-
-        // 2) Méta du QCM (pour le seuil & JD)
-        const qcmId = detail?.attempt?.qcm_id;
-        if (qcmId) {
-          const q = await admin.getQcmAdmin(qcmId);
-          if (!alive) return;
-          setQcmMeta({
-            id: q?.qcm?.id,
-            language: q?.qcm?.language,
-            status: q?.qcm?.status,
-            pass_threshold: q?.qcm?.pass_threshold, // renvoyé par ton /admin/qcm/<id>/results (sinon on fallback)
-            jd_preview: q?.qcm?.jd_preview,
-          });
-        }
+        setReport(data);
       } catch (e) {
         if (!alive) return;
         setErr(e?.data?.message || e?.message || "API error");
@@ -46,39 +30,33 @@ export default function AttemptReportPage() {
         if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [id]);
 
-  // ====== Données affichées ======
-  const candidateEmail = attemptDetail?.attempt?.candidate_email || "—";
-  const score = typeof attemptDetail?.attempt?.score === "number" ? attemptDetail.attempt.score : null;
+  // ====== Données + fallbacks sûrs ======
+  const candidateEmail = report?.attempt?.candidate_email || "—";
+  const score = typeof report?.attempt?.score === "number" ? report.attempt.score : null;
+  const passThreshold = typeof report?.attempt?.pass_threshold === "number"
+    ? report.attempt.pass_threshold
+    : 70;
 
-  // seuil: priorité à qcmMeta.pass_threshold, sinon essaie de le lire depuis la route Results (tu l’avais)
-  const passThreshold = typeof qcmMeta?.pass_threshold === "number" ? qcmMeta.pass_threshold : 70;
+  // CV: /admin/attempts/:id/cv (exposé par app.py dans report.cv.url)
+  const cvUrl = report?.cv?.url || null;
+  const cvFilename = report?.cv?.filename || (cvUrl ? cvUrl.split("/").pop() : null);
+  const cvTextExtracted = !!report?.cv?.text_extracted;
 
-  // CV: supporte upload récent (intake.cv.download_url) et ancien champ (cv_url)
-  const cvUrl =
-    attemptDetail?.intake?.cv?.download_url ||
-    attemptDetail?.intake?.cv_download_url ||
-    attemptDetail?.intake?.cv_url ||
-    null;
-
-  const cvFilename =
-    attemptDetail?.intake?.cv?.filename ||
-    (cvUrl ? cvUrl.split("/").pop() : null);
-
-  // ====== Matching très simple (placeholder) ======
-  // Pour l’instant on utilise le score comme proxy du “overall match”.
-  // Tu pourras remplacer par une valeur renvoyée par ton backend (ex: report.overall_match).
+  const jdPreview = report?.qcm?.jd_preview || "—";
+  const matchingScore = typeof report?.matching?.score === "number" ? report.matching.score : null;
   const overallMatch = useMemo(() => {
-    if (typeof score === "number") return score;
+    if (typeof matchingScore === "number") return matchingScore;
+    if (typeof score === "number") return score; // fallback simple
     return 0;
-    // TODO: si ton backend renvoie un "overall_match", utilises-le ici.
-  }, [score]);
+  }, [matchingScore, score]);
 
-  // ====== UI ======
+  const jdKw = Array.isArray(report?.matching?.jd_keywords) ? report.matching.jd_keywords : [];
+  const cvKw = Array.isArray(report?.matching?.cv_keywords) ? report.matching.cv_keywords : [];
+  const matchingExplain = report?.matching?.explanation || "—";
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,9 +66,9 @@ export default function AttemptReportPage() {
           <button onClick={() => router.back()} className="underline hover:opacity-80">
             ← Back
           </button>
-          {qcmMeta?.id && (
+          {!!report?.qcm?.id && (
             <Link
-              href={`/admin/qcm/${qcmMeta.id}/results`}
+              href={`/admin/qcm/${report.qcm.id}/results`}
               className="underline hover:opacity-80"
               prefetch={false}
             >
@@ -130,18 +108,31 @@ export default function AttemptReportPage() {
 
       {/* Matching summary */}
       {!loading && !err && (
-        <div className="bg-white shadow rounded-2xl p-6 space-y-3">
+        <div className="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-semibold">Matching summary</h2>
-          <p className="text-sm text-gray-600">
-            {qcmMeta?.jd_preview || "—"}
-          </p>
+          <p className="text-sm text-gray-600">{jdPreview}</p>
           <div className="text-sm">
             Overall match: <strong>{overallMatch}%</strong>
+          </div>
+          <p className="text-xs text-gray-500">{matchingExplain}</p>
+
+          {/* Keywords (aperçu) */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs font-medium text-gray-600 mb-1">JD keywords</div>
+              <TagList items={jdKw.slice(0, 15)} />
+            </div>
+            <div>
+              <div className="text-xs font-medium text-gray-600 mb-1">
+                CV keywords {cvTextExtracted ? "" : "(no text extracted)"}
+              </div>
+              <TagList items={cvKw.slice(0, 15)} />
+            </div>
           </div>
         </div>
       )}
 
-      {/* Strengths & Risks (placeholders — à remplacer par ton analyse réelle) */}
+      {/* Strengths & Risks */}
       {!loading && !err && (
         <div className="bg-white shadow rounded-2xl p-6">
           <h2 className="text-lg font-semibold mb-4">Strengths & Risks</h2>
@@ -202,6 +193,26 @@ export default function AttemptReportPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ───────────── UI helpers ───────────── */
+
+function TagList({ items }) {
+  if (!items || items.length === 0) {
+    return <div className="text-xs text-gray-400">—</div>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1">
+      {items.map((t, i) => (
+        <span
+          key={`${t}-${i}`}
+          className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
+        >
+          {t}
+        </span>
+      ))}
     </div>
   );
 }
