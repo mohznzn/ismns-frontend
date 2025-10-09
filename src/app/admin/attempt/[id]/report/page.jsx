@@ -1,4 +1,3 @@
-// src/app/admin/attempt/[id]/report/page.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -12,7 +11,8 @@ export default function AttemptReportPage() {
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [report, setReport] = useState(null); // payload de /admin/attempts/:id/report
+  const [report, setReport] = useState(null);
+  const [ai, setAi] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -23,6 +23,13 @@ export default function AttemptReportPage() {
         const data = await admin.getAttemptReport(id);
         if (!alive) return;
         setReport(data);
+        // Charger le rapport IA s'il existe (éphemère ou pas)
+        try {
+          const aiRes = await admin.getAttemptAIReport(id);
+          if (alive) setAi(aiRes?.ai_report || null);
+        } catch {
+          // silencieux si pas d'analyse IA
+        }
       } catch (e) {
         if (!alive) return;
         setErr(e?.data?.message || e?.message || "API error");
@@ -40,10 +47,11 @@ export default function AttemptReportPage() {
     ? report.attempt.pass_threshold
     : 70;
 
-  // CV: /admin/attempts/:id/cv (exposé par app.py dans report.cv.url)
+  // CV
   const cvUrl = report?.cv?.url || null;
   const cvFilename = report?.cv?.filename || (cvUrl ? cvUrl.split("/").pop() : null);
   const cvTextExtracted = !!report?.cv?.text_extracted;
+  const cvEphemeral = !!report?.cv?.ephemeral;
 
   const jdPreview = report?.qcm?.jd_preview || "—";
   const matchingScore = typeof report?.matching?.score === "number" ? report.matching.score : null;
@@ -124,7 +132,7 @@ export default function AttemptReportPage() {
             </div>
             <div>
               <div className="text-xs font-medium text-gray-600 mb-1">
-                CV keywords {cvTextExtracted ? "" : "(no text extracted)"}
+                CV keywords {cvTextExtracted ? "" : "(derived)"}
               </div>
               <TagList items={cvKw.slice(0, 15)} />
             </div>
@@ -132,7 +140,28 @@ export default function AttemptReportPage() {
         </div>
       )}
 
-      {/* Strengths & Risks */}
+      {/* AI assessment */}
+      {!loading && !err && ai && (
+        <div className="bg-white shadow rounded-2xl p-6 space-y-3">
+          <h2 className="text-lg font-semibold">AI assessment</h2>
+          <div className="text-sm">Overall: <b>{ai.overall_score}%</b></div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <Metric label="Keyword match" v={ai.components?.keyword_match} />
+            <Metric label="Skills fit" v={ai.components?.skills_fit} />
+            <Metric label="QCM score" v={ai.components?.qcm_score} />
+            <Metric label="Seniority fit" v={ai.components?.seniority_fit} />
+          </div>
+          <List title="Strengths" items={ai.strengths} />
+          <List title="Gaps" items={ai.gaps} />
+          <List title="Risks" items={ai.risks} />
+          <List title="Recommendations" items={ai.recommendations} />
+          <div className="text-sm">
+            Decision: <b>{ai.decision?.label}</b> — {ai.decision?.reason}
+          </div>
+        </div>
+      )}
+
+      {/* Strengths & Risks (baseline) */}
       {!loading && !err && (
         <div className="bg-white shadow rounded-2xl p-6">
           <h2 className="text-lg font-semibold mb-4">Strengths & Risks</h2>
@@ -189,7 +218,9 @@ export default function AttemptReportPage() {
               </a>
             </div>
           ) : (
-            <div className="text-sm text-gray-500">No CV.</div>
+            <div className="text-sm text-gray-500">
+              {cvEphemeral ? "CV not stored (ephemeral analysis)." : "No CV."}
+            </div>
           )}
         </div>
       )}
@@ -213,6 +244,34 @@ function TagList({ items }) {
           {t}
         </span>
       ))}
+    </div>
+  );
+}
+
+function Metric({ label, v }) {
+  const value = typeof v === "number" ? `${v}%` : "—";
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-base font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function List({ title, items }) {
+  const arr = Array.isArray(items) ? items : [];
+  return (
+    <div className="text-sm">
+      <div className="font-medium mb-1">{title}</div>
+      {arr.length === 0 ? (
+        <div className="text-gray-400 text-xs">—</div>
+      ) : (
+        <ul className="list-disc list-inside space-y-1 text-gray-700">
+          {arr.map((it, i) => (
+            <li key={`${title}-${i}`}>{it}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
