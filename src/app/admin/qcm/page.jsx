@@ -1,3 +1,4 @@
+// src/app/admin/qcm/page.jsx  (ou src/app/admin/qcm/index.jsx selon ton arbo)
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -13,16 +14,38 @@ export default function MyQCMsPage() {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
-    return items.filter((q) => {
-      const okStatus = status === "all" ? true : q.status === status;
-      const haystack = `${q.jd_preview || ""} ${q.language} ${q.status}`.toLowerCase();
-      const okQuery = haystack.includes(query.toLowerCase());
+    return (items || []).filter((q) => {
+      const okStatus = status === "all" ? true : (q.status || "").toLowerCase() === status;
+      const haystack = `${q.jd_preview || ""} ${q.language || ""} ${q.status || ""}`.toLowerCase();
+      const okQuery = haystack.includes((query || "").toLowerCase());
       return okStatus && okQuery;
     });
   }, [items, status, query]);
 
   const shareUrlFor = (token) =>
     token ? `${window.location.origin}/invite?token=${token}` : "";
+
+  async function safeJson(res) {
+    try { return await res.json(); } catch { return null; }
+  }
+
+  async function fetchQcms() {
+    // Essaye d'abord /admin/qcms (route principale), puis /admin/qcm (alias éventuel)
+    const urls = [`${BACKEND}/admin/qcms`, `${BACKEND}/admin/qcm`];
+    let last;
+    for (const url of urls) {
+      const r = await fetch(url, { credentials: "include" });
+      if (r.ok) return await r.json();
+      const body = await safeJson(r);
+      last = { status: r.status, body };
+      // si ce n'est PAS un 404, on s'arrête (auth, etc.)
+      if (r.status !== 404) break;
+    }
+    // messages d'erreur plus parlants
+    if (last?.status === 401) throw new Error("Not authenticated (401). Connecte-toi d’abord.");
+    if (last?.status === 403) throw new Error("Forbidden (403). Ce compte n’a pas accès.");
+    throw new Error(last?.body?.error || `API ${last?.status || 500}`);
+  }
 
   const load = async () => {
     if (!BACKEND) {
@@ -31,14 +54,10 @@ export default function MyQCMsPage() {
       return;
     }
     setLoading(true);
+    setErr("");
     try {
-      const r = await fetch(`${BACKEND}/admin/qcm`, {
-        credentials: "include", // envoie le cookie 'sid'
-      });
-      if (!r.ok) throw new Error(`API ${r.status}`);
-      const data = await r.json();
+      const data = await fetchQcms();
       setItems(data.items || []);
-      setErr("");
     } catch (e) {
       setErr(e?.message || "Failed to load QCMs");
     } finally {
@@ -48,6 +67,7 @@ export default function MyQCMsPage() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onPublish = async (qcmId) => {
@@ -57,8 +77,8 @@ export default function MyQCMsPage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data?.error || "Publish failed");
+      const data = await safeJson(r);
+      if (!r.ok) throw new Error(data?.error || `Publish failed (${r.status})`);
       alert(`Share link ready:\n${data.share_url}`);
       load();
     } catch (e) {
@@ -115,7 +135,7 @@ export default function MyQCMsPage() {
             return (
               <div key={q.id} className="bg-white shadow rounded-2xl p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  {/* Bloc gauche : aperçu de la JD (remplace l'affichage de l'ID) */}
+                  {/* JD preview */}
                   <div className="min-w-0 max-w-2xl">
                     <div className="text-sm text-gray-500">Job description</div>
                     <div
@@ -126,7 +146,7 @@ export default function MyQCMsPage() {
                     </div>
                   </div>
 
-                  {/* Métadonnées */}
+                  {/* Meta */}
                   <div className="text-sm">
                     <div>
                       <span className="text-gray-500">Language: </span>
