@@ -4,8 +4,8 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const MAX_MB = 15; // doit matcher UPLOAD_MAX_MB côté serveur
-const ALLOWED_EXT = [".pdf", ".doc", ".docx"]; // mêmes extensions que le backend
+const MAX_MB = 15;
+const ALLOWED_EXT = [".pdf", ".doc", ".docx"];
 
 export default function IntakePage() {
   return (
@@ -33,11 +33,12 @@ function IntakeInner() {
   const [salaryPeriod, setSalaryPeriod] = useState("year"); // "year" | "month"
   const [availability, setAvailability] = useState("");
 
-  const [cvFile, setCvFile] = useState(null); // requis
+  const [cvFile, setCvFile] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState(false);
-  const [aiSummary, setAiSummary] = useState(null); // si l’API renvoie déjà un snapshot AI
+  const [aiSummary, setAiSummary] = useState(null);
 
   useEffect(() => {
     if (!attemptId) setErr("Missing attempt_id");
@@ -46,7 +47,8 @@ function IntakeInner() {
   const validateFile = (file) => {
     if (!file) return "Veuillez joindre votre CV.";
     const name = file.name || "";
-    const ext = name.slice(name.lastIndexOf(".")).toLowerCase();
+    const dot = name.lastIndexOf(".");
+    const ext = dot >= 0 ? name.slice(dot).toLowerCase() : "";
     if (!ALLOWED_EXT.includes(ext)) {
       return `Extension non autorisée. Formats acceptés : ${ALLOWED_EXT.join(", ")}`;
     }
@@ -73,12 +75,17 @@ function IntakeInner() {
       return;
     }
 
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE || "";
+    if (!baseUrl) {
+      setErr("NEXT_PUBLIC_API_BASE manquant côté front.");
+      return;
+    }
+
     setLoading(true);
     setErr("");
     setOk(false);
     setAiSummary(null);
 
-    // multipart/form-data vers l’endpoint ÉPHÉMÈRE (pas de stockage fichier)
     const fd = new FormData();
     if (salaryAmount) fd.append("salary_amount", String(Number(salaryAmount)));
     if (salaryCurrency) fd.append("salary_currency", salaryCurrency);
@@ -86,13 +93,15 @@ function IntakeInner() {
     if (availability?.trim()) fd.append("availability_text", availability.trim());
     fd.append("cv_file", cvFile);
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE || "";
-    const url = `${baseUrl}/attempts/${encodeURIComponent(attemptId)}/intake_ephemeral`;
+    const url = `${baseUrl.replace(/\/$/, "")}/attempts/${encodeURIComponent(
+      attemptId
+    )}/intake?ephemeral=1`;
 
     try {
       const res = await fetch(url, {
         method: "POST",
         credentials: "include",
+        headers: { "X-Ephemeral": "1" }, // hint côté backend
         body: fd,
       });
 
@@ -102,6 +111,7 @@ function IntakeInner() {
       }
 
       const data = await safeJson(res);
+
       if (data?.ai_report) setAiSummary(data.ai_report);
       setOk(true);
     } catch (e) {
@@ -147,7 +157,7 @@ function IntakeInner() {
             <form onSubmit={onSubmit} className="space-y-5">
               {err && <div className="text-sm text-red-600">API error: {err}</div>}
 
-              {/* Prétentions salariales */}
+              {/* Salary */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
                   Prétentions salariales
@@ -186,7 +196,7 @@ function IntakeInner() {
                 </p>
               </div>
 
-              {/* Disponibilités */}
+              {/* Availability */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
                   Disponibilités (texte libre)
@@ -200,7 +210,7 @@ function IntakeInner() {
                 />
               </div>
 
-              {/* CV upload – obligatoire */}
+              {/* CV upload */}
               <div className="space-y-2">
                 <label className="block text-sm mb-1 font-medium">
                   CV (upload obligatoire)
@@ -289,7 +299,6 @@ function Section({ title, children }) {
     </div>
   );
 }
-
 function Metric({ label, v }) {
   const value = typeof v === "number" ? `${v}%` : "—";
   return (
@@ -301,9 +310,5 @@ function Metric({ label, v }) {
 }
 
 async function safeJson(res) {
-  try {
-    return await res.json();
-  } catch {
-    return null;
-  }
+  try { return await res.json(); } catch { return null; }
 }
