@@ -75,9 +75,9 @@ function IntakeInner() {
       return;
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE || "";
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
     if (!baseUrl) {
-      setErr("NEXT_PUBLIC_API_BASE manquant côté front.");
+      setErr("NEXT_PUBLIC_BACKEND_URL manquant côté front.");
       return;
     }
 
