@@ -4,7 +4,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const MAX_MB = 15; // garde en phase avec UPLOAD_MAX_MB côté serveur
+const MAX_MB = 15; // doit matcher UPLOAD_MAX_MB côté serveur
 const ALLOWED_EXT = [".pdf", ".doc", ".docx"]; // mêmes extensions que le backend
 
 export default function IntakePage() {
@@ -33,13 +33,11 @@ function IntakeInner() {
   const [salaryPeriod, setSalaryPeriod] = useState("year"); // "year" | "month"
   const [availability, setAvailability] = useState("");
 
-  const [cvFile, setCvFile] = useState(null); // fichier requis
-  const [ephemeral, setEphemeral] = useState(true); // par défaut: analyse sans stockage
-
+  const [cvFile, setCvFile] = useState(null); // requis
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState(false);
-  const [aiSummary, setAiSummary] = useState(null); // affichera un résumé éventuel renvoyé par l’API
+  const [aiSummary, setAiSummary] = useState(null); // si l’API renvoie déjà un snapshot AI
 
   useEffect(() => {
     if (!attemptId) setErr("Missing attempt_id");
@@ -62,10 +60,7 @@ function IntakeInner() {
   const onFileChange = (e) => {
     const f = e.target.files?.[0] || null;
     setCvFile(f);
-    if (f) {
-      const ve = validateFile(f);
-      setErr(ve || "");
-    }
+    if (f) setErr(validateFile(f) || "");
   };
 
   const onSubmit = async (e) => {
@@ -83,7 +78,7 @@ function IntakeInner() {
     setOk(false);
     setAiSummary(null);
 
-    // Construit le multipart/form-data
+    // multipart/form-data vers l’endpoint ÉPHÉMÈRE (pas de stockage fichier)
     const fd = new FormData();
     if (salaryAmount) fd.append("salary_amount", String(Number(salaryAmount)));
     if (salaryCurrency) fd.append("salary_currency", salaryCurrency);
@@ -91,45 +86,23 @@ function IntakeInner() {
     if (availability?.trim()) fd.append("availability_text", availability.trim());
     fd.append("cv_file", cvFile);
 
-    // Tentative 1: mode éphémère (ne pas stocker le CV)
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE || "";
-    const urlEphemeral = `${baseUrl}/attempts/${encodeURIComponent(
-      attemptId
-    )}/intake?ephemeral=1`;
+    const url = `${baseUrl}/attempts/${encodeURIComponent(attemptId)}/intake_ephemeral`;
 
     try {
-      let res = await fetch(urlEphemeral, {
+      const res = await fetch(url, {
         method: "POST",
         credentials: "include",
         body: fd,
-        // Optionnel : certains backends préfèrent un header explicite
-        headers: { "X-Ephemeral": "1" },
       });
-
-      // Si l’API ne connaît pas encore le mode éphémère, fallback en mode normal
-      if (!res.ok && (res.status === 404 || res.status === 400)) {
-        const urlFallback = `${baseUrl}/attempts/${encodeURIComponent(attemptId)}/intake`;
-        res = await fetch(urlFallback, {
-          method: "POST",
-          credentials: "include",
-          body: fd,
-        });
-      }
 
       if (!res.ok) {
         const data = await safeJson(res);
-        throw new Error(
-          data?.message || data?.error || `HTTP ${res.status}`
-        );
+        throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
       }
 
       const data = await safeJson(res);
-
-      // Si le backend renvoie un résumé IA (recommandé en mode éphémère), on l’affiche
-      if (data?.ai_report) {
-        setAiSummary(data.ai_report);
-      }
-
+      if (data?.ai_report) setAiSummary(data.ai_report);
       setOk(true);
     } catch (e) {
       setErr(e?.message || "API error");
@@ -154,7 +127,6 @@ function IntakeInner() {
                 Merci ! Vos informations ont bien été envoyées.
               </div>
 
-              {/* Affiche un éventuel résumé IA renvoyé par l’API en mode éphémère */}
               {aiSummary && (
                 <div className="rounded-xl border p-4 space-y-2">
                   <div className="text-sm font-semibold">Résumé IA</div>
@@ -175,7 +147,7 @@ function IntakeInner() {
             <form onSubmit={onSubmit} className="space-y-5">
               {err && <div className="text-sm text-red-600">API error: {err}</div>}
 
-              {/* Salary */}
+              {/* Prétentions salariales */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
                   Prétentions salariales
@@ -214,7 +186,7 @@ function IntakeInner() {
                 </p>
               </div>
 
-              {/* Availability */}
+              {/* Disponibilités */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
                   Disponibilités (texte libre)
@@ -228,24 +200,7 @@ function IntakeInner() {
                 />
               </div>
 
-              {/* Toggle: Analyse éphémère */}
-              <div className="flex items-start gap-2">
-                <input
-                  id="ephemeral"
-                  type="checkbox"
-                  className="mt-1"
-                  checked={ephemeral}
-                  onChange={(e) => setEphemeral(e.target.checked)}
-                />
-                <label htmlFor="ephemeral" className="text-sm">
-                  Ne pas stocker mon CV — autoriser uniquement une analyse éphémère par l’IA.
-                </label>
-              </div>
-              <p className="text-xs text-gray-500 -mt-2">
-                Si coché, le fichier est traité en mémoire et non conservé côté serveur.
-              </p>
-
-              {/* CV upload – requis */}
+              {/* CV upload – obligatoire */}
               <div className="space-y-2">
                 <label className="block text-sm mb-1 font-medium">
                   CV (upload obligatoire)
@@ -288,7 +243,6 @@ function IntakeInner() {
 }
 
 function AIReportView({ report }) {
-  // Rend un petit résumé si le backend renvoie déjà un objet structuré
   if (!report || typeof report !== "object") {
     return <div className="text-sm text-gray-500">—</div>;
   }
