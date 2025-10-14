@@ -31,8 +31,8 @@ export default function SiteHeader() {
   const router = useRouter();
   const { user, loading, logout } = useAuth();
 
-  // Masquer l’en-tête pour les pages candidats
-  if (pathname?.startsWith("/invite") || pathname?.startsWith("/test")) return null;
+  const isCandidateSurface = pathname?.startsWith("/invite") || pathname?.startsWith("/test");
+  if (isCandidateSurface) return null;
 
   const onLogout = async () => {
     try {

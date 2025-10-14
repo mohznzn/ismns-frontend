@@ -32,7 +32,10 @@ const footerLinks = [
 
 export default function SiteFooter() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/invite") || pathname?.startsWith("/test")) return null;
+  const isCandidateSurface = pathname?.startsWith("/invite") || pathname?.startsWith("/test");
+  if (isCandidateSurface) return null;
+
+  const year = new Date().getFullYear();
 
   return (
     <footer className="mx-auto mt-20 w-full max-w-6xl px-4 pb-10 pt-12 text-sm text-gray-500">
@@ -61,7 +64,7 @@ export default function SiteFooter() {
         ))}
       </div>
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4 text-xs text-gray-400">
-        <span>© {new Date().getFullYear()} ISMNS. Tous droits réservés.</span>
+        <span>© {year} ISMNS. Tous droits réservés.</span>
         <span>Made in Paris & Montréal.</span>
       </div>
     </footer>
