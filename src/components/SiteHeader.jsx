@@ -8,16 +8,16 @@ import { useAuth } from "@/lib/useAuth";
 const marketingLinks = [
   { href: "/features", label: "Fonctionnalités" },
   { href: "/pricing", label: "Tarifs" },
-  { href: "/docs", label: "Docs" },
+  { href: "/docs", label: "Documentation" },
   { href: "/support", label: "Support" },
 ];
 
 const authenticatedLinks = [
-  { href: "/admin/qcm/new", label: "New QCM" },
-  { href: "/admin/qcm", label: "My QCMs" },
-  { href: "/admin/results", label: "Results" },
-  { href: "/admin/billing", label: "Billing" },
-  { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/qcm/new", label: "Créer un QCM" },
+  { href: "/admin/qcm", label: "QCM" },
+  { href: "/admin/results", label: "Résultats" },
+  { href: "/admin/billing", label: "Facturation" },
+  { href: "/admin/settings", label: "Paramètres" },
 ];
 
 function isActive(pathname, href) {
@@ -44,71 +44,81 @@ export default function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <div className="flex items-center gap-10">
-          <Link href="/" className="font-semibold tracking-tight hover:opacity-80">
-            ISMNS
-          </Link>
-          <div className="hidden items-center gap-6 text-sm text-gray-600 md:flex">
-            {marketingLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={
-                  "transition hover:text-blue-600" +
-                  (isActive(pathname, link.href) ? " text-blue-600 font-medium" : "")
-                }
-              >
-                {link.label}
-              </Link>
-            ))}
+    <header className="sticky top-0 z-40 bg-gradient-to-b from-white via-white/95 to-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/70">
+      <div className="mx-auto w-full max-w-6xl px-4 py-4">
+        <div className="flex items-center justify-between rounded-full border border-gray-200 bg-white/90 px-4 py-2 shadow-lg shadow-gray-200/60">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="text-base font-semibold tracking-tight text-gray-900 hover:text-gray-700">
+              ISMNS
+            </Link>
+            <nav className="hidden items-center gap-4 text-sm text-gray-600 md:flex">
+              {marketingLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={
+                    "rounded-full px-3 py-1 transition-colors" +
+                    (isActive(pathname, link.href)
+                      ? " bg-gray-900 text-white shadow"
+                      : " hover:bg-gray-100 hover:text-gray-900")
+                  }
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
           </div>
-        </div>
 
-        {loading ? (
-          // Placeholders stables pour éviter le “trou” pendant /auth/me
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-16 rounded-lg bg-gray-100 animate-pulse" />
-            <div className="h-8 w-16 rounded-lg bg-gray-100 animate-pulse" />
-            <div className="h-8 w-16 rounded-lg bg-gray-100 animate-pulse" />
-            <div className="h-8 w-24 rounded-lg bg-gray-100 animate-pulse" />
-          </div>
-        ) : user ? (
-          <div className="flex items-center gap-5 text-sm">
-            {authenticatedLinks.map((link) => (
+          {loading ? (
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-20 animate-pulse rounded-full bg-gray-100" />
+              <div className="h-9 w-24 animate-pulse rounded-full bg-gray-100" />
+              <div className="h-9 w-28 animate-pulse rounded-full bg-gray-100" />
+            </div>
+          ) : user ? (
+            <div className="flex items-center gap-3 text-sm font-medium text-gray-700">
+              {authenticatedLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={
+                    "rounded-full px-3 py-1 transition-colors" +
+                    (isActive(pathname, link.href)
+                      ? " bg-gray-900 text-white shadow"
+                      : " hover:bg-gray-100 hover:text-gray-900")
+                  }
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <button
+                onClick={onLogout}
+                className="rounded-full bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-gray-700"
+              >
+                Déconnexion
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 text-sm font-medium">
               <Link
-                key={link.href}
-                href={link.href}
+                href="/login"
                 className={
-                  "transition hover:text-blue-600" +
-                  (isActive(pathname, link.href) ? " text-blue-600 font-medium" : "")
+                  "rounded-full px-4 py-1.5 text-gray-700 transition hover:bg-gray-100 hover:text-gray-900" +
+                  (isActive(pathname, "/login") ? " bg-gray-900 text-white" : "")
                 }
               >
-                {link.label}
+                Connexion
               </Link>
-            ))}
-            <button
-              onClick={onLogout}
-              className="rounded-full border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:border-gray-400"
-            >
-              Logout
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4 text-sm">
-            <Link href="/login" className="hover:text-blue-600">
-              Login
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-full bg-blue-600 px-4 py-1.5 font-semibold text-white hover:bg-blue-700"
-            >
-              Créer un compte
-            </Link>
-          </div>
-        )}
-      </nav>
+              <Link
+                href="/register"
+                className="rounded-full bg-gray-900 px-4 py-1.5 text-white shadow transition hover:bg-gray-700"
+              >
+                Créer un compte
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
     </header>
   );
 }
