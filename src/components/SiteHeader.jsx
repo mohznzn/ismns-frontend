@@ -10,21 +10,21 @@ export default function SiteHeader() {
   const router = useRouter();
   const { user, loading, logout } = useAuth();
 
-  // Masquer l’en-tête pour les pages candidats
+  // Hide header for candidate flow
   if (pathname?.startsWith("/invite") || pathname?.startsWith("/test")) return null;
 
   const onLogout = async () => {
     try {
-      await logout();           // efface la session côté API
-      router.push("/login");    // redirige proprement
+      await logout();
+      router.push("/login");
     } catch {
       router.refresh();
     }
   };
 
-  const isActive = (href) => (pathname === href || pathname?.startsWith(href));
+  const isActive = (href) => pathname === href || pathname?.startsWith(href);
 
-  // Liens marketing (restent accessibles même sans être connecté)
+  // Public marketing links
   const marketing = [
     { href: "/features", label: "Features" },
     { href: "/pricing", label: "Pricing" },
@@ -36,14 +36,13 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <nav className="mx-auto max-w-6xl h-14 px-4 flex items-center justify-between">
-        {/* Logo / Brand */}
+        {/* Brand */}
         <Link href="/" className="font-semibold tracking-tight hover:opacity-80">
           ISMNS
         </Link>
 
-        {/* Zone actions à droite */}
+        {/* Right side */}
         {loading ? (
-          // Placeholders stables pour éviter le “trou” pendant /auth/me
           <div className="flex items-center gap-3">
             <div className="h-8 w-16 rounded-lg bg-gray-100 animate-pulse" />
             <div className="h-8 w-16 rounded-lg bg-gray-100 animate-pulse" />
@@ -51,32 +50,19 @@ export default function SiteHeader() {
             <div className="h-8 w-24 rounded-lg bg-gray-100 animate-pulse" />
           </div>
         ) : user ? (
-          // Navigation une fois connecté
+          // Authenticated (recruiting)
           <div className="flex items-center gap-6 text-sm">
             <Link
               href="/admin/qcm/new"
               className={`hover:text-blue-600 ${isActive("/admin/qcm/new") ? "font-semibold" : ""}`}
             >
-              New QCM
+              New Assessment
             </Link>
             <Link
               href="/admin/qcm"
               className={`hover:text-blue-600 ${isActive("/admin/qcm") ? "font-semibold" : ""}`}
             >
-              My QCMs
-            </Link>
-            <Link
-              href="/admin/results"
-              className={`hover:text-blue-600 ${isActive("/admin/results") ? "font-semibold" : ""}`}
-            >
-              Results
-            </Link>
-            {/* Lien rapide vers le dashboard si tu as une page dédiée */}
-            <Link
-              href="/dashboard"
-              className={`hover:text-blue-600 ${isActive("/dashboard") ? "font-semibold" : ""}`}
-            >
-              Dashboard
+              My Assessments
             </Link>
             <button
               onClick={onLogout}
@@ -86,7 +72,7 @@ export default function SiteHeader() {
             </button>
           </div>
         ) : (
-          // Navigation publique (marketing) + Auth
+          // Public (marketing) + auth
           <div className="flex items-center gap-6 text-sm">
             {marketing.map((m) => (
               <Link
