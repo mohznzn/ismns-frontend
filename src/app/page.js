@@ -58,7 +58,11 @@ export default function Landing() {
         </div>
 
         <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-gray-900 md:text-5xl">
-          Assess candidates with <span className="bg-gradient-to-tr from-blue-600 to-indigo-600 bg-clip-text text-transparent">AI-powered</span> tests.
+          Assess candidates with{" "}
+          <span className="bg-gradient-to-tr from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            AI-powered
+          </span>{" "}
+          tests.
         </h1>
         <p className="mt-4 max-w-2xl text-base text-gray-600 md:text-lg">
           Create an assessment, share a unique link, get a clear report. Multilingual QCM, anti-cheat basics, and instant insights.
@@ -67,13 +71,13 @@ export default function Landing() {
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             href="/register"
-            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white shadow hover:bg-blue-700"
+            className="inline-flex h-11 items-center rounded-xl bg-blue-600 px-5 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             Get started free
           </Link>
           <Link
             href="/admin/qcm/new"
-            className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-medium hover:bg-gray-50"
+            className="inline-flex h-11 items-center rounded-xl border border-gray-300 bg-white px-5 text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             Create assessment
           </Link>
@@ -271,13 +275,13 @@ export default function Landing() {
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
               href="/register"
-              className="rounded-xl bg-white px-5 py-3 text-sm font-medium text-blue-700 hover:bg-white/90"
+              className="inline-flex h-11 items-center rounded-xl bg-white px-5 text-sm font-medium text-blue-700 hover:bg-white/90"
             >
               Get started
             </Link>
             <Link
               href="/admin/qcm/new"
-              className="rounded-xl border border-white/30 px-5 py-3 text-sm font-medium text-white hover:bg-white/10"
+              className="inline-flex h-11 items-center rounded-xl border border-white/30 px-5 text-sm font-medium text-white hover:bg-white/10"
             >
               Create assessment
             </Link>
