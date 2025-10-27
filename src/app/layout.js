@@ -33,9 +33,15 @@ export const metadata = {
   description: "Generate and share AI-powered QCMs",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ffffff",
+};
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
         {/* Accélère la 1ʳᵉ requête /auth/me */}
         {PRECONNECT_API && (
@@ -44,13 +50,14 @@ export default function RootLayout({ children }) {
             <link rel="preconnect" href={PRECONNECT_API} crossOrigin="" />
           </>
         )}
+        <link rel="icon" href="/favicon.ico" />
       </head>
 
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased font-sans">
         <ClientProviders>
           <SiteHeader />
 
-          {/* Petit fallback pendant l’hydratation si une page lit useSearchParams */}
+          {/* Fallback léger pendant l’hydratation (ex: pages qui lisent useSearchParams) */}
           <Suspense
             fallback={
               <main className="mx-auto max-w-6xl px-4 py-8">
@@ -59,7 +66,10 @@ export default function RootLayout({ children }) {
               </main>
             }
           >
-            <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+            {/* Conteneur commun : marketing et app partagent la même largeur par défaut */}
+            <main className="mx-auto max-w-6xl px-4 py-8">
+              {children}
+            </main>
           </Suspense>
 
           <SiteFooter />
