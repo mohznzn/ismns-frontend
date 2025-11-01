@@ -20,21 +20,25 @@ const AuthCtx = createContext({
   logout: async () => {},
 });
 
+// Fonction pour lire le cache (accessible en dehors du composant)
+const readCache = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Initialise l'état directement depuis le cache pour éviter le délai initial
+  const cached = readCache();
+  const [user, setUser] = useState(cached?.user || null);
+  const [loading, setLoading] = useState(!cached); // false si cache existe, true sinon
   // évite double refresh simultané
   const refreshingRef = useRef(false);
-
-  const readCache = () => {
-    try {
-      const raw = sessionStorage.getItem(CACHE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  };
 
   const writeCache = (data) => {
     try {
@@ -66,12 +70,13 @@ export function AuthProvider({ children }) {
     []
   );
 
-  // Montage : hydrate depuis le cache puis rafraîchit en arrière-plan
+  // Montage : l'état est déjà hydraté depuis le cache au premier render
+  // On fait juste un refresh en arrière-plan pour valider/rafraîchir la session
   useEffect(() => {
-    const cached = readCache();
-    if (cached) {
-      setUser(cached.user || null);
-      setLoading(false);
+    // Si on avait un cache au montage, on fait un refresh silencieux
+    // Sinon, on fait un vrai refresh avec loading
+    const hadCache = !!cached;
+    if (hadCache) {
       // refresh silencieux pour valider/rafraîchir la session
       refresh({ silent: true });
     } else {
