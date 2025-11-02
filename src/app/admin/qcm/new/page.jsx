@@ -14,6 +14,9 @@ export default function NewQcmPage() {
   const [step, setStep] = useState(1); // 1: extract skills, 2: confirm and generate
   const [extractedSkills, setExtractedSkills] = useState([]);
   const [selectedSkills, setSelectedSkills] = useState([]);
+  const [customSkills, setCustomSkills] = useState([]); // Skills ajoutés manuellement
+  const [newSkillInput, setNewSkillInput] = useState("");
+  const MAX_SKILLS = 20;
   const router = useRouter();
 
   // Étape 1: Extraire les skills
@@ -34,6 +37,8 @@ export default function NewQcmPage() {
 
       setExtractedSkills(skills);
       setSelectedSkills([...skills]); // Sélectionner tous par défaut
+      setCustomSkills([]); // Reset les skills personnalisés
+      setNewSkillInput(""); // Reset l'input
       setStep(2);
     } catch (err) {
       const apiMsg =
@@ -51,8 +56,15 @@ export default function NewQcmPage() {
 
   // Étape 2: Générer les questions avec les skills confirmés
   const onGenerateQuestions = async () => {
-    if (selectedSkills.length === 0) {
-      setError("Veuillez sélectionner au moins un skill");
+    const allSelectedSkills = [...selectedSkills, ...customSkills];
+    
+    if (allSelectedSkills.length === 0) {
+      setError("Veuillez sélectionner ou ajouter au moins un skill");
+      return;
+    }
+
+    if (allSelectedSkills.length > MAX_SKILLS) {
+      setError(`Maximum ${MAX_SKILLS} skills autorisés`);
       return;
     }
 
@@ -63,7 +75,7 @@ export default function NewQcmPage() {
       const data = await admin.createDraftFromJD({
         job_description: jobDescription.trim(),
         language,
-        confirmed_skills: selectedSkills,
+        confirmed_skills: allSelectedSkills,
       });
 
       const id = data?.qcm_id;
@@ -83,21 +95,68 @@ export default function NewQcmPage() {
     }
   };
 
-  const toggleSkill = (skill) => {
-    if (selectedSkills.includes(skill)) {
-      setSelectedSkills(selectedSkills.filter((s) => s !== skill));
-    } else {
-      setSelectedSkills([...selectedSkills, skill]);
-    }
-  };
-
   const selectAll = () => {
     setSelectedSkills([...extractedSkills]);
   };
 
   const deselectAll = () => {
-    setSelectedSkills([]);
+    const minSkills = customSkills.length > 0 ? customSkills : [];
+    setSelectedSkills([...minSkills]); // Garder au moins les skills personnalisés
   };
+
+  const addCustomSkill = () => {
+    const skill = newSkillInput.trim();
+    if (!skill) return;
+    
+    // Vérifier si le skill n'existe pas déjà (insensible à la casse)
+    const allSkills = [...extractedSkills, ...customSkills].map(s => s.toLowerCase());
+    if (allSkills.includes(skill.toLowerCase())) {
+      setError(`Le skill "${skill}" existe déjà`);
+      return;
+    }
+    
+    // Vérifier la limite
+    const totalSkills = selectedSkills.length + customSkills.length;
+    if (totalSkills >= MAX_SKILLS) {
+      setError(`Maximum ${MAX_SKILLS} skills autorisés`);
+      return;
+    }
+    
+    setCustomSkills([...customSkills, skill]);
+    setSelectedSkills([...selectedSkills, skill]); // Ajouter automatiquement aux sélectionnés
+    setNewSkillInput("");
+    setError("");
+  };
+
+  const removeCustomSkill = (skill) => {
+    setCustomSkills(customSkills.filter(s => s !== skill));
+    setSelectedSkills(selectedSkills.filter(s => s !== skill));
+  };
+
+  const toggleSkill = (skill) => {
+    // Ne pas permettre de désélectionner si on atteint 0 (sauf s'il reste des skills personnalisés)
+    const willHaveZero = selectedSkills.length === 1 && selectedSkills.includes(skill) && customSkills.length === 0;
+    if (willHaveZero) {
+      setError("Au moins un skill doit être sélectionné");
+      return;
+    }
+    
+    if (selectedSkills.includes(skill)) {
+      setSelectedSkills(selectedSkills.filter((s) => s !== skill));
+    } else {
+      // Vérifier la limite avant d'ajouter
+      const totalSkills = selectedSkills.length + customSkills.length;
+      if (totalSkills >= MAX_SKILLS) {
+        setError(`Maximum ${MAX_SKILLS} skills autorisés`);
+        return;
+      }
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+    setError("");
+  };
+  
+  // Calculer le total de skills sélectionnés
+  const totalSelectedCount = selectedSkills.length + customSkills.length;
 
   return (
     <div className="space-y-6">
@@ -160,7 +219,7 @@ export default function NewQcmPage() {
         <div className="bg-white shadow rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">
-              Confirm Skills ({selectedSkills.length} selected)
+              Confirm Skills ({totalSelectedCount}/{MAX_SKILLS} selected)
             </h2>
             <button
               onClick={() => {
@@ -175,8 +234,69 @@ export default function NewQcmPage() {
 
           <p className="text-sm text-gray-600">
             Review and select the skills you want to include in the QCM. One
-            question will be generated per selected skill.
+            question will be generated per selected skill. Maximum {MAX_SKILLS} skills.
           </p>
+
+          {/* Section pour ajouter un skill personnalisé */}
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium mb-2">Add Custom Skill</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newSkillInput}
+                onChange={(e) => {
+                  setNewSkillInput(e.target.value);
+                  setError("");
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomSkill();
+                  }
+                }}
+                placeholder="Enter a new skill..."
+                maxLength={50}
+                disabled={totalSelectedCount >= MAX_SKILLS}
+                className="flex-1 border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-50 disabled:bg-gray-100"
+              />
+              <button
+                onClick={addCustomSkill}
+                disabled={!newSkillInput.trim() || totalSelectedCount >= MAX_SKILLS}
+                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              >
+                Add
+              </button>
+            </div>
+            {totalSelectedCount >= MAX_SKILLS && (
+              <p className="text-xs text-amber-600 mt-1">
+                Maximum {MAX_SKILLS} skills reached. Remove some skills to add new ones.
+              </p>
+            )}
+          </div>
+
+          {/* Skills personnalisés ajoutés */}
+          {customSkills.length > 0 && (
+            <div className="border-t pt-4">
+              <label className="block text-sm font-medium mb-2">Custom Skills Added</label>
+              <div className="flex flex-wrap gap-2">
+                {customSkills.map((skill, idx) => (
+                  <div
+                    key={`custom-${idx}`}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg"
+                  >
+                    <span className="text-sm font-medium">{skill}</span>
+                    <button
+                      onClick={() => removeCustomSkill(skill)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-bold"
+                      title="Remove skill"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 mb-4">
             <button
@@ -219,12 +339,12 @@ export default function NewQcmPage() {
           <div className="pt-2 flex gap-3">
             <button
               onClick={onGenerateQuestions}
-              disabled={loading || selectedSkills.length === 0}
+              disabled={loading || totalSelectedCount === 0}
               className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-40"
             >
               {loading
-                ? `Generating ${selectedSkills.length} questions…`
-                : `Generate ${selectedSkills.length} Questions`}
+                ? `Generating ${totalSelectedCount} questions…`
+                : `Generate ${totalSelectedCount} Questions`}
             </button>
             <button
               onClick={() => {
