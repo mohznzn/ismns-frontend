@@ -56,14 +56,13 @@ export default function NewQcmPage() {
 
   // Étape 2: Générer les questions avec les skills confirmés
   const onGenerateQuestions = async () => {
-    const allSelectedSkills = [...selectedSkills, ...customSkills];
-    
-    if (allSelectedSkills.length === 0) {
+    // selectedSkills contient déjà tous les skills sélectionnés (extraits + personnalisés)
+    if (selectedSkills.length === 0) {
       setError("Veuillez sélectionner ou ajouter au moins un skill");
       return;
     }
 
-    if (allSelectedSkills.length > MAX_SKILLS) {
+    if (selectedSkills.length > MAX_SKILLS) {
       setError(`Maximum ${MAX_SKILLS} skills autorisés`);
       return;
     }
@@ -75,7 +74,7 @@ export default function NewQcmPage() {
       const data = await admin.createDraftFromJD({
         job_description: jobDescription.trim(),
         language,
-        confirmed_skills: allSelectedSkills,
+        confirmed_skills: selectedSkills,
       });
 
       const id = data?.qcm_id;
@@ -115,9 +114,8 @@ export default function NewQcmPage() {
       return;
     }
     
-    // Vérifier la limite
-    const totalSkills = selectedSkills.length + customSkills.length;
-    if (totalSkills >= MAX_SKILLS) {
+    // Vérifier la limite (selectedSkills contient déjà tous les skills sélectionnés)
+    if (selectedSkills.length >= MAX_SKILLS) {
       setError(`Maximum ${MAX_SKILLS} skills autorisés`);
       return;
     }
@@ -144,9 +142,8 @@ export default function NewQcmPage() {
     if (selectedSkills.includes(skill)) {
       setSelectedSkills(selectedSkills.filter((s) => s !== skill));
     } else {
-      // Vérifier la limite avant d'ajouter
-      const totalSkills = selectedSkills.length + customSkills.length;
-      if (totalSkills >= MAX_SKILLS) {
+      // Vérifier la limite avant d'ajouter (selectedSkills contient déjà tous les skills sélectionnés)
+      if (selectedSkills.length >= MAX_SKILLS) {
         setError(`Maximum ${MAX_SKILLS} skills autorisés`);
         return;
       }
@@ -155,8 +152,8 @@ export default function NewQcmPage() {
     setError("");
   };
   
-  // Calculer le total de skills sélectionnés
-  const totalSelectedCount = selectedSkills.length + customSkills.length;
+  // Calculer le total de skills sélectionnés (selectedSkills contient déjà tous les skills sélectionnés)
+  const totalSelectedCount = selectedSkills.length;
 
   return (
     <div className="space-y-6">
