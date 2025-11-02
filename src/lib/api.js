@@ -31,34 +31,103 @@ async function parse(res) {
   }
 }
 
+// ================= Gestion d'Erreurs Améliorée =================
+
+/**
+ * Messages d'erreur user-friendly selon le code HTTP
+ */
+function getUserFriendlyMessage(status, data) {
+  // Messages personnalisés du backend
+  if (data?.message || data?.error) {
+    return data.message || data.error;
+  }
+
+  // Messages par défaut selon le code HTTP
+  const messages = {
+    400: "Requête invalide. Vérifiez vos données.",
+    401: "Vous n'êtes pas connecté. Veuillez vous connecter.",
+    403: "Accès interdit. Vous n'avez pas les permissions nécessaires.",
+    404: "Ressource non trouvée.",
+    409: "Cette ressource existe déjà.",
+    413: "Fichier trop volumineux.",
+    422: "Impossible de traiter ce fichier.",
+    429: "Trop de requêtes. Veuillez réessayer plus tard.",
+    500: "Erreur serveur. Veuillez réessayer plus tard.",
+    502: "Service temporairement indisponible. Réessayez dans quelques instants.",
+    503: "Service indisponible. Réessayez plus tard.",
+  };
+
+  return messages[status] || `Erreur ${status}`;
+}
+
 function buildError(res, data) {
-  const msg =
-    (data && (data.message || data.error || data.detail)) ||
-    `HTTP ${res.status}`;
+  const msg = getUserFriendlyMessage(res.status, data);
   const err = new Error(msg);
   err.status = res.status;
   err.data = data;
+  err.userMessage = msg;
   return err;
 }
 
-// -------- Fetch générique (avec cookies) --------
-async function apiFetch(path, init = {}) {
+// -------- Fetch générique (avec cookies + retry) --------
+async function apiFetch(path, init = {}, retries = 2) {
   if (!API_BASE) throw new Error("API base URL is not set");
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "GET",
-    cache: "no-store",
-    credentials: "include", // indispensable pour le cookie de session
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init.headers || {}),
-    },
-  });
+  let lastError = null;
 
-  const data = await parse(res);
-  if (!res.ok) throw buildError(res, data);
-  return data;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        method: "GET",
+        cache: "no-store",
+        credentials: "include", // indispensable pour le cookie de session
+        ...init,
+        headers: {
+          Accept: "application/json",
+          ...(init.headers || {}),
+        },
+      });
+
+      const data = await parse(res);
+      
+      // Gestion spéciale des erreurs d'authentification
+      if (res.status === 401) {
+        // Rediriger vers login si non authentifié (sauf si déjà sur /login)
+        if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+          window.location.href = "/login";
+        }
+      }
+
+      if (!res.ok) {
+        const error = buildError(res, data);
+        // Ne pas retry sur erreurs 4xx (sauf 429 rate limit)
+        if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+          throw error;
+        }
+        lastError = error;
+        // Retry sur erreurs réseau, 5xx, ou 429
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 1000));
+          continue;
+        }
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      // Si erreur réseau (pas de réponse), retry
+      if (err.name === "TypeError" && err.message.includes("fetch")) {
+        lastError = err;
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 1000));
+          continue;
+        }
+      }
+      throw err;
+    }
+  }
+
+  throw lastError || new Error("Requête échouée après plusieurs tentatives");
 }
 
 // -------- Helpers HTTP --------
@@ -172,10 +241,18 @@ export const publicApi = {
 
 // ================= ADMIN (protégé par cookie) =================
 export const admin = {
-  createDraftFromJD: ({ job_description, language = "en" }) =>
+  // Extraire uniquement les skills depuis la JD (rapide)
+  extractSkillsFromJD: ({ job_description }) =>
+    apiPost(`/qcm/extract_skills_from_jd`, {
+      job_description,
+    }),
+
+  // Créer un QCM avec ou sans skills confirmés
+  createDraftFromJD: ({ job_description, language = "en", confirmed_skills }) =>
     apiPost(`/qcm/create_draft_from_jd`, {
       job_description,
       language,
+      ...(confirmed_skills ? { confirmed_skills } : {}),
     }),
 
   publishQcm: (qcmId) =>
@@ -204,6 +281,10 @@ export const admin = {
   // ⇩⇩ NOUVEAU : rapport consolidé (score, CV, matching) ⇩⇩
   getAttemptReport: (attemptId) =>
     apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}/report`),
+
+  // Rapport IA fusionné (JD + CV + QCM)
+  getAttemptAIReport: (attemptId) =>
+    apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}/ai_report`),
 };
 
 // ================= Storage local tentative (candidat) =================
@@ -232,4 +313,41 @@ export function loadAttemptResult(attemptId) {
   } catch {
     return null;
   }
+}
+
+// ================= Helper pour gérer les erreurs dans les composants =================
+
+/**
+ * Extrait un message d'erreur user-friendly depuis une erreur API
+ * @param {Error} error - Erreur de l'API
+ * @returns {string} Message user-friendly
+ */
+export function getErrorMessage(error) {
+  if (!error) return "Une erreur inattendue s'est produite.";
+  
+  // Message user-friendly si disponible
+  if (error.userMessage) return error.userMessage;
+  
+  // Message standard de l'erreur
+  if (error.message) return error.message;
+  
+  // Message générique
+  return "Une erreur s'est produite. Veuillez réessayer.";
+}
+
+/**
+ * Vérifie si une erreur est une erreur réseau (connexion)
+ */
+export function isNetworkError(error) {
+  return (
+    error?.name === "TypeError" &&
+    (error?.message?.includes("fetch") || error?.message?.includes("network"))
+  );
+}
+
+/**
+ * Vérifie si une erreur nécessite une ré-authentification
+ */
+export function isAuthError(error) {
+  return error?.status === 401 || error?.status === 403;
 }
