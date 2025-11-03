@@ -92,19 +92,23 @@ export default function NewQcmPage() {
       admin.listenToGenerationProgress(
         taskId,
         (progress) => {
+          console.log("[DEBUG] Progress update received:", progress);
           setGenerationProgress(progress);
           
           // Si terminé avec succès, rediriger
           if (progress.status === "completed" && progress.result?.qcm_id) {
+            console.log("[DEBUG] Generation completed, redirecting to:", progress.result.qcm_id);
             setLoading(false);
             // Petit délai pour que l'utilisateur voie "100%" avant la redirection
             setTimeout(() => {
+              console.log("[DEBUG] Executing redirect...");
               router.replace(`/admin/qcm/${progress.result.qcm_id}/review`);
             }, 500);
           }
           
           // Si erreur, afficher le message (mais ne pas rediriger)
           if (progress.status === "error") {
+            console.error("[DEBUG] Generation error:", progress.error);
             setError(progress.error || "Erreur lors de la génération");
             setLoading(false);
             // Ne pas rediriger vers login, juste afficher l'erreur
