@@ -101,6 +101,10 @@ async function apiFetch(path, init = {}, retries = 2) {
       if (!res.ok) {
         const error = buildError(res, data);
         // Ne pas retry sur erreurs 4xx (sauf 429 rate limit)
+        // Accepter 202 Accepted comme succès (utilisé pour les tâches asynchrones)
+        if (res.status === 202) {
+          return data;
+        }
         if (res.status >= 400 && res.status < 500 && res.status !== 429) {
           throw error;
         }
@@ -247,13 +251,48 @@ export const admin = {
       job_description,
     }),
 
-  // Créer un QCM avec ou sans skills confirmés
+  // Créer un QCM avec progression en temps réel (retourne task_id)
   createDraftFromJD: ({ job_description, language = "en", confirmed_skills }) =>
     apiPost(`/qcm/create_draft_from_jd`, {
       job_description,
       language,
       ...(confirmed_skills ? { confirmed_skills } : {}),
     }),
+
+  // Écouter la progression de génération via SSE
+  listenToGenerationProgress: (taskId, onProgress, onError) => {
+    const baseUrl = API_BASE.replace(/\/$/, "");
+    const url = `${baseUrl}/qcm/generation_progress/${encodeURIComponent(taskId)}`;
+    
+    const eventSource = new EventSource(url, {
+      withCredentials: true,
+    });
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const progress = JSON.parse(event.data);
+        onProgress(progress);
+        
+        // Fermer la connexion si terminé
+        if (progress.status === "completed" || progress.status === "error") {
+          eventSource.close();
+        }
+      } catch (err) {
+        console.error("Error parsing progress:", err);
+        onError(err);
+      }
+    };
+    
+    eventSource.onerror = (err) => {
+      console.error("SSE error:", err);
+      eventSource.close();
+      onError(err);
+    };
+    
+    return () => {
+      eventSource.close();
+    };
+  },
 
   publishQcm: (qcmId) =>
     apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, {}),

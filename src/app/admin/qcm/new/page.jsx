@@ -16,6 +16,10 @@ export default function NewQcmPage() {
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [customSkills, setCustomSkills] = useState([]); // Skills ajoutés manuellement
   const [newSkillInput, setNewSkillInput] = useState("");
+  
+  // État pour la barre de progression
+  const [generationProgress, setGenerationProgress] = useState(null); // {current, total, current_skill, status}
+  
   const MAX_SKILLS = 20;
   const router = useRouter();
 
@@ -54,7 +58,7 @@ export default function NewQcmPage() {
     }
   };
 
-  // Étape 2: Générer les questions avec les skills confirmés
+  // Étape 2: Générer les questions avec les skills confirmés (avec progression)
   const onGenerateQuestions = async () => {
     // selectedSkills contient déjà tous les skills sélectionnés (extraits + personnalisés)
     if (selectedSkills.length === 0) {
@@ -69,17 +73,46 @@ export default function NewQcmPage() {
 
     setLoading(true);
     setError("");
+    setGenerationProgress({ current: 0, total: selectedSkills.length, status: "starting" });
 
     try {
+      // Démarrer la génération et récupérer le task_id
       const data = await admin.createDraftFromJD({
         job_description: jobDescription.trim(),
         language,
         confirmed_skills: selectedSkills,
       });
 
-      const id = data?.qcm_id;
-      if (!id) throw new Error("Missing qcm_id in response");
-      router.replace(`/admin/qcm/${id}/review`);
+      const taskId = data?.task_id;
+      if (!taskId) {
+        throw new Error("Missing task_id in response");
+      }
+
+      // Écouter les événements de progression
+      admin.listenToGenerationProgress(
+        taskId,
+        (progress) => {
+          setGenerationProgress(progress);
+          
+          // Si terminé avec succès, rediriger
+          if (progress.status === "completed" && progress.result?.qcm_id) {
+            setTimeout(() => {
+              router.replace(`/admin/qcm/${progress.result.qcm_id}/review`);
+            }, 500); // Petit délai pour que l'utilisateur voie "100%"
+          }
+          
+          // Si erreur, afficher le message
+          if (progress.status === "error") {
+            setError(progress.error || "Erreur lors de la génération");
+            setLoading(false);
+          }
+        },
+        (err) => {
+          console.error("Progress listening error:", err);
+          setError("Erreur de connexion avec le serveur");
+          setLoading(false);
+        }
+      );
     } catch (err) {
       const apiMsg =
         err?.data?.message ||
@@ -89,8 +122,8 @@ export default function NewQcmPage() {
 
       console.error("create_draft_from_jd error:", err);
       setError(apiMsg);
-    } finally {
       setLoading(false);
+      setGenerationProgress(null);
     }
   };
 
@@ -330,6 +363,41 @@ export default function NewQcmPage() {
           {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
               {error}
+            </div>
+          )}
+
+          {/* Barre de progression */}
+          {generationProgress && (
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-700">
+                  {generationProgress.status === "completed"
+                    ? "Generation completed!"
+                    : generationProgress.status === "error"
+                    ? "Generation failed"
+                    : `Generating question ${generationProgress.current} of ${generationProgress.total}`}
+                </span>
+                <span className="text-gray-500">
+                  {generationProgress.current}/{generationProgress.total}
+                </span>
+              </div>
+              
+              {/* Barre de progression */}
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-black h-full transition-all duration-300 ease-out rounded-full"
+                  style={{
+                    width: `${(generationProgress.current / generationProgress.total) * 100}%`,
+                  }}
+                />
+              </div>
+              
+              {/* Skill actuel */}
+              {generationProgress.current_skill && generationProgress.status === "generating" && (
+                <p className="text-xs text-gray-500">
+                  Current skill: <span className="font-medium">{generationProgress.current_skill}</span>
+                </p>
+              )}
             </div>
           )}
 
