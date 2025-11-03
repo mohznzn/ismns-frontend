@@ -264,9 +264,18 @@ export const admin = {
     const baseUrl = API_BASE.replace(/\/$/, "");
     const url = `${baseUrl}/qcm/generation_progress/${encodeURIComponent(taskId)}`;
     
-    const eventSource = new EventSource(url, {
-      withCredentials: true,
-    });
+    let eventSource;
+    let closed = false;
+    
+    try {
+      eventSource = new EventSource(url, {
+        withCredentials: true,
+      });
+    } catch (err) {
+      console.error("Failed to create EventSource:", err);
+      onError(err);
+      return () => {}; // Cleanup function vide
+    }
     
     eventSource.onmessage = (event) => {
       try {
@@ -275,22 +284,47 @@ export const admin = {
         
         // Fermer la connexion si terminé
         if (progress.status === "completed" || progress.status === "error") {
+          closed = true;
           eventSource.close();
         }
       } catch (err) {
         console.error("Error parsing progress:", err);
-        onError(err);
+        if (!closed) {
+          onError(err);
+        }
       }
     };
     
     eventSource.onerror = (err) => {
+      // Ne pas appeler onError si déjà fermé ou si c'est juste la fermeture normale
+      if (closed) {
+        return;
+      }
+      
+      // EventSource peut déclencher onerror même lors d'une fermeture normale
+      // Vérifier l'état de la connexion
+      if (eventSource.readyState === EventSource.CLOSED) {
+        // Connexion fermée normalement ou après erreur
+        // Ne pas rediriger vers login si c'est juste une fermeture normale
+        console.log("SSE connection closed");
+        return;
+      }
+      
+      // Vraie erreur (connexion interrompue, timeout, etc.)
       console.error("SSE error:", err);
+      closed = true;
       eventSource.close();
-      onError(err);
+      
+      // Ne pas appeler onError pour les erreurs SSE car ça peut causer des redirections
+      // Laisser le frontend gérer via les messages de progression
+      // onError(err);
     };
     
     return () => {
-      eventSource.close();
+      closed = true;
+      if (eventSource) {
+        eventSource.close();
+      }
     };
   },
 

@@ -96,20 +96,28 @@ export default function NewQcmPage() {
           
           // Si terminé avec succès, rediriger
           if (progress.status === "completed" && progress.result?.qcm_id) {
+            setLoading(false);
+            // Petit délai pour que l'utilisateur voie "100%" avant la redirection
             setTimeout(() => {
               router.replace(`/admin/qcm/${progress.result.qcm_id}/review`);
-            }, 500); // Petit délai pour que l'utilisateur voie "100%"
+            }, 500);
           }
           
-          // Si erreur, afficher le message
+          // Si erreur, afficher le message (mais ne pas rediriger)
           if (progress.status === "error") {
             setError(progress.error || "Erreur lors de la génération");
             setLoading(false);
+            // Ne pas rediriger vers login, juste afficher l'erreur
           }
         },
         (err) => {
+          // Ne pas rediriger automatiquement vers login pour les erreurs SSE
+          // Ce callback ne devrait être appelé que pour les vraies erreurs réseau
           console.error("Progress listening error:", err);
-          setError("Erreur de connexion avec le serveur");
+          // Ne pas afficher d'erreur générique si c'est juste une fermeture de connexion
+          if (err && err.message && !err.message.includes("EventSource")) {
+            setError("Erreur de connexion avec le serveur");
+          }
           setLoading(false);
         }
       );
@@ -375,10 +383,10 @@ export default function NewQcmPage() {
                     ? "Generation completed!"
                     : generationProgress.status === "error"
                     ? "Generation failed"
-                    : `Generating question ${generationProgress.current} of ${generationProgress.total}`}
+                    : `Generating question ${generationProgress.current || 0} of ${generationProgress.total || 0}`}
                 </span>
                 <span className="text-gray-500">
-                  {generationProgress.current}/{generationProgress.total}
+                  {generationProgress.current || 0}/{generationProgress.total || 0}
                 </span>
               </div>
               
@@ -387,7 +395,7 @@ export default function NewQcmPage() {
                 <div
                   className="bg-black h-full transition-all duration-300 ease-out rounded-full"
                   style={{
-                    width: `${(generationProgress.current / generationProgress.total) * 100}%`,
+                    width: `${Math.min(100, Math.max(0, ((generationProgress.current || 0) / (generationProgress.total || 1)) * 100))}%`,
                   }}
                 />
               </div>
