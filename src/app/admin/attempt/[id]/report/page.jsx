@@ -187,38 +187,54 @@ export default function AttemptReportPage() {
         </div>
       )}
 
-      {/* AI assessment (détaillé) */}
+      {/* AI assessment (rapport exécutif concis) */}
       {!loading && !err && ai && (
         <div className="bg-white shadow rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">AI assessment</h2>
-            <div className="text-sm">Overall: <b>{pp(aiOverall)}</b></div>
+            <h2 className="text-lg font-semibold">Assessment Report</h2>
+            <div className="flex items-center gap-2">
+              {decision && <DecisionBadge label={decision} />}
+              {typeof aiOverall === "number" && (
+                <span className="text-sm">Overall: <b>{pp(aiOverall)}</b></span>
+              )}
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-4">
-            <Progress label="Keyword match" value={components.keyword_match} />
-            <Progress label="Skills fit" value={components.skills_fit} />
-            <Progress label="QCM score" value={components.qcm_score} />
-            <Progress label="Seniority fit" value={components.seniority_fit} />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <List title="Strengths" items={ai.strengths} />
-            <List title="Gaps" items={ai.gaps} />
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            <List title="Risks" items={ai.risks} />
-            <List title="Recommendations" items={ai.recommendations} />
-          </div>
-
-          {decision && (
-            <div className="text-sm">
-              Decision: <DecisionBadge label={decision} />{" "}
-              <span className="text-gray-700">{decisionReason}</span>
+          {/* Rapport exécutif principal */}
+          {ai.executive_summary && (
+            <div className="bg-gray-50 rounded-xl p-4 border-l-4 border-black">
+              <div className="text-sm font-medium mb-2">Executive Summary</div>
+              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                {ai.executive_summary}
+              </div>
             </div>
           )}
 
-          {/* Vision Insights */}
+          {/* Détails techniques */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {ai.technical_fit && (
+              <div>
+                <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Technical Fit</div>
+                <div className="text-sm text-gray-700">{ai.technical_fit}</div>
+              </div>
+            )}
+            {ai.qcm_assessment && (
+              <div>
+                <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">QCM Assessment</div>
+                <div className="text-sm text-gray-700">{ai.qcm_assessment}</div>
+              </div>
+            )}
+          </div>
+
+          {/* Recommandation */}
+          {ai.recommendation && (
+            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
+              <div className="text-xs uppercase tracking-wide text-blue-700 mb-1 font-medium">Recommendation</div>
+              <div className="text-sm text-blue-900">{ai.recommendation}</div>
+            </div>
+          )}
+
+          {/* Vision Insights (si disponible) */}
           {ai.vision_insights && (
             <VisionInsightsSection insights={ai.vision_insights} />
           )}

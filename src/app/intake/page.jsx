@@ -256,36 +256,60 @@ function AIReportView({ report }) {
     return <div className="text-sm text-gray-500">—</div>;
   }
   const overall = typeof report.overall_score === "number" ? `${report.overall_score}%` : "—";
-  const comps = report.components || {};
-  const list = (arr) =>
-    Array.isArray(arr) && arr.length > 0 ? (
-      <ul className="list-disc list-inside space-y-1">
-        {arr.map((x, i) => (
-          <li key={i}>{x}</li>
-        ))}
-      </ul>
-    ) : (
-      <span className="text-gray-400">—</span>
-    );
+  const decision = typeof report.decision === "string" ? report.decision : (report.decision?.label || null);
 
   return (
-    <div className="space-y-2 text-sm">
-      <div>Score global: <b>{overall}</b></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-        <Metric label="Keyword match" v={comps.keyword_match} />
-        <Metric label="Skills fit" v={comps.skills_fit} />
-        <Metric label="QCM score" v={comps.qcm_score} />
-        <Metric label="Seniority fit" v={comps.seniority_fit} />
+    <div className="space-y-3 text-sm">
+      {/* Header avec score et décision */}
+      <div className="flex items-center justify-between">
+        <div>Score global: <b>{overall}</b></div>
+        {decision && (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            decision === "proceed" ? "bg-green-100 text-green-800" :
+            decision === "interview" ? "bg-blue-100 text-blue-800" :
+            decision === "hold" ? "bg-yellow-100 text-yellow-800" :
+            "bg-red-100 text-red-800"
+          }`}>
+            {decision}
+          </span>
+        )}
       </div>
-      <Section title="Forces">{list(report.strengths)}</Section>
-      <Section title="Gaps">{list(report.gaps)}</Section>
-      <Section title="Risques">{list(report.risks)}</Section>
-      <Section title="Recommandations">{list(report.recommendations)}</Section>
-      {report.decision?.label && (
-        <div>
-          Décision: <b>{report.decision.label}</b> — {report.decision.reason || ""}
+
+      {/* Rapport exécutif */}
+      {report.executive_summary && (
+        <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-black">
+          <div className="font-medium mb-1 text-xs uppercase tracking-wide text-gray-600">Résumé exécutif</div>
+          <div className="text-gray-700 leading-relaxed whitespace-pre-line">{report.executive_summary}</div>
         </div>
       )}
+
+      {/* Détails techniques */}
+      {(report.technical_fit || report.qcm_assessment) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {report.technical_fit && (
+            <div>
+              <div className="text-xs font-medium text-gray-600 mb-1">Fit technique</div>
+              <div className="text-gray-700">{report.technical_fit}</div>
+            </div>
+          )}
+          {report.qcm_assessment && (
+            <div>
+              <div className="text-xs font-medium text-gray-600 mb-1">Évaluation QCM</div>
+              <div className="text-gray-700">{report.qcm_assessment}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Recommandation */}
+      {report.recommendation && (
+        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+          <div className="text-xs font-medium text-blue-700 mb-1">Recommandation</div>
+          <div className="text-blue-900">{report.recommendation}</div>
+        </div>
+      )}
+
+      {/* Vision Insights (si disponible) */}
       {report.vision_insights && (
         <VisionInsights insights={report.vision_insights} />
       )}
