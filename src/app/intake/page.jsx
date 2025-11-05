@@ -286,6 +286,60 @@ function AIReportView({ report }) {
           Décision: <b>{report.decision.label}</b> — {report.decision.reason || ""}
         </div>
       )}
+      {report.vision_insights && (
+        <VisionInsights insights={report.vision_insights} />
+      )}
+    </div>
+  );
+}
+
+function VisionInsights({ insights }) {
+  if (!insights || typeof insights !== "object") return null;
+  
+  const quality = insights.visual_quality || "—";
+  const layout = insights.layout_type || "—";
+  const structure = typeof insights.structure_score === "number" ? `${insights.structure_score}%` : "—";
+  const hasPhoto = insights.has_photo === true ? "Oui" : insights.has_photo === false ? "Non" : "—";
+  const richness = insights.content_richness || "—";
+  const sections = Array.isArray(insights.sections_detected) ? insights.sections_detected : [];
+  const notes = insights.visual_notes || "";
+  
+  return (
+    <div className="border-t pt-3 mt-3 space-y-2">
+      <div className="font-medium text-sm">📄 Analyse visuelle du CV</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+        <div>
+          <span className="text-gray-500">Qualité visuelle:</span>{" "}
+          <span className="font-medium">{quality}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Layout:</span>{" "}
+          <span className="font-medium">{layout}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Structure:</span>{" "}
+          <span className="font-medium">{structure}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Photo:</span>{" "}
+          <span className="font-medium">{hasPhoto}</span>
+        </div>
+      </div>
+      {sections.length > 0 && (
+        <div className="text-xs">
+          <span className="text-gray-500">Sections détectées:</span>{" "}
+          <span className="text-gray-700">{sections.join(", ")}</span>
+        </div>
+      )}
+      {richness && richness !== "—" && (
+        <div className="text-xs">
+          <span className="text-gray-500">Richesse du contenu:</span>{" "}
+          <span className="font-medium">{richness}</span>
+        </div>
+      )}
+      {notes && (
+        <div className="text-xs text-gray-600 italic">{notes}</div>
+      )}
     </div>
   );
 }

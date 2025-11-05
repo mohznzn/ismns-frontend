@@ -217,6 +217,11 @@ export default function AttemptReportPage() {
               <span className="text-gray-700">{decisionReason}</span>
             </div>
           )}
+
+          {/* Vision Insights */}
+          {ai.vision_insights && (
+            <VisionInsightsSection insights={ai.vision_insights} />
+          )}
         </div>
       )}
 
@@ -365,4 +370,60 @@ function getDecisionTone(label) {
 }
 function tone(fg, bg, border) {
   return { fg, bg, border };
+}
+
+/* Vision Insights Component */
+function VisionInsightsSection({ insights }) {
+  if (!insights || typeof insights !== "object") return null;
+  
+  const quality = insights.visual_quality || "—";
+  const layout = insights.layout_type || "—";
+  const structure = typeof insights.structure_score === "number" ? insights.structure_score : null;
+  const hasPhoto = insights.has_photo === true ? "Yes" : insights.has_photo === false ? "No" : "—";
+  const richness = insights.content_richness || "—";
+  const sections = Array.isArray(insights.sections_detected) ? insights.sections_detected : [];
+  const notes = insights.visual_notes || "";
+  
+  return (
+    <div className="border-t pt-4 mt-4 space-y-3">
+      <h3 className="text-sm font-semibold flex items-center gap-2">
+        <span>📄</span> CV Visual Analysis
+      </h3>
+      
+      <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-4">
+        <KV label="Visual quality">
+          <span className="font-medium capitalize">{quality}</span>
+        </KV>
+        <KV label="Layout type">
+          <span className="font-medium capitalize">{layout}</span>
+        </KV>
+        {structure !== null && (
+          <Progress label="Structure score" value={structure} />
+        )}
+        <KV label="Photo included">
+          <span className="font-medium">{hasPhoto}</span>
+        </KV>
+      </div>
+      
+      {sections.length > 0 && (
+        <div className="text-sm">
+          <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Sections detected</div>
+          <TagList items={sections} />
+        </div>
+      )}
+      
+      {richness && richness !== "—" && (
+        <KV label="Content richness">
+          <span className="font-medium capitalize">{richness}</span>
+        </KV>
+      )}
+      
+      {notes && (
+        <div className="text-sm">
+          <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Visual notes</div>
+          <p className="text-gray-700 italic">{notes}</p>
+        </div>
+      )}
+    </div>
+  );
 }
