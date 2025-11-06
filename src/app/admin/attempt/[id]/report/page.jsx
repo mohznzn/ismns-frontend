@@ -67,8 +67,8 @@ export default function AttemptReportPage() {
   const jdPreview = report?.qcm?.jd_preview || "—";
   const matchingScore = nOrNull(report?.matching?.score);
   const overallMatch = useMemo(() => {
-    if (typeof matchingScore === "number") return matchingScore;
-    if (typeof score === "number") return score; // fallback simple
+    if (typeof matchingScore === "number" && !isNaN(matchingScore) && isFinite(matchingScore)) return matchingScore;
+    if (typeof score === "number" && !isNaN(score) && isFinite(score)) return score; // fallback simple
     return 0;
   }, [matchingScore, score]);
 
@@ -135,8 +135,8 @@ export default function AttemptReportPage() {
               <span className="font-medium truncate" title={candidateEmail}>{candidateEmail}</span>
             </KV>
             <KV label="QCM score"><b>{pp(score)}</b></KV>
-            <KV label="Pass threshold"><b>{passThreshold}%</b></KV>
-            <KV label="Overall match (keywords)"><b>{overallMatch}%</b></KV>
+            <KV label="Pass threshold"><b>{pp(passThreshold)}</b></KV>
+            <KV label="Overall match (keywords)"><b>{pp(overallMatch)}</b></KV>
           </div>
         )}
       </div>
@@ -186,7 +186,7 @@ export default function AttemptReportPage() {
                 {ai.candidate_info.email && (
                   <div>
                     <span className="text-gray-600">Email: </span>
-                    <span className="font-medium">{ai.candidate_info.email}</span>
+                    <span className="font-medium">{String(ai.candidate_info.email || "")}</span>
                   </div>
                 )}
               </div>
@@ -198,7 +198,7 @@ export default function AttemptReportPage() {
             <div>
               <div className="text-sm font-semibold mb-2 text-gray-900">Contexte du besoin</div>
               <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-4">
-                {ai.jd_context}
+                {String(ai.jd_context || "")}
               </div>
             </div>
           )}
@@ -208,7 +208,7 @@ export default function AttemptReportPage() {
             <div>
               <div className="text-sm font-semibold mb-2 text-gray-900">Snapshot candidat (extrait du CV)</div>
               <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-4">
-                {ai.candidate_snapshot}
+                {String(ai.candidate_snapshot || "")}
               </div>
             </div>
           )}
@@ -230,12 +230,16 @@ export default function AttemptReportPage() {
               <div>
                 <div className="text-sm font-semibold mb-2 text-green-700">Forces</div>
                 <ul className="space-y-1 text-sm text-gray-700">
-                  {ai.strengths.map((s, i) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-green-600 mr-2">✓</span>
-                      <span>{s}</span>
-                    </li>
-                  ))}
+                  {ai.strengths.map((s, i) => {
+                    const text = String(s || "").trim();
+                    if (!text) return null;
+                    return (
+                      <li key={i} className="flex items-start">
+                        <span className="text-green-600 mr-2">✓</span>
+                        <span>{text}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -243,12 +247,16 @@ export default function AttemptReportPage() {
               <div>
                 <div className="text-sm font-semibold mb-2 text-orange-700">Lacunes</div>
                 <ul className="space-y-1 text-sm text-gray-700">
-                  {ai.gaps.map((g, i) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-orange-600 mr-2">⚠</span>
-                      <span>{g}</span>
-                    </li>
-                  ))}
+                  {ai.gaps.map((g, i) => {
+                    const text = String(g || "").trim();
+                    if (!text) return null;
+                    return (
+                      <li key={i} className="flex items-start">
+                        <span className="text-orange-600 mr-2">⚠</span>
+                        <span>{text}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -256,12 +264,16 @@ export default function AttemptReportPage() {
               <div>
                 <div className="text-sm font-semibold mb-2 text-red-700">Risques</div>
                 <ul className="space-y-1 text-sm text-gray-700">
-                  {ai.risks.map((r, i) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-red-600 mr-2">!</span>
-                      <span>{r}</span>
-                    </li>
-                  ))}
+                  {ai.risks.map((r, i) => {
+                    const text = String(r || "").trim();
+                    if (!text) return null;
+                    return (
+                      <li key={i} className="flex items-start">
+                        <span className="text-red-600 mr-2">!</span>
+                        <span>{text}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -273,13 +285,13 @@ export default function AttemptReportPage() {
               {ai.availability && (
                 <div>
                   <div className="text-sm font-semibold mb-1 text-gray-700">Disponibilité</div>
-                  <div className="text-sm text-gray-600">{ai.availability}</div>
+                  <div className="text-sm text-gray-600">{String(ai.availability || "")}</div>
                 </div>
               )}
               {ai.notice_period && (
                 <div>
                   <div className="text-sm font-semibold mb-1 text-gray-700">Préavis</div>
-                  <div className="text-sm text-gray-600">{ai.notice_period}</div>
+                  <div className="text-sm text-gray-600">{String(ai.notice_period || "")}</div>
                 </div>
               )}
             </div>
@@ -289,7 +301,7 @@ export default function AttemptReportPage() {
           {ai.salary_expectation && (
             <div>
               <div className="text-sm font-semibold mb-1 text-gray-700">Prétention salariale</div>
-              <div className="text-sm font-medium text-gray-900">{ai.salary_expectation}</div>
+              <div className="text-sm font-medium text-gray-900">{String(ai.salary_expectation || "")}</div>
             </div>
           )}
 
@@ -332,7 +344,7 @@ function KV({ label, children }) {
   return (
     <div className="min-w-0">
       <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-0.5">{children}</div>
+      <div className="mt-0.5">{children != null ? children : <MutedDash />}</div>
     </div>
   );
 }
@@ -346,14 +358,18 @@ function TagList({ items }) {
   if (arr.length === 0) return <div className="text-xs text-gray-400">—</div>;
   return (
     <div className="flex flex-wrap gap-1">
-      {arr.map((t, i) => (
-        <span
-          key={`${t}-${i}`}
-          className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
-        >
-          {t}
-        </span>
-      ))}
+      {arr.map((t, i) => {
+        const text = String(t || "").trim();
+        if (!text) return null;
+        return (
+          <span
+            key={`${text}-${i}`}
+            className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
+          >
+            {text}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -436,7 +452,8 @@ function arr(x) {
   return Array.isArray(x) ? x : [];
 }
 function pp(n) {
-  return typeof n === "number" ? `${n}%` : "—";
+  if (typeof n !== "number" || isNaN(n) || !isFinite(n)) return "—";
+  return `${n}%`;
 }
 function getDecisionTone(label) {
   const l = String(label || "").toLowerCase();
@@ -499,7 +516,7 @@ function VisionInsightsSection({ insights }) {
       {notes && (
         <div className="text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Visual notes</div>
-          <p className="text-gray-700 italic">{notes}</p>
+          <p className="text-gray-700 italic">{String(notes || "")}</p>
         </div>
       )}
     </div>
