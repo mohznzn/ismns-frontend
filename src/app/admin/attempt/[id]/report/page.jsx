@@ -187,50 +187,137 @@ export default function AttemptReportPage() {
         </div>
       )}
 
-      {/* AI assessment (rapport exécutif concis) */}
+      {/* Rapport professionnel structuré */}
       {!loading && !err && ai && (
-        <div className="bg-white shadow rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Assessment Report</h2>
-            <div className="flex items-center gap-2">
+        <div className="bg-white shadow rounded-2xl p-6 space-y-6">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h2 className="text-xl font-semibold">Rapport de recrutement</h2>
+            <div className="flex items-center gap-3">
               {decision && <DecisionBadge label={decision} />}
               {typeof aiOverall === "number" && (
-                <span className="text-sm">Overall: <b>{pp(aiOverall)}</b></span>
+                <span className="text-sm font-medium">Score global: <b>{pp(aiOverall)}</b></span>
               )}
             </div>
           </div>
 
-          {/* Rapport exécutif principal */}
-          {ai.executive_summary && (
-            <div className="bg-gray-50 rounded-xl p-4 border-l-4 border-black">
-              <div className="text-sm font-medium mb-2">Executive Summary</div>
-              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                {ai.executive_summary}
+          {/* Informations candidat */}
+          {ai.candidate_info && (ai.candidate_info.first_name || ai.candidate_info.last_name || ai.candidate_info.email) && (
+            <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+              <div className="text-sm font-semibold mb-2 text-blue-900">Informations candidat</div>
+              <div className="grid md:grid-cols-3 gap-3 text-sm">
+                {(ai.candidate_info.first_name || ai.candidate_info.last_name) && (
+                  <div>
+                    <span className="text-gray-600">Nom complet: </span>
+                    <span className="font-medium">{[ai.candidate_info.first_name, ai.candidate_info.last_name].filter(Boolean).join(" ")}</span>
+                  </div>
+                )}
+                {ai.candidate_info.email && (
+                  <div>
+                    <span className="text-gray-600">Email: </span>
+                    <span className="font-medium">{ai.candidate_info.email}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Détails techniques */}
-          <div className="grid md:grid-cols-2 gap-4">
-            {ai.technical_fit && (
+          {/* Contexte du besoin (JD) */}
+          {ai.jd_context && (
+            <div>
+              <div className="text-sm font-semibold mb-2 text-gray-900">Contexte du besoin</div>
+              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-4">
+                {ai.jd_context}
+              </div>
+            </div>
+          )}
+
+          {/* Snapshot candidat */}
+          {ai.candidate_snapshot && (
+            <div>
+              <div className="text-sm font-semibold mb-2 text-gray-900">Snapshot candidat (extrait du CV)</div>
+              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-4">
+                {ai.candidate_snapshot}
+              </div>
+            </div>
+          )}
+
+          {/* Score QCM */}
+          {typeof ai.qcm_score === "number" && (
+            <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+              <div className="text-sm font-semibold mb-2 text-yellow-900">Score QCM</div>
+              <div className="text-2xl font-bold text-yellow-800">{ai.qcm_score}%</div>
+              <div className="text-xs text-yellow-700 mt-1">
+                Seuil de passage: {passThreshold}% {ai.qcm_score >= passThreshold ? "✓ Passé" : "✗ En dessous"}
+              </div>
+            </div>
+          )}
+
+          {/* Forces / Lacunes / Risques */}
+          <div className="grid md:grid-cols-3 gap-4">
+            {ai.strengths && Array.isArray(ai.strengths) && ai.strengths.length > 0 && (
               <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Technical Fit</div>
-                <div className="text-sm text-gray-700">{ai.technical_fit}</div>
+                <div className="text-sm font-semibold mb-2 text-green-700">Forces</div>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  {ai.strengths.map((s, i) => (
+                    <li key={i} className="flex items-start">
+                      <span className="text-green-600 mr-2">✓</span>
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
-            {ai.qcm_assessment && (
+            {ai.gaps && Array.isArray(ai.gaps) && ai.gaps.length > 0 && (
               <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">QCM Assessment</div>
-                <div className="text-sm text-gray-700">{ai.qcm_assessment}</div>
+                <div className="text-sm font-semibold mb-2 text-orange-700">Lacunes</div>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  {ai.gaps.map((g, i) => (
+                    <li key={i} className="flex items-start">
+                      <span className="text-orange-600 mr-2">⚠</span>
+                      <span>{g}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {ai.risks && Array.isArray(ai.risks) && ai.risks.length > 0 && (
+              <div>
+                <div className="text-sm font-semibold mb-2 text-red-700">Risques</div>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  {ai.risks.map((r, i) => (
+                    <li key={i} className="flex items-start">
+                      <span className="text-red-600 mr-2">!</span>
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
 
-          {/* Recommandation */}
-          {ai.recommendation && (
-            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
-              <div className="text-xs uppercase tracking-wide text-blue-700 mb-1 font-medium">Recommendation</div>
-              <div className="text-sm text-blue-900">{ai.recommendation}</div>
+          {/* Disponibilité et préavis */}
+          {(ai.availability || ai.notice_period) && (
+            <div className="grid md:grid-cols-2 gap-4">
+              {ai.availability && (
+                <div>
+                  <div className="text-sm font-semibold mb-1 text-gray-700">Disponibilité</div>
+                  <div className="text-sm text-gray-600">{ai.availability}</div>
+                </div>
+              )}
+              {ai.notice_period && (
+                <div>
+                  <div className="text-sm font-semibold mb-1 text-gray-700">Préavis</div>
+                  <div className="text-sm text-gray-600">{ai.notice_period}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Prétention salariale */}
+          {ai.salary_expectation && (
+            <div>
+              <div className="text-sm font-semibold mb-1 text-gray-700">Prétention salariale</div>
+              <div className="text-sm font-medium text-gray-900">{ai.salary_expectation}</div>
             </div>
           )}
 
