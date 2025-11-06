@@ -91,8 +91,8 @@ export default function AttemptReportPage() {
   // IA enrichissements
   const aiOverall = nOrNull(ai?.overall_score);
   const components = ai?.components || {};
-  const decision = ai?.decision?.label || null;
-  const decisionReason = ai?.decision?.reason || "";
+  const decision = typeof ai?.decision === "string" ? ai.decision : (ai?.decision?.label || null);
+  const decisionReason = typeof ai?.decision === "string" ? "" : (ai?.decision?.reason || "");
 
   return (
     <div className="space-y-6">
@@ -359,7 +359,9 @@ function TagList({ items }) {
 }
 
 function Progress({ label, value }) {
-  const v = typeof value === "number" ? Math.max(0, Math.min(100, value)) : null;
+  const v = typeof value === "number" && !isNaN(value) && isFinite(value) 
+    ? Math.max(0, Math.min(100, value)) 
+    : null;
   return (
     <div className="space-y-1">
       <div className="text-xs text-gray-600">{label}</div>
@@ -405,6 +407,7 @@ function List({ title, items }) {
 
 /* Badge décision */
 function DecisionBadge({ label }) {
+  if (!label || typeof label !== "string") return null;
   const tone = getDecisionTone(label);
   return (
     <span
