@@ -159,34 +159,6 @@ export default function AttemptReportPage() {
         </div>
       )}
 
-      {/* Matching summary */}
-      {!loading && !err && (
-        <div className="bg-white shadow rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Matching summary</h2>
-          <p className="text-sm text-gray-600">{jdPreview}</p>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Progress label="Overall match" value={overallMatch} />
-            <Progress label="QCM score" value={score ?? null} />
-            {typeof components.keyword_match === "number" ? (
-              <Progress label="Keyword match (AI)" value={components.keyword_match} />
-            ) : (
-              <div className="hidden md:block" />
-            )}
-          </div>
-
-          <p className="text-xs text-gray-500">{report?.matching?.explanation || "—"}</p>
-
-          {/* Keywords (aperçu) */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <KV label="JD keywords"><TagList items={jdKw.slice(0, 15)} /></KV>
-            <KV label={`CV keywords ${cvTextExtracted ? "" : "(derived)"}`}>
-              <TagList items={cvKw.slice(0, 15)} />
-            </KV>
-          </div>
-        </div>
-      )}
-
       {/* Rapport professionnel structuré */}
       {!loading && !err && ai && (
         <div className="bg-white shadow rounded-2xl p-6 space-y-6">
