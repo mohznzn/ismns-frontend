@@ -11,23 +11,37 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
-  const [openaiUsage, setOpenaiUsage] = useState(null);
+  const [openaiUsage, setOpenaiUsage] = useState({ total_tokens: 0, prompt_tokens: 0, completion_tokens: 0 });
   const [usageLoading, setUsageLoading] = useState(false);
+  const [usageError, setUsageError] = useState(false);
 
   // Charger la consommation OpenAI
   useEffect(() => {
     if (!user) {
-      setOpenaiUsage(null);
+      setOpenaiUsage({ total_tokens: 0, prompt_tokens: 0, completion_tokens: 0 });
+      setUsageError(false);
       return;
     }
 
     const loadUsage = async () => {
       try {
         setUsageLoading(true);
+        setUsageError(false);
         const data = await auth.getOpenAIUsage();
-        setOpenaiUsage(data);
+        // S'assurer que les données sont valides
+        if (data && typeof data === 'object') {
+          setOpenaiUsage({
+            total_tokens: data.total_tokens || 0,
+            prompt_tokens: data.prompt_tokens || 0,
+            completion_tokens: data.completion_tokens || 0,
+          });
+        } else {
+          setOpenaiUsage({ total_tokens: 0, prompt_tokens: 0, completion_tokens: 0 });
+        }
       } catch (err) {
         console.error("Error loading OpenAI usage:", err);
+        setUsageError(true);
+        // Garder les valeurs précédentes en cas d'erreur
       } finally {
         setUsageLoading(false);
       }
@@ -90,15 +104,26 @@ export default function SiteHeader() {
           // Authenticated (recruiting)
           <div className="flex items-center gap-6 text-sm">
             {/* OpenAI Usage Display */}
-            {openaiUsage && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200">
-                <span className="text-xs text-blue-700 font-medium">
-                  OpenAI: {formatTokens(openaiUsage.total_tokens)} tokens
+            {usageLoading ? (
+              <div className="h-6 w-24 rounded bg-gray-100 animate-pulse" />
+            ) : (
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
+                usageError 
+                  ? "bg-gray-50 border-gray-300" 
+                  : "bg-blue-50 border-blue-200"
+              }`}>
+                <span className={`text-xs font-medium ${
+                  usageError 
+                    ? "text-gray-600" 
+                    : "text-blue-700"
+                }`}>
+                  {usageError ? (
+                    "OpenAI: Error"
+                  ) : (
+                    `OpenAI: ${formatTokens(openaiUsage?.total_tokens || 0)} tokens`
+                  )}
                 </span>
               </div>
-            )}
-            {usageLoading && (
-              <div className="h-6 w-24 rounded bg-gray-100 animate-pulse" />
             )}
             <Link
               href="/admin/qcm/new"
