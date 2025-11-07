@@ -232,7 +232,11 @@ export default function InvitePage() {
             <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-black"
-                style={{ width: `${((index + 1) / Math.max(1, questions.length)) * 100}%` }}
+                style={{ 
+                  width: questions.length > 0 && index >= 0 
+                    ? `${Math.max(0, Math.min(100, ((index + 1) / questions.length) * 100))}%` 
+                    : "0%" 
+                }}
               />
             </div>
           </div>

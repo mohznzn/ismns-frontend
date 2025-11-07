@@ -190,6 +190,7 @@ export const auth = {
   register: (email, password) => apiPost(`/auth/register`, { email, password }),
   login: (email, password) => apiPost(`/auth/login`, { email, password }),
   logout: () => apiPost(`/auth/logout`, {}),
+  getOpenAIUsage: () => apiGet(`/auth/openai_usage`),
 };
 
 // ================= PUBLIC / CANDIDAT =================
