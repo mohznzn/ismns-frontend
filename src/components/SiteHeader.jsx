@@ -30,11 +30,22 @@ export default function SiteHeader() {
         const data = await auth.getOpenAIUsage();
         // S'assurer que les données sont valides
         if (data && typeof data === 'object') {
-          setOpenaiUsage({
-            total_tokens: data.total_tokens || 0,
-            prompt_tokens: data.prompt_tokens || 0,
-            completion_tokens: data.completion_tokens || 0,
-          });
+          // Convertir en nombres entiers et valider
+          const total = Math.max(0, Math.floor(Number(data.total_tokens) || 0));
+          const prompt = Math.max(0, Math.floor(Number(data.prompt_tokens) || 0));
+          const completion = Math.max(0, Math.floor(Number(data.completion_tokens) || 0));
+          
+          // Vérifier que les valeurs sont valides (pas NaN, Infinity, etc.)
+          if (isNaN(total) || !isFinite(total)) {
+            console.warn("Invalid total_tokens:", data.total_tokens);
+            setOpenaiUsage({ total_tokens: 0, prompt_tokens: 0, completion_tokens: 0 });
+          } else {
+            setOpenaiUsage({
+              total_tokens: total,
+              prompt_tokens: prompt,
+              completion_tokens: completion,
+            });
+          }
         } else {
           setOpenaiUsage({ total_tokens: 0, prompt_tokens: 0, completion_tokens: 0 });
         }
@@ -69,10 +80,17 @@ export default function SiteHeader() {
 
   // Formater les tokens pour l'affichage
   const formatTokens = (tokens) => {
-    if (!tokens) return "0";
-    if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`;
-    if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`;
-    return tokens.toString();
+    // Vérifier que tokens est un nombre valide
+    if (tokens === null || tokens === undefined || isNaN(tokens) || !isFinite(tokens)) {
+      return "0";
+    }
+    const numTokens = Number(tokens);
+    if (isNaN(numTokens) || !isFinite(numTokens) || numTokens < 0) {
+      return "0";
+    }
+    if (numTokens >= 1000000) return `${(numTokens / 1000000).toFixed(1)}M`;
+    if (numTokens >= 1000) return `${(numTokens / 1000).toFixed(1)}K`;
+    return Math.floor(numTokens).toString();
   };
 
   // Public marketing links
@@ -120,7 +138,7 @@ export default function SiteHeader() {
                   {usageError ? (
                     "OpenAI: Error"
                   ) : (
-                    `OpenAI: ${formatTokens(openaiUsage?.total_tokens || 0)} tokens`
+                    `OpenAI: ${formatTokens(openaiUsage?.total_tokens ?? 0)} tokens`
                   )}
                 </span>
               </div>
