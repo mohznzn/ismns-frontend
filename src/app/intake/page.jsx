@@ -100,9 +100,21 @@ function IntakeInner() {
     if (noticePeriod?.trim()) fd.append("notice_period", noticePeriod.trim());
     fd.append("cv_file", cvFile);
 
+    // Log pour déboguer ce qui est envoyé
+    console.log("[intake] Sending form data:");
+    console.log("[intake] - first_name:", firstName);
+    console.log("[intake] - last_name:", lastName);
+    console.log("[intake] - email:", email);
+    console.log("[intake] - salary_amount:", salaryAmount);
+    console.log("[intake] - availability:", availability);
+    console.log("[intake] - notice_period:", noticePeriod);
+    console.log("[intake] - cv_file:", cvFile?.name, cvFile?.size);
+
     const url = `${baseUrl.replace(/\/$/, "")}/attempts/${encodeURIComponent(
       attemptId
     )}/intake?ephemeral=1`;
+
+    console.log("[intake] Request URL:", url);
 
     try {
       const res = await fetch(url, {
@@ -112,16 +124,54 @@ function IntakeInner() {
         body: fd,
       });
 
+      console.log("[intake] Response status:", res.status, res.statusText);
+      console.log("[intake] Response headers:", Object.fromEntries(res.headers.entries()));
+
       if (!res.ok) {
         const data = await safeJson(res);
+        console.error("[intake] Error response:", data);
         throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
       }
 
       const data = await safeJson(res);
+      console.log("[intake] ✅ Response received successfully");
+      console.log("[intake] Response data keys:", Object.keys(data || {}));
+      console.log("[intake] Response data:", data);
 
-      if (data?.ai_report) setAiSummary(data.ai_report);
+      // Vérifier spécifiquement ai_report
+      console.log("[intake] ai_report present?", !!data?.ai_report);
+      if (data?.ai_report) {
+        console.log("[intake] ai_report type:", typeof data.ai_report);
+        console.log("[intake] ai_report keys:", Object.keys(data.ai_report));
+        console.log("[intake] ai_report content:", JSON.stringify(data.ai_report, null, 2));
+        console.log("[intake] ai_report.overall_score:", data.ai_report.overall_score);
+        console.log("[intake] ai_report.decision:", data.ai_report.decision);
+        console.log("[intake] ai_report.candidate_info:", data.ai_report.candidate_info);
+        console.log("[intake] ai_report.jd_context:", data.ai_report.jd_context);
+        console.log("[intake] ai_report.candidate_snapshot:", data.ai_report.candidate_snapshot);
+        console.log("[intake] ai_report.strengths:", data.ai_report.strengths);
+        console.log("[intake] ai_report.gaps:", data.ai_report.gaps);
+        console.log("[intake] ai_report.risks:", data.ai_report.risks);
+        console.log("[intake] ai_report.availability:", data.ai_report.availability);
+        console.log("[intake] ai_report.notice_period:", data.ai_report.notice_period);
+        console.log("[intake] ai_report.salary_expectation:", data.ai_report.salary_expectation);
+      } else {
+        console.warn("[intake] ⚠️ ai_report is missing from response!");
+        console.warn("[intake] Available keys in response:", Object.keys(data || {}));
+      }
+
+      if (data?.ai_report) {
+        console.log("[intake] Setting aiSummary with:", data.ai_report);
+        setAiSummary(data.ai_report);
+      } else {
+        console.warn("[intake] ⚠️ Not setting aiSummary because ai_report is missing");
+        setAiSummary(null);
+      }
       setOk(true);
     } catch (e) {
+      console.error("[intake] ❌ Error:", e);
+      console.error("[intake] Error message:", e?.message);
+      console.error("[intake] Error stack:", e?.stack);
       setErr(e?.message || "API error");
     } finally {
       setLoading(false);
@@ -321,7 +371,37 @@ function IntakeInner() {
 }
 
 function AIReportView({ report }) {
+  // Logs de débogage complets
+  console.log("[AIReportView] ========== RENDER ==========");
+  console.log("[AIReportView] Report received:", report);
+  console.log("[AIReportView] Report type:", typeof report);
+  console.log("[AIReportView] Report is null?", report === null);
+  console.log("[AIReportView] Report is undefined?", report === undefined);
+  console.log("[AIReportView] Report is object?", typeof report === "object");
+  
+  if (report && typeof report === "object") {
+    console.log("[AIReportView] Report keys:", Object.keys(report));
+    console.log("[AIReportView] Report.overall_score:", report.overall_score, typeof report.overall_score);
+    console.log("[AIReportView] Report.decision:", report.decision, typeof report.decision);
+    console.log("[AIReportView] Report.candidate_info:", report.candidate_info);
+    console.log("[AIReportView] Report.jd_context:", report.jd_context);
+    console.log("[AIReportView] Report.candidate_snapshot:", report.candidate_snapshot);
+    console.log("[AIReportView] Report.qcm_score:", report.qcm_score);
+    console.log("[AIReportView] Report.strengths:", report.strengths, Array.isArray(report.strengths));
+    console.log("[AIReportView] Report.gaps:", report.gaps, Array.isArray(report.gaps));
+    console.log("[AIReportView] Report.risks:", report.risks, Array.isArray(report.risks));
+    console.log("[AIReportView] Report.availability:", report.availability);
+    console.log("[AIReportView] Report.notice_period:", report.notice_period);
+    console.log("[AIReportView] Report.salary_expectation:", report.salary_expectation);
+    console.log("[AIReportView] Report.vision_insights:", report.vision_insights);
+    console.log("[AIReportView] Full report JSON:", JSON.stringify(report, null, 2));
+  } else {
+    console.warn("[AIReportView] ⚠️ Report is not a valid object!");
+  }
+  console.log("[AIReportView] ============================");
+
   if (!report || typeof report !== "object") {
+    console.warn("[AIReportView] Returning fallback because report is invalid");
     return <div className="text-sm text-gray-500">—</div>;
   }
   const overall = typeof report.overall_score === "number" ? `${report.overall_score}%` : "—";
