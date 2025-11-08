@@ -119,19 +119,6 @@ function IntakeInner() {
 
       const data = await safeJson(res);
 
-      // Log pour déboguer
-      console.log("[intake] Response data:", data);
-      console.log("[intake] AI report:", data?.ai_report);
-      if (data?.ai_report) {
-        console.log("[intake] AI report keys:", Object.keys(data.ai_report));
-        console.log("[intake] AI report overall_score:", data.ai_report.overall_score);
-        console.log("[intake] AI report decision:", data.ai_report.decision);
-        console.log("[intake] AI report executive_summary:", data.ai_report.executive_summary);
-        console.log("[intake] AI report technical_fit:", data.ai_report.technical_fit);
-        console.log("[intake] AI report qcm_assessment:", data.ai_report.qcm_assessment);
-        console.log("[intake] AI report recommendation:", data.ai_report.recommendation);
-      }
-
       if (data?.ai_report) setAiSummary(data.ai_report);
       setOk(true);
     } catch (e) {
@@ -334,14 +321,6 @@ function IntakeInner() {
 }
 
 function AIReportView({ report }) {
-  // Log pour déboguer
-  console.log("[AIReportView] Report received:", report);
-  console.log("[AIReportView] Report keys:", report ? Object.keys(report) : "no report");
-  console.log("[AIReportView] executive_summary:", report?.executive_summary);
-  console.log("[AIReportView] technical_fit:", report?.technical_fit);
-  console.log("[AIReportView] qcm_assessment:", report?.qcm_assessment);
-  console.log("[AIReportView] recommendation:", report?.recommendation);
-  
   if (!report || typeof report !== "object") {
     return <div className="text-sm text-gray-500">—</div>;
   }
@@ -474,40 +453,6 @@ function AIReportView({ report }) {
         <div>
           <div className="font-medium mb-1 text-gray-700">Prétention salariale</div>
           <div className="font-medium text-gray-900">{report.salary_expectation}</div>
-        </div>
-      )}
-
-      {/* Rapport exécutif (nouveau format) */}
-      {report.executive_summary && (
-        <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-black">
-          <div className="font-medium mb-1 text-xs uppercase tracking-wide text-gray-600">Résumé exécutif</div>
-          <div className="text-gray-700 leading-relaxed whitespace-pre-line">{report.executive_summary}</div>
-        </div>
-      )}
-
-      {/* Détails techniques (nouveau format) */}
-      {(report.technical_fit || report.qcm_assessment) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {report.technical_fit && (
-            <div>
-              <div className="text-xs font-medium text-gray-600 mb-1">Fit technique</div>
-              <div className="text-gray-700">{report.technical_fit}</div>
-            </div>
-          )}
-          {report.qcm_assessment && (
-            <div>
-              <div className="text-xs font-medium text-gray-600 mb-1">Évaluation QCM</div>
-              <div className="text-gray-700">{report.qcm_assessment}</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Recommandation (nouveau format) */}
-      {report.recommendation && (
-        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-          <div className="text-xs font-medium text-blue-700 mb-1">Recommandation</div>
-          <div className="text-blue-900">{report.recommendation}</div>
         </div>
       )}
 
