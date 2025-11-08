@@ -27,10 +27,14 @@ function IntakeInner() {
   const sp = useSearchParams();
   const attemptId = useMemo(() => sp.get("attempt_id") || "", [sp]);
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [salaryAmount, setSalaryAmount] = useState("");
   const [salaryCurrency, setSalaryCurrency] = useState("EUR");
   const [salaryPeriod, setSalaryPeriod] = useState("year"); // "year" | "month"
   const [availability, setAvailability] = useState("");
+  const [noticePeriod, setNoticePeriod] = useState(""); // préavis
 
   const [cvFile, setCvFile] = useState(null);
 
@@ -86,10 +90,14 @@ function IntakeInner() {
     setAiSummary(null);
 
     const fd = new FormData();
+    if (firstName?.trim()) fd.append("first_name", firstName.trim());
+    if (lastName?.trim()) fd.append("last_name", lastName.trim());
+    if (email?.trim()) fd.append("email", email.trim());
     if (salaryAmount) fd.append("salary_amount", String(Number(salaryAmount)));
     if (salaryCurrency) fd.append("salary_currency", salaryCurrency);
     if (salaryPeriod) fd.append("salary_period", salaryPeriod);
     if (availability?.trim()) fd.append("availability_text", availability.trim());
+    if (noticePeriod?.trim()) fd.append("notice_period", noticePeriod.trim());
     fd.append("cv_file", cvFile);
 
     const url = `${baseUrl.replace(/\/$/, "")}/attempts/${encodeURIComponent(
@@ -169,6 +177,50 @@ function IntakeInner() {
             <form onSubmit={onSubmit} className="space-y-5">
               {err && <div className="text-sm text-red-600">API error: {err}</div>}
 
+              {/* Informations personnelles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm mb-1 font-medium">
+                    Prénom <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Ex: Jean"
+                    required
+                    className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1 font-medium">
+                    Nom <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Ex: Dupont"
+                    required
+                    className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1 font-medium">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Ex: jean.dupont@example.com"
+                  required
+                  className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+              </div>
+
               {/* Salary */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
@@ -211,15 +263,32 @@ function IntakeInner() {
               {/* Availability */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
-                  Disponibilités (texte libre)
+                  Disponibilités
                 </label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={availability}
                   onChange={(e) => setAvailability(e.target.value)}
-                  placeholder="Ex: Semaine prochaine, mar–jeu 14h–18h, fuseau Europe/Paris"
+                  placeholder="Ex: Disponible immédiatement, ou à partir du 1er mars"
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                 />
+              </div>
+
+              {/* Notice Period */}
+              <div>
+                <label className="block text-sm mb-1 font-medium">
+                  Préavis
+                </label>
+                <input
+                  type="text"
+                  value={noticePeriod}
+                  onChange={(e) => setNoticePeriod(e.target.value)}
+                  placeholder="Ex: 2 semaines, 1 mois, immédiat"
+                  className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Durée de préavis nécessaire avant de pouvoir commencer.
+                </p>
               </div>
 
               {/* CV upload */}
@@ -280,12 +349,12 @@ function AIReportView({ report }) {
   const decision = typeof report.decision === "string" ? report.decision : (report.decision?.label || null);
 
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-4 text-sm">
       {/* Header avec score et décision */}
-      <div className="flex items-center justify-between">
-        <div>Score global: <b>{overall}</b></div>
+      <div className="flex items-center justify-between pb-3 border-b">
+        <div className="font-semibold">Score global: <b>{overall}</b></div>
         {decision && (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
             decision === "proceed" ? "bg-green-100 text-green-800" :
             decision === "interview" ? "bg-blue-100 text-blue-800" :
             decision === "hold" ? "bg-yellow-100 text-yellow-800" :
@@ -296,48 +365,150 @@ function AIReportView({ report }) {
         )}
       </div>
 
-      {/* Rapport exécutif */}
-      {report.executive_summary ? (
+      {/* Informations candidat */}
+      {report.candidate_info && (report.candidate_info.first_name || report.candidate_info.last_name || report.candidate_info.email) && (
+        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+          <div className="font-medium mb-2 text-blue-900">Informations candidat</div>
+          <div className="space-y-1 text-gray-700">
+            {(report.candidate_info.first_name || report.candidate_info.last_name) && (
+              <div><span className="text-gray-600">Nom: </span><span className="font-medium">{[report.candidate_info.first_name, report.candidate_info.last_name].filter(Boolean).join(" ")}</span></div>
+            )}
+            {report.candidate_info.email && (
+              <div><span className="text-gray-600">Email: </span><span className="font-medium">{report.candidate_info.email}</span></div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Contexte du besoin */}
+      {report.jd_context && (
+        <div>
+          <div className="font-medium mb-1 text-gray-900">Contexte du besoin</div>
+          <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-3">
+            {report.jd_context}
+          </div>
+        </div>
+      )}
+
+      {/* Snapshot candidat */}
+      {report.candidate_snapshot && (
+        <div>
+          <div className="font-medium mb-1 text-gray-900">Snapshot candidat</div>
+          <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-3">
+            {report.candidate_snapshot}
+          </div>
+        </div>
+      )}
+
+      {/* Score QCM */}
+      {typeof report.qcm_score === "number" && (
+        <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+          <div className="font-medium mb-1 text-yellow-900">Score QCM</div>
+          <div className="text-xl font-bold text-yellow-800">{report.qcm_score}%</div>
+        </div>
+      )}
+
+      {/* Forces / Lacunes / Risques */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {report.strengths && Array.isArray(report.strengths) && report.strengths.length > 0 && (
+          <div>
+            <div className="font-medium mb-1 text-green-700">Forces</div>
+            <ul className="space-y-1 text-gray-700 text-xs">
+              {report.strengths.map((s, i) => (
+                <li key={i} className="flex items-start">
+                  <span className="text-green-600 mr-1">✓</span>
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {report.gaps && Array.isArray(report.gaps) && report.gaps.length > 0 && (
+          <div>
+            <div className="font-medium mb-1 text-orange-700">Lacunes</div>
+            <ul className="space-y-1 text-gray-700 text-xs">
+              {report.gaps.map((g, i) => (
+                <li key={i} className="flex items-start">
+                  <span className="text-orange-600 mr-1">⚠</span>
+                  <span>{g}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {report.risks && Array.isArray(report.risks) && report.risks.length > 0 && (
+          <div>
+            <div className="font-medium mb-1 text-red-700">Risques</div>
+            <ul className="space-y-1 text-gray-700 text-xs">
+              {report.risks.map((r, i) => (
+                <li key={i} className="flex items-start">
+                  <span className="text-red-600 mr-1">!</span>
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Disponibilité et préavis */}
+      {(report.availability || report.notice_period) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {report.availability && (
+            <div>
+              <div className="font-medium mb-1 text-gray-700">Disponibilité</div>
+              <div className="text-gray-600">{report.availability}</div>
+            </div>
+          )}
+          {report.notice_period && (
+            <div>
+              <div className="font-medium mb-1 text-gray-700">Préavis</div>
+              <div className="text-gray-600">{report.notice_period}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Prétention salariale */}
+      {report.salary_expectation && (
+        <div>
+          <div className="font-medium mb-1 text-gray-700">Prétention salariale</div>
+          <div className="font-medium text-gray-900">{report.salary_expectation}</div>
+        </div>
+      )}
+
+      {/* Rapport exécutif (nouveau format) */}
+      {report.executive_summary && (
         <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-black">
           <div className="font-medium mb-1 text-xs uppercase tracking-wide text-gray-600">Résumé exécutif</div>
           <div className="text-gray-700 leading-relaxed whitespace-pre-line">{report.executive_summary}</div>
         </div>
-      ) : (
-        <div className="text-xs text-gray-400 italic">Résumé exécutif non disponible</div>
       )}
 
-      {/* Détails techniques */}
-      {(report.technical_fit || report.qcm_assessment) ? (
+      {/* Détails techniques (nouveau format) */}
+      {(report.technical_fit || report.qcm_assessment) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {report.technical_fit ? (
+          {report.technical_fit && (
             <div>
               <div className="text-xs font-medium text-gray-600 mb-1">Fit technique</div>
               <div className="text-gray-700">{report.technical_fit}</div>
             </div>
-          ) : (
-            <div className="text-xs text-gray-400 italic">Fit technique non disponible</div>
           )}
-          {report.qcm_assessment ? (
+          {report.qcm_assessment && (
             <div>
               <div className="text-xs font-medium text-gray-600 mb-1">Évaluation QCM</div>
               <div className="text-gray-700">{report.qcm_assessment}</div>
             </div>
-          ) : (
-            <div className="text-xs text-gray-400 italic">Évaluation QCM non disponible</div>
           )}
         </div>
-      ) : (
-        <div className="text-xs text-gray-400 italic">Détails techniques non disponibles</div>
       )}
 
-      {/* Recommandation */}
-      {report.recommendation ? (
+      {/* Recommandation (nouveau format) */}
+      {report.recommendation && (
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
           <div className="text-xs font-medium text-blue-700 mb-1">Recommandation</div>
           <div className="text-blue-900">{report.recommendation}</div>
         </div>
-      ) : (
-        <div className="text-xs text-gray-400 italic">Recommandation non disponible</div>
       )}
 
       {/* Vision Insights (si disponible) */}
