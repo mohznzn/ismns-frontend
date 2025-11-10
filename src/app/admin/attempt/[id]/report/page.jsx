@@ -60,7 +60,6 @@ export default function AttemptReportPage() {
   }, [id]);
 
   // ====== Données + fallbacks sûrs ======
-  const candidateEmail = report?.attempt?.candidate_email || "—";
   const score = nOrNull(report?.attempt?.score);
   const passThreshold = nOrNull(report?.attempt?.pass_threshold) ?? 70;
   
@@ -97,6 +96,13 @@ export default function AttemptReportPage() {
   const components = ai?.components || {};
   const decision = typeof ai?.decision === "string" ? ai.decision : (ai?.decision?.label || null);
   const decisionReason = typeof ai?.decision === "string" ? "" : (ai?.decision?.reason || "");
+  
+  // Email : priorité à l'email de l'intake (formulaire), sinon celui de l'Attempt
+  const emailFromIntake = ai?.candidate_info?.email || intake?.email || "";
+  const finalCandidateEmail = emailFromIntake || report?.attempt?.candidate_email || "—";
+  
+  // Score QCM : priorité au score du rapport AI, sinon celui de l'Attempt
+  const finalQcmScore = nOrNull(ai?.qcm_score) ?? score;
   
   // Labels selon la langue
   const labels = {
@@ -167,11 +173,10 @@ export default function AttemptReportPage() {
         ) : err ? (
           <div className="text-sm text-red-600">{isFrench ? "Erreur API" : "API error"}: {err}</div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-4 text-sm">
+          <div className="grid gap-4 sm:grid-cols-3 text-sm">
             <KV label={labels.candidate}>
-              <span className="font-medium truncate" title={candidateEmail}>{candidateEmail}</span>
+              <span className="font-medium truncate" title={finalCandidateEmail}>{finalCandidateEmail}</span>
             </KV>
-            <KV label={labels.qcmScore}><b>{pp(score)}</b></KV>
             <KV label={labels.passThreshold}><b>{pp(passThreshold)}</b></KV>
             <KV label={labels.overallMatch}><b>{pp(overallMatch)}</b></KV>
           </div>
@@ -250,8 +255,8 @@ export default function AttemptReportPage() {
             </div>
           )}
 
-          {/* Score QCM */}
-          {typeof ai.qcm_score === "number" && (
+          {/* Score QCM - Afficher seulement dans le rapport détaillé */}
+          {typeof ai?.qcm_score === "number" && (
             <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
               <div className="text-sm font-semibold mb-2 text-yellow-900">{labels.qcmScore}</div>
               <div className="text-2xl font-bold text-yellow-800">{ai.qcm_score}%</div>
