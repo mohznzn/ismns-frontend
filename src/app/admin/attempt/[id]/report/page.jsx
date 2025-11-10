@@ -63,6 +63,10 @@ export default function AttemptReportPage() {
   const candidateEmail = report?.attempt?.candidate_email || "—";
   const score = nOrNull(report?.attempt?.score);
   const passThreshold = nOrNull(report?.attempt?.pass_threshold) ?? 70;
+  
+  // Langue du QCM pour tous les labels
+  const language = report?.qcm?.language || "en";
+  const isFrench = language === "fr";
 
   const jdPreview = report?.qcm?.jd_preview || "—";
   const matchingScore = nOrNull(report?.matching?.score);
@@ -93,23 +97,56 @@ export default function AttemptReportPage() {
   const components = ai?.components || {};
   const decision = typeof ai?.decision === "string" ? ai.decision : (ai?.decision?.label || null);
   const decisionReason = typeof ai?.decision === "string" ? "" : (ai?.decision?.reason || "");
+  
+  // Labels selon la langue
+  const labels = {
+    candidateReport: isFrench ? "Rapport candidat" : "Candidate report",
+    back: isFrench ? "← Retour" : "← Back",
+    backToResults: isFrench ? "Retour aux résultats" : "Back to results",
+    candidate: isFrench ? "Candidat" : "Candidate",
+    qcmScore: isFrench ? "Score QCM" : "QCM score",
+    passThreshold: isFrench ? "Seuil de passage" : "Pass threshold",
+    overallMatch: isFrench ? "Correspondance globale (mots-clés)" : "Overall match (keywords)",
+    candidateProfile: isFrench ? "Profil candidat" : "Candidate profile",
+    topSkills: isFrench ? "Compétences principales" : "Top skills",
+    availability: isFrench ? "Disponibilité" : "Availability",
+    salary: isFrench ? "Salaire" : "Salary",
+    recruitmentReport: isFrench ? "Rapport de recrutement" : "Recruitment report",
+    overallScore: isFrench ? "Score global" : "Overall score",
+    candidateInfo: isFrench ? "Informations candidat" : "Candidate information",
+    fullName: isFrench ? "Nom complet" : "Full name",
+    email: isFrench ? "Email" : "Email",
+    jobContext: isFrench ? "Contexte du besoin" : "Job context",
+    candidateSnapshot: isFrench ? "Aperçu candidat (extrait du CV)" : "Candidate snapshot (from CV)",
+    strengths: isFrench ? "Forces" : "Strengths",
+    gaps: isFrench ? "Lacunes" : "Gaps",
+    risks: isFrench ? "Risques" : "Risks",
+    noticePeriod: isFrench ? "Préavis" : "Notice period",
+    salaryExpectation: isFrench ? "Prétention salariale" : "Salary expectation",
+    attachments: isFrench ? "Pièces jointes" : "Attachments",
+    cvNotStored: isFrench ? "CV non stocké (analyse éphémère)." : "CV not stored (ephemeral analysis).",
+    noCv: isFrench ? "Aucun CV." : "No CV.",
+    openCv: isFrench ? "Ouvrir le CV" : "Open CV",
+    passed: isFrench ? "✓ Passé" : "✓ Passed",
+    below: isFrench ? "✗ En dessous" : "✗ Below threshold"
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Candidate report</h1>
+          <h1 className="text-2xl font-bold">{labels.candidateReport}</h1>
           {decision && <DecisionBadge label={decision} />}
           {typeof aiOverall === "number" && (
             <span className="text-xs px-2 py-1 rounded-full bg-gray-100">
-              AI overall: <b>{aiOverall}%</b>
+              {isFrench ? "IA globale" : "AI overall"}: <b>{aiOverall}%</b>
             </span>
           )}
         </div>
         <div className="flex items-center gap-3 text-sm">
           <button onClick={() => router.back()} className="underline hover:opacity-80">
-            ← Back
+            {labels.back}
           </button>
           {!!report?.qcm?.id && (
             <Link
@@ -117,7 +154,7 @@ export default function AttemptReportPage() {
               className="underline hover:opacity-80"
               prefetch={false}
             >
-              Back to results
+              {labels.backToResults}
             </Link>
           )}
         </div>
@@ -126,34 +163,34 @@ export default function AttemptReportPage() {
       {/* Meta */}
       <div className="bg-white shadow rounded-2xl p-6">
         {loading ? (
-          <div className="text-sm text-gray-500">Loading…</div>
+          <div className="text-sm text-gray-500">{isFrench ? "Chargement…" : "Loading…"}</div>
         ) : err ? (
-          <div className="text-sm text-red-600">API error: {err}</div>
+          <div className="text-sm text-red-600">{isFrench ? "Erreur API" : "API error"}: {err}</div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-4 text-sm">
-            <KV label="Candidate">
+            <KV label={labels.candidate}>
               <span className="font-medium truncate" title={candidateEmail}>{candidateEmail}</span>
             </KV>
-            <KV label="QCM score"><b>{pp(score)}</b></KV>
-            <KV label="Pass threshold"><b>{pp(passThreshold)}</b></KV>
-            <KV label="Overall match (keywords)"><b>{pp(overallMatch)}</b></KV>
+            <KV label={labels.qcmScore}><b>{pp(score)}</b></KV>
+            <KV label={labels.passThreshold}><b>{pp(passThreshold)}</b></KV>
+            <KV label={labels.overallMatch}><b>{pp(overallMatch)}</b></KV>
           </div>
         )}
       </div>
 
-      {/* Candidate profile (résumé + skills + dispo/salaire) */}
-      {!loading && !err && (cvSummary || (cvSkills && cvSkills.length) || availability || salary) && (
+      {/* Candidate profile (résumé + skills + dispo/salaire) - AFFICHÉ SEULEMENT SI PAS DE SNAPSHOT DANS LE RAPPORT AI */}
+      {!loading && !err && !ai?.candidate_snapshot && (cvSummary || (cvSkills && cvSkills.length) || availability || salary) && (
         <div className="bg-white shadow rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Candidate profile</h2>
+          <h2 className="text-lg font-semibold">{labels.candidateProfile}</h2>
           {cvSummary && <p className="text-sm text-gray-700 leading-6 whitespace-pre-line">{cvSummary}</p>}
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <KV label="Top skills">
+            <KV label={labels.topSkills}>
               {cvSkills && cvSkills.length > 0 ? <TagList items={cvSkills.slice(0, 12)} /> : <MutedDash />}
             </KV>
             <div className="grid grid-cols-2 gap-4">
-              <KV label="Availability">{availability || <MutedDash />}</KV>
-              <KV label="Salary">{salary || <MutedDash />}</KV>
+              <KV label={labels.availability}>{availability || <MutedDash />}</KV>
+              <KV label={labels.salary}>{salary || <MutedDash />}</KV>
             </div>
           </div>
         </div>
@@ -163,11 +200,11 @@ export default function AttemptReportPage() {
       {!loading && !err && ai && (
         <div className="bg-white shadow rounded-2xl p-6 space-y-6">
           <div className="flex items-center justify-between border-b pb-3">
-            <h2 className="text-xl font-semibold">Rapport de recrutement</h2>
+            <h2 className="text-xl font-semibold">{labels.recruitmentReport}</h2>
             <div className="flex items-center gap-3">
               {decision && <DecisionBadge label={decision} />}
               {typeof aiOverall === "number" && (
-                <span className="text-sm font-medium">Score global: <b>{pp(aiOverall)}</b></span>
+                <span className="text-sm font-medium">{labels.overallScore}: <b>{pp(aiOverall)}</b></span>
               )}
             </div>
           </div>
@@ -175,17 +212,17 @@ export default function AttemptReportPage() {
           {/* Informations candidat */}
           {ai.candidate_info && (ai.candidate_info.first_name || ai.candidate_info.last_name || ai.candidate_info.email) && (
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-              <div className="text-sm font-semibold mb-2 text-blue-900">Informations candidat</div>
+              <div className="text-sm font-semibold mb-2 text-blue-900">{labels.candidateInfo}</div>
               <div className="grid md:grid-cols-3 gap-3 text-sm">
                 {(ai.candidate_info.first_name || ai.candidate_info.last_name) && (
                   <div>
-                    <span className="text-gray-600">Nom complet: </span>
+                    <span className="text-gray-600">{labels.fullName}: </span>
                     <span className="font-medium">{[ai.candidate_info.first_name, ai.candidate_info.last_name].filter(Boolean).join(" ")}</span>
                   </div>
                 )}
                 {ai.candidate_info.email && (
                   <div>
-                    <span className="text-gray-600">Email: </span>
+                    <span className="text-gray-600">{labels.email}: </span>
                     <span className="font-medium">{String(ai.candidate_info.email || "")}</span>
                   </div>
                 )}
@@ -196,17 +233,17 @@ export default function AttemptReportPage() {
           {/* Contexte du besoin (JD) */}
           {ai.jd_context && (
             <div>
-              <div className="text-sm font-semibold mb-2 text-gray-900">Contexte du besoin</div>
+              <div className="text-sm font-semibold mb-2 text-gray-900">{labels.jobContext}</div>
               <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-4">
                 {String(ai.jd_context || "")}
               </div>
             </div>
           )}
 
-          {/* Snapshot candidat */}
+          {/* Snapshot candidat - REMPLACE le Candidate Profile pour éviter la duplication */}
           {ai.candidate_snapshot && (
             <div>
-              <div className="text-sm font-semibold mb-2 text-gray-900">Snapshot candidat (extrait du CV)</div>
+              <div className="text-sm font-semibold mb-2 text-gray-900">{labels.candidateSnapshot}</div>
               <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 rounded-lg p-4">
                 {String(ai.candidate_snapshot || "")}
               </div>
@@ -216,10 +253,10 @@ export default function AttemptReportPage() {
           {/* Score QCM */}
           {typeof ai.qcm_score === "number" && (
             <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
-              <div className="text-sm font-semibold mb-2 text-yellow-900">Score QCM</div>
+              <div className="text-sm font-semibold mb-2 text-yellow-900">{labels.qcmScore}</div>
               <div className="text-2xl font-bold text-yellow-800">{ai.qcm_score}%</div>
               <div className="text-xs text-yellow-700 mt-1">
-                Seuil de passage: {passThreshold}% {ai.qcm_score >= passThreshold ? "✓ Passé" : "✗ En dessous"}
+                {isFrench ? "Seuil de passage" : "Pass threshold"}: {passThreshold}% {ai.qcm_score >= passThreshold ? labels.passed : labels.below}
               </div>
             </div>
           )}
@@ -228,7 +265,7 @@ export default function AttemptReportPage() {
           <div className="grid md:grid-cols-3 gap-4">
             {ai.strengths && Array.isArray(ai.strengths) && ai.strengths.length > 0 && (
               <div>
-                <div className="text-sm font-semibold mb-2 text-green-700">Forces</div>
+                <div className="text-sm font-semibold mb-2 text-green-700">{labels.strengths}</div>
                 <ul className="space-y-1 text-sm text-gray-700">
                   {ai.strengths.map((s, i) => {
                     const text = String(s || "").trim();
@@ -245,7 +282,7 @@ export default function AttemptReportPage() {
             )}
             {ai.gaps && Array.isArray(ai.gaps) && ai.gaps.length > 0 && (
               <div>
-                <div className="text-sm font-semibold mb-2 text-orange-700">Lacunes</div>
+                <div className="text-sm font-semibold mb-2 text-orange-700">{labels.gaps}</div>
                 <ul className="space-y-1 text-sm text-gray-700">
                   {ai.gaps.map((g, i) => {
                     const text = String(g || "").trim();
@@ -262,7 +299,7 @@ export default function AttemptReportPage() {
             )}
             {ai.risks && Array.isArray(ai.risks) && ai.risks.length > 0 && (
               <div>
-                <div className="text-sm font-semibold mb-2 text-red-700">Risques</div>
+                <div className="text-sm font-semibold mb-2 text-red-700">{labels.risks}</div>
                 <ul className="space-y-1 text-sm text-gray-700">
                   {ai.risks.map((r, i) => {
                     const text = String(r || "").trim();
@@ -284,13 +321,13 @@ export default function AttemptReportPage() {
             <div className="grid md:grid-cols-2 gap-4">
               {ai.availability && (
                 <div>
-                  <div className="text-sm font-semibold mb-1 text-gray-700">Disponibilité</div>
+                  <div className="text-sm font-semibold mb-1 text-gray-700">{labels.availability}</div>
                   <div className="text-sm text-gray-600">{String(ai.availability || "")}</div>
                 </div>
               )}
               {ai.notice_period && (
                 <div>
-                  <div className="text-sm font-semibold mb-1 text-gray-700">Préavis</div>
+                  <div className="text-sm font-semibold mb-1 text-gray-700">{labels.noticePeriod}</div>
                   <div className="text-sm text-gray-600">{String(ai.notice_period || "")}</div>
                 </div>
               )}
@@ -300,7 +337,7 @@ export default function AttemptReportPage() {
           {/* Prétention salariale */}
           {ai.salary_expectation && (
             <div>
-              <div className="text-sm font-semibold mb-1 text-gray-700">Prétention salariale</div>
+              <div className="text-sm font-semibold mb-1 text-gray-700">{labels.salaryExpectation}</div>
               <div className="text-sm font-medium text-gray-900">{String(ai.salary_expectation || "")}</div>
             </div>
           )}
@@ -315,7 +352,7 @@ export default function AttemptReportPage() {
       {/* Attachments (CV) */}
       {!loading && !err && (
         <div className="bg-white shadow rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-3">Attachments</h2>
+          <h2 className="text-lg font-semibold mb-3">{labels.attachments}</h2>
           {cvUrl ? (
             <div className="text-sm">
               <a
@@ -324,12 +361,12 @@ export default function AttemptReportPage() {
                 rel="noopener noreferrer"
                 className="underline hover:opacity-80"
               >
-                Open CV{cvFilename ? ` (${cvFilename})` : ""}
+                {labels.openCv}{cvFilename ? ` (${cvFilename})` : ""}
               </a>
             </div>
           ) : (
             <div className="text-sm text-gray-500">
-              {cvEphemeral ? "CV not stored (ephemeral analysis)." : "No CV."}
+              {cvEphemeral ? labels.cvNotStored : labels.noCv}
             </div>
           )}
         </div>
