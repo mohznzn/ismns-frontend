@@ -14,6 +14,7 @@ export default function QcmResultsPage() {
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all"); // all | ongoing | finished | passed | failed
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -41,6 +42,41 @@ export default function QcmResultsPage() {
       alive = false;
     };
   }, [id]);
+
+  const handleDownloadReport = async (e, attemptId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!attemptId || downloadingId) {
+      console.log("[handleDownloadReport] Skipping: attemptId=", attemptId, "downloadingId=", downloadingId);
+      return;
+    }
+    console.log("[handleDownloadReport] Starting download for attempt:", attemptId);
+    try {
+      setDownloadingId(attemptId);
+      console.log("[handleDownloadReport] Calling API...");
+      const { blob, filename } = await admin.downloadAttemptAIReportPdf(attemptId);
+      console.log("[handleDownloadReport] Got blob, size:", blob.size, "filename:", filename);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log("[handleDownloadReport] Download triggered successfully");
+    } catch (err) {
+      console.error("[handleDownloadReport] Failed to download AI report", err);
+      const message = err?.userMessage || err?.message || "Impossible de télécharger le rapport.";
+      if (typeof window !== "undefined") {
+        alert(message);
+      } else {
+        setError(message);
+      }
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   // statut dérivé (ongoing/passed/failed/finished)
   const derivedStatus = (it) => {
@@ -183,14 +219,20 @@ export default function QcmResultsPage() {
                         <Td>{formatDate(it.started_at)}</Td>
                         <Td>{formatDate(it.finished_at)}</Td>
                         <Td>{formatDuration(it.duration_s)}</Td>
-                        <Td>
-                          <Link
-                            href={`/admin/attempt/${it.attempt_id}/report`}
-                            className="underline hover:opacity-80"
-                            prefetch={false}
+                        <Td onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDownloadReport(e, it.attempt_id);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            disabled={downloadingId === it.attempt_id}
+                            style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
                           >
-                            Report
-                          </Link>
+                            {downloadingId === it.attempt_id ? "Downloading…" : "Report"}
+                          </button>
                         </Td>
                       </tr>
                     );
