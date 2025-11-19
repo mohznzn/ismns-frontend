@@ -359,6 +359,50 @@ export const admin = {
   // Rapport IA fusionné (JD + CV + QCM)
   getAttemptAIReport: (attemptId) =>
     apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}/ai_report`),
+
+  downloadAttemptAIReportPdf: async (attemptId) => {
+    if (!API_BASE) throw new Error("API base URL is not set");
+    const url = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf`;
+    const res = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      let payload = null;
+      if (contentType.includes("application/json")) {
+        try {
+          payload = await res.json();
+        } catch {
+          payload = null;
+        }
+      } else {
+        try {
+          payload = await res.text();
+        } catch {
+          payload = null;
+        }
+      }
+
+      const message =
+        payload?.message || payload?.error || `Téléchargement impossible (${res.status})`;
+      const err = new Error(message);
+      err.status = res.status;
+      err.data = payload;
+      throw err;
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get("content-disposition") || "";
+    let filename = `ai_report_${attemptId}.pdf`;
+    const match = disposition.match(/filename="([^"]+)"/i);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+
+    return { blob, filename };
+  },
 };
 
 // ================= Storage local tentative (candidat) =================
