@@ -360,9 +360,9 @@ export const admin = {
   getAttemptAIReport: (attemptId) =>
     apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}/ai_report`),
 
-  downloadAttemptAIReportPdf: async (attemptId) => {
+  downloadAttemptAIReportPdf: async (attemptId, regenerate = true) => {
     if (!API_BASE) throw new Error("API base URL is not set");
-    const url = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf`;
+    const url = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf${regenerate ? "?regenerate=true" : ""}`;
     const res = await fetch(url, {
       method: "GET",
       credentials: "include",
