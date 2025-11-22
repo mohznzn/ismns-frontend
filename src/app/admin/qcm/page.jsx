@@ -184,14 +184,7 @@ export default function MyQCMsPage() {
                       Results
                     </Link>
 
-                    {q.status === "draft" ? (
-                      <button
-                        onClick={() => onPublish(q.id)}
-                        className="px-3 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-800"
-                      >
-                        Publish
-                      </button>
-                    ) : q.share_token ? (
+                    {q.share_token ? (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => copy(shareUrl)}

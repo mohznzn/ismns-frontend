@@ -13,6 +13,7 @@ export default function ReviewQcmPage() {
   const [questions, setQuestions] = useState([]); // [{ id, skill_tag, text, options[], explanation }]
   const [error, setError] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [passThreshold, setPassThreshold] = useState(70); // Default pass threshold
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -22,6 +23,10 @@ export default function ReviewQcmPage() {
       const data = await admin.getQcmAdmin(id);
       setQcm(data.qcm || null);
       setQuestions(data.questions || []);
+      // Charger le pass_threshold depuis le QCM s'il existe, sinon utiliser 70 par défaut
+      if (data.qcm?.pass_threshold !== undefined && data.qcm.pass_threshold !== null) {
+        setPassThreshold(data.qcm.pass_threshold);
+      }
     } catch (e) {
       setError(e?.message || "Failed to fetch QCM");
     } finally {
@@ -65,9 +70,15 @@ export default function ReviewQcmPage() {
   };
 
   const onPublish = async () => {
+    // Validation du pass_threshold
+    if (!passThreshold || passThreshold < 0 || passThreshold > 100) {
+      alert("Le seuil de passage doit être entre 0 et 100");
+      return;
+    }
+    
     try {
       setPublishing(true);
-      const res = await admin.publishQcm(id); // { share_url, token }
+      const res = await admin.publishQcm(id, passThreshold); // { share_url, token }
       setQcm((prev) =>
         prev
           ? { ...prev, status: "published", share_token: res?.token || prev.share_token }
@@ -126,13 +137,30 @@ export default function ReviewQcmPage() {
           </span>
 
           {qcm.status === "draft" ? (
-            <button
-              onClick={onPublish}
-              disabled={publishing}
-              className="px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50"
-            >
-              {publishing ? "Publishing…" : "Publish"}
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <label htmlFor="pass-threshold" className="text-sm text-gray-600">
+                  Pass threshold (%):
+                </label>
+                <input
+                  id="pass-threshold"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={passThreshold}
+                  onChange={(e) => setPassThreshold(parseInt(e.target.value) || 70)}
+                  className="w-20 px-2 py-1 rounded-lg border text-sm"
+                  required
+                />
+              </div>
+              <button
+                onClick={onPublish}
+                disabled={publishing || !passThreshold || passThreshold < 0 || passThreshold > 100}
+                className="px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50"
+              >
+                {publishing ? "Publishing…" : "Publish"}
+              </button>
+            </div>
           ) : (
             qcm.share_token && (
               <div className="flex items-center gap-2">

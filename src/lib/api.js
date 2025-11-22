@@ -329,8 +329,8 @@ export const admin = {
     };
   },
 
-  publishQcm: (qcmId) =>
-    apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, {}),
+  publishQcm: (qcmId, passThreshold) =>
+    apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, { pass_threshold: passThreshold }),
 
   getQcmAdmin: (qcmId) => apiGet(`/qcm/${encodeURIComponent(qcmId)}/admin`),
 
