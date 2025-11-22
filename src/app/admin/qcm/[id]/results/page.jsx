@@ -15,6 +15,8 @@ export default function QcmResultsPage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all"); // all | ongoing | finished | passed | failed
   const [downloadingId, setDownloadingId] = useState(null);
+  const [cvModalOpen, setCvModalOpen] = useState(false);
+  const [selectedCvUrl, setSelectedCvUrl] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -42,6 +44,14 @@ export default function QcmResultsPage() {
       alive = false;
     };
   }, [id]);
+
+  const handleViewCv = (e, attemptId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const cvUrl = admin.getAttemptCvUrl(attemptId);
+    setSelectedCvUrl(cvUrl);
+    setCvModalOpen(true);
+  };
 
   const handleDownloadReport = async (e, attemptId) => {
     e.preventDefault();
@@ -196,13 +206,14 @@ export default function QcmResultsPage() {
                   <Th>Started</Th>
                   <Th>Finished</Th>
                   <Th>Duration</Th>
+                  <Th>CV</Th>
                   <Th>Actions</Th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-6 text-center text-gray-500">
+                    <td colSpan={8} className="py-6 text-center text-gray-500">
                       No attempts yet.
                     </td>
                   </tr>
@@ -219,6 +230,16 @@ export default function QcmResultsPage() {
                         <Td>{formatDate(it.started_at)}</Td>
                         <Td>{formatDate(it.finished_at)}</Td>
                         <Td>{formatDuration(it.duration_s)}</Td>
+                        <Td onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => handleViewCv(e, it.attempt_id)}
+                            className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 cursor-pointer"
+                            style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
+                          >
+                            View CV
+                          </button>
+                        </Td>
                         <Td onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
@@ -242,6 +263,17 @@ export default function QcmResultsPage() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* CV Modal */}
+      {cvModalOpen && selectedCvUrl && (
+        <CvModal
+          cvUrl={selectedCvUrl}
+          onClose={() => {
+            setCvModalOpen(false);
+            setSelectedCvUrl(null);
+          }}
+        />
       )}
     </div>
   );
@@ -321,6 +353,70 @@ function toCsvRow(arr) {
       return needsQuotes ? `"${escaped}"` : escaped;
     })
     .join(",");
+}
+
+/* ───────────────── CV Modal Component ───────────────── */
+
+function CvModal({ cvUrl, onClose }) {
+  useEffect(() => {
+    // Fermer avec la touche Escape
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    // Empêcher le scroll du body quand le modal est ouvert
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">CV du candidat</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* PDF Viewer */}
+        <div className="flex-1 overflow-hidden">
+          <iframe
+            src={cvUrl}
+            className="w-full h-full border-0"
+            title="CV Viewer"
+            style={{ minHeight: "600px" }}
+          />
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function downloadCsv(rows) {

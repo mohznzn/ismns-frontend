@@ -403,6 +403,12 @@ export const admin = {
 
     return { blob, filename };
   },
+
+  // Récupérer l'URL du CV pour affichage dans une popup
+  getAttemptCvUrl: (attemptId) => {
+    if (!API_BASE) throw new Error("API base URL is not set");
+    return `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/cv?inline=true`;
+  },
 };
 
 // ================= Storage local tentative (candidat) =================
