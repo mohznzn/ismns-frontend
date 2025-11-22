@@ -234,8 +234,10 @@ export default function QcmResultsPage() {
                           <button
                             type="button"
                             onClick={(e) => handleViewCv(e, it.attempt_id)}
-                            className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 cursor-pointer"
+                            className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            disabled={!it.has_cv}
                             style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
+                            title={!it.has_cv ? "Le candidat n'a pas importé son CV" : ""}
                           >
                             View CV
                           </button>
@@ -249,8 +251,9 @@ export default function QcmResultsPage() {
                               handleDownloadReport(e, it.attempt_id);
                             }}
                             className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                            disabled={downloadingId === it.attempt_id}
+                            disabled={downloadingId === it.attempt_id || !it.has_cv}
                             style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
+                            title={!it.has_cv ? "Le candidat n'a pas importé son CV" : ""}
                           >
                             {downloadingId === it.attempt_id ? "Downloading…" : "Report"}
                           </button>
