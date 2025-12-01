@@ -28,12 +28,65 @@ export default function NewQcmPage() {
     e.preventDefault();
     setExtractingSkills(true);
     setError("");
+    setGenerationProgress({ current: 0, total: 1, status: "starting", message: "Extracting skills..." });
 
     try {
       const data = await admin.extractSkillsFromJD({
         job_description: jobDescription.trim(),
       });
 
+      // Si on reçoit un task_id, suivre la progression via SSE
+      if (data?.task_id) {
+        const cleanup = admin.listenToTaskProgress(
+          data.task_id,
+          (progress) => {
+            setGenerationProgress({
+              current: progress.current || 0,
+              total: progress.total || 1,
+              status: progress.status || "processing",
+              message: progress.message || "Extracting skills...",
+            });
+
+            // Si terminé avec succès
+            if (progress.status === "completed" && progress.result) {
+              const skills = progress.result?.skills || [];
+              if (skills.length === 0) {
+                setError("Aucun skill détecté dans la description de poste");
+                setExtractingSkills(false);
+                setGenerationProgress(null);
+                return;
+              }
+
+              setExtractedSkills(skills);
+              setSelectedSkills([...skills]); // Sélectionner tous par défaut
+              setCustomSkills([]); // Reset les skills personnalisés
+              setNewSkillInput(""); // Reset l'input
+              setStep(2);
+              setExtractingSkills(false);
+              setGenerationProgress(null);
+            }
+
+            // Si erreur
+            if (progress.status === "error") {
+              const errorMsg = progress.error || "Erreur lors de l'extraction des skills";
+              setError(errorMsg);
+              setExtractingSkills(false);
+              setGenerationProgress(null);
+            }
+          },
+          (err) => {
+            console.error("SSE error:", err);
+            setError("Erreur de connexion lors du suivi de la progression");
+            setExtractingSkills(false);
+            setGenerationProgress(null);
+          }
+        );
+
+        // Nettoyer la connexion SSE si le composant est démonté
+        return cleanup;
+      }
+
+      // Format synchrone (fallback si Celery n'est pas disponible)
       const skills = data?.skills || [];
       if (skills.length === 0) {
         throw new Error("Aucun skill détecté dans la description de poste");
@@ -44,6 +97,8 @@ export default function NewQcmPage() {
       setCustomSkills([]); // Reset les skills personnalisés
       setNewSkillInput(""); // Reset l'input
       setStep(2);
+      setExtractingSkills(false);
+      setGenerationProgress(null);
     } catch (err) {
       const apiMsg =
         err?.data?.message ||
@@ -53,8 +108,8 @@ export default function NewQcmPage() {
 
       console.error("extract_skills_from_jd error:", err);
       setError(apiMsg);
-    } finally {
       setExtractingSkills(false);
+      setGenerationProgress(null);
     }
   };
 
@@ -249,6 +304,39 @@ export default function NewQcmPage() {
             >
               {extractingSkills ? "Extracting skills…" : "Extract Skills"}
             </button>
+            
+            {/* Barre de progression pour l'extraction des skills */}
+            {generationProgress && step === 1 && (
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className={generationProgress.status === "completed" ? "text-green-600" : generationProgress.status === "error" ? "text-red-600" : "text-gray-600"}>
+                    {generationProgress.status === "completed"
+                      ? "Skills extracted successfully"
+                      : generationProgress.status === "error"
+                      ? "Error extracting skills"
+                      : generationProgress.message || "Extracting skills..."}
+                  </span>
+                  <span className="text-gray-500">
+                    {generationProgress.current || 0}/{generationProgress.total || 1}
+                  </span>
+                </div>
+                {/* Barre de progression */}
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      generationProgress.status === "completed"
+                        ? "bg-green-500"
+                        : generationProgress.status === "error"
+                        ? "bg-red-500"
+                        : "bg-black"
+                    }`}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, ((generationProgress.current || 0) / (generationProgress.total || 1)) * 100))}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </form>
       )}

@@ -246,27 +246,34 @@ export const publicApi = {
 
 // ================= ADMIN (protégé par cookie) =================
 export const admin = {
-  // Extraire uniquement les skills depuis la JD (rapide)
-  extractSkillsFromJD: ({ job_description }) =>
-    apiPost(`/qcm/extract_skills_from_jd`, {
+  // Extraire uniquement les skills depuis la JD (via Celery, retourne task_id)
+  extractSkillsFromJD: async ({ job_description }) => {
+    const response = await apiPost(`/qcm/extract_skills_from_jd`, {
       job_description,
-    }),
-
-  // Créer un QCM avec progression en temps réel (retourne task_id)
-  createDraftFromJD: async ({ job_description, language = "en", confirmed_skills }) => {
-    const response = await apiPost(`/qcm/create_draft_from_jd`, {
-      job_description,
-      language,
-      confirmed_skills: confirmed_skills || [],
     });
-    // La réponse contient toujours un task_id maintenant (Celery ou thread)
+    
+    // Si on reçoit un task_id (code 202), retourner l'objet avec task_id
+    // Sinon, retourner directement les skills (fallback synchrone)
+    if (response.task_id) {
+      return { task_id: response.task_id };
+    }
+    
+    // Format synchrone (fallback)
     return response;
   },
 
-  // Écouter la progression de génération via SSE (legacy, pour compatibilité)
-  listenToGenerationProgress: (taskId, onProgress, onError) => {
+  // Créer un QCM avec progression en temps réel (retourne task_id)
+  createDraftFromJD: ({ job_description, language = "en", confirmed_skills }) =>
+    apiPost(`/qcm/create_draft_from_jd`, {
+      job_description,
+      language,
+      ...(confirmed_skills ? { confirmed_skills } : {}),
+    }),
+
+  // Écouter la progression d'une tâche Celery via SSE (générique)
+  listenToTaskProgress: (taskId, onProgress, onError) => {
     const baseUrl = API_BASE.replace(/\/$/, "");
-    const url = `${baseUrl}/qcm/generation_progress/${encodeURIComponent(taskId)}`;
+    const url = `${baseUrl}/tasks/${encodeURIComponent(taskId)}/stream`;
     
     let eventSource;
     let closed = false;
@@ -314,92 +321,26 @@ export const admin = {
         return;
       }
       
-      // Vraie erreur (connexion interrompue, timeout, etc.)
       console.error("SSE error:", err);
-      closed = true;
-      eventSource.close();
-      
-      // Ne pas appeler onError pour les erreurs SSE car ça peut causer des redirections
-      // Laisser le frontend gérer via les messages de progression
-      // onError(err);
+      if (!closed) {
+        closed = true;
+        eventSource.close();
+        onError(err);
+      }
     };
     
+    // Retourner une fonction de cleanup
     return () => {
-      closed = true;
-      if (eventSource) {
+      if (!closed && eventSource) {
+        closed = true;
         eventSource.close();
       }
     };
   },
 
-  // Fonction générique pour écouter la progression de n'importe quelle tâche Celery
-  listenToTaskProgress: (taskId, onProgress, onError) => {
-    const baseUrl = API_BASE.replace(/\/$/, "");
-    const url = `${baseUrl}/tasks/${encodeURIComponent(taskId)}/stream`;
-    
-    let eventSource;
-    let closed = false;
-    
-    try {
-      eventSource = new EventSource(url, {
-        withCredentials: true,
-      });
-    } catch (err) {
-      console.error("Failed to create EventSource:", err);
-      onError(err);
-      return () => {}; // Cleanup function vide
-    }
-    
-    eventSource.onmessage = (event) => {
-      try {
-        const progress = JSON.parse(event.data);
-        onProgress(progress);
-        
-        // Fermer la connexion si terminé
-        if (progress.status === "completed" || progress.status === "error") {
-          closed = true;
-          eventSource.close();
-        }
-      } catch (err) {
-        console.error("Error parsing progress:", err);
-        if (!closed) {
-          onError(err);
-        }
-      }
-    };
-    
-    eventSource.onerror = (err) => {
-      if (closed) {
-        return;
-      }
-      
-      if (eventSource.readyState === EventSource.CLOSED) {
-        console.log("SSE connection closed");
-        return;
-      }
-      
-      console.error("SSE error:", err);
-      closed = true;
-      eventSource.close();
-    };
-    
-    return () => {
-      closed = true;
-      if (eventSource) {
-        eventSource.close();
-      }
-    };
-  },
-
-  // Fonction de polling alternatif (si SSE ne fonctionne pas)
-  pollTaskStatus: async (taskId) => {
-    const response = await fetch(`${API_BASE}/tasks/${taskId}/status`, {
-      credentials: "include",
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return response.json();
+  // Écouter la progression de génération via SSE (legacy, utilise listenToTaskProgress)
+  listenToGenerationProgress: (taskId, onProgress, onError) => {
+    return admin.listenToTaskProgress(taskId, onProgress, onError);
   },
 
   publishQcm: (qcmId, passThreshold) =>
@@ -407,20 +348,13 @@ export const admin = {
 
   getQcmAdmin: (qcmId) => apiGet(`/qcm/${encodeURIComponent(qcmId)}/admin`),
 
-  regenerateQuestion: async (qcmId, qid) => {
-    const response = await apiPost(
+  regenerateQuestion: (qcmId, qid) =>
+    apiPost(
       `/qcm/${encodeURIComponent(qcmId)}/question/${encodeURIComponent(
         qid
       )}/regenerate`,
       {}
-    );
-    // Si la réponse contient un task_id, c'est qu'on utilise Celery
-    if (response.task_id) {
-      return response;
-    }
-    // Sinon, c'est la réponse synchrone classique
-    return response;
-  },
+    ),
 
   listMyQcms: () => apiGet(`/admin/qcm`),
 
@@ -447,14 +381,6 @@ export const admin = {
       method: "GET",
       credentials: "include",
     });
-
-    // Si le statut est 202, c'est qu'une tâche Celery a été lancée
-    if (res.status === 202) {
-      const data = await res.json();
-      if (data.task_id) {
-        return { task_id: data.task_id, status: "processing" };
-      }
-    }
 
     if (!res.ok) {
       const contentType = res.headers.get("content-type") || "";
