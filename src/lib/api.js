@@ -271,22 +271,87 @@ export const admin = {
     }),
 
   // Écouter la progression d'une tâche Celery via SSE (générique)
+  // Fallback automatique vers polling si SSE échoue
   listenToTaskProgress: (taskId, onProgress, onError) => {
     const baseUrl = API_BASE.replace(/\/$/, "");
-    // EventSource envoie automatiquement les cookies, pas besoin de withCredentials
     const url = `${baseUrl}/tasks/${encodeURIComponent(taskId)}/stream`;
     
     let eventSource;
     let closed = false;
+    let fallbackToPolling = false;
+    let pollingInterval = null;
+    
+    // Fonction de fallback vers polling
+    const startPolling = () => {
+      if (closed) return;
+      
+      console.log(`[listenToTaskProgress] Falling back to polling for task ${taskId}`);
+      fallbackToPolling = true;
+      
+      const poll = async () => {
+        if (closed) return;
+        
+        try {
+          const response = await fetch(`${baseUrl}/tasks/${encodeURIComponent(taskId)}/status`, {
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+            },
+          });
+          
+          if (!response.ok) {
+            if (response.status === 401) {
+              closed = true;
+              if (pollingInterval) clearInterval(pollingInterval);
+              onError(new Error("unauthenticated"));
+              return;
+            }
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.status === 'completed') {
+            closed = true;
+            if (pollingInterval) clearInterval(pollingInterval);
+            onProgress({ status: 'completed', result: data.result });
+          } else if (data.status === 'error') {
+            closed = true;
+            if (pollingInterval) clearInterval(pollingInterval);
+            onProgress({ status: 'error', error: data.error });
+          } else {
+            // Tâche en cours
+            onProgress({
+              status: data.status || 'processing',
+              current: data.current || 0,
+              total: data.total || 1,
+              message: data.message || 'Processing...',
+            });
+          }
+        } catch (err) {
+          console.error(`[listenToTaskProgress] Polling error:`, err);
+          if (!closed) {
+            closed = true;
+            if (pollingInterval) clearInterval(pollingInterval);
+            onError(err);
+          }
+        }
+      };
+      
+      // Poller immédiatement puis toutes les 2 secondes
+      poll();
+      pollingInterval = setInterval(poll, 2000);
+    };
     
     try {
-      // EventSource n'accepte pas d'options dans le constructeur
-      // Les cookies sont envoyés automatiquement par le navigateur
       eventSource = new EventSource(url);
     } catch (err) {
       console.error("Failed to create EventSource:", err);
-      onError(err);
-      return () => {}; // Cleanup function vide
+      startPolling();
+      return () => {
+        closed = true;
+        if (pollingInterval) clearInterval(pollingInterval);
+      };
     }
     
     eventSource.onmessage = (event) => {
@@ -322,7 +387,6 @@ export const admin = {
     };
     
     eventSource.onerror = (err) => {
-      // Ne pas appeler onError si déjà fermé ou si c'est juste la fermeture normale
       if (closed) {
         return;
       }
@@ -335,29 +399,27 @@ export const admin = {
         error: err
       });
       
-      // EventSource peut déclencher onerror même lors d'une fermeture normale
-      // Vérifier l'état de la connexion
-      if (readyState === EventSource.CLOSED) {
-        // Connexion fermée normalement ou après erreur
-        console.log("[listenToTaskProgress] SSE connection closed normally");
+      // Si la connexion est fermée ou en erreur, basculer vers polling
+      if (readyState === EventSource.CLOSED || readyState === EventSource.CONNECTING) {
+        if (!fallbackToPolling) {
+          eventSource.close();
+          startPolling();
+        }
         return;
       }
       
-      // Si on est en train de se connecter ou ouvert, c'est une vraie erreur
-      if (readyState === EventSource.CONNECTING || readyState === EventSource.OPEN) {
-        if (!closed) {
-          closed = true;
-          eventSource.close();
-          onError(new Error(`SSE connection error (state: ${readyState === EventSource.CONNECTING ? 'CONNECTING' : 'OPEN'})`));
-        }
+      // Si on est ouvert mais erreur, continuer à essayer SSE
+      if (readyState === EventSource.OPEN) {
+        // Ne rien faire, laisser SSE continuer
       }
     };
     
     // Retourner une fonction de cleanup
     return () => {
-      if (!closed && eventSource) {
+      if (!closed) {
         closed = true;
-        eventSource.close();
+        if (eventSource) eventSource.close();
+        if (pollingInterval) clearInterval(pollingInterval);
       }
     };
   },
