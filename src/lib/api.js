@@ -361,9 +361,14 @@ export const admin = {
         
         // Vérifier si c'est une erreur d'authentification
         if (progress.status === "error" && progress.error === "unauthenticated") {
-          closed = true;
-          eventSource.close();
-          onError(new Error("unauthenticated"));
+          // Basculer vers polling au lieu de déclencher une erreur
+          // EventSource ne peut pas envoyer les cookies en cross-origin
+          console.log(`[listenToTaskProgress] SSE returned unauthenticated, switching to polling`);
+          if (!fallbackToPolling) {
+            closed = true;
+            eventSource.close();
+            startPolling();
+          }
           return;
         }
         
@@ -399,9 +404,11 @@ export const admin = {
         error: err
       });
       
-      // Si la connexion est fermée ou en erreur, basculer vers polling
+      // Si la connexion est fermée ou en erreur (y compris 401), basculer vers polling
+      // EventSource ne peut pas envoyer les cookies en cross-origin, donc on bascule directement vers polling
       if (readyState === EventSource.CLOSED || readyState === EventSource.CONNECTING) {
         if (!fallbackToPolling) {
+          console.log(`[listenToTaskProgress] SSE failed (likely CORS/cookie issue), switching to polling`);
           eventSource.close();
           startPolling();
         }

@@ -75,20 +75,26 @@ export default function NewQcmPage() {
             }
           },
           (err) => {
-            console.error("SSE error:", err);
-            // Vérifier si c'est une erreur d'authentification
+            console.error("SSE/polling error:", err);
+            // Ne pas déclencher d'erreur si c'est juste un problème de connexion SSE
+            // Le polling devrait prendre le relais automatiquement
+            // Seulement afficher une erreur si le polling échoue aussi après plusieurs tentatives
             const errorMsg = err?.message?.includes('unauthenticated') || err?.message?.includes('401')
               ? "Session expirée. Veuillez vous reconnecter."
-              : "Erreur de connexion lors du suivi de la progression";
-            setError(errorMsg);
-            setExtractingSkills(false);
-            setGenerationProgress(null);
+              : "Erreur de connexion lors du suivi de la progression. Tentative de récupération...";
             
-            // Rediriger vers login si authentification échouée
-            if (errorMsg.includes("Session expirée")) {
+            // Ne pas afficher d'erreur immédiatement, laisser le polling essayer
+            // Seulement si c'est vraiment une erreur d'authentification, alors déconnecter
+            if (err?.message?.includes('unauthenticated') || err?.message?.includes('401')) {
+              setError("Session expirée. Veuillez vous reconnecter.");
+              setExtractingSkills(false);
+              setGenerationProgress(null);
               setTimeout(() => {
                 window.location.href = "/login";
               }, 2000);
+            } else {
+              // Pour les autres erreurs, ne pas bloquer, le polling devrait récupérer
+              console.log("SSE failed, polling should take over");
             }
           }
         );
