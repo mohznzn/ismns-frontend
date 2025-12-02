@@ -76,9 +76,20 @@ export default function NewQcmPage() {
           },
           (err) => {
             console.error("SSE error:", err);
-            setError("Erreur de connexion lors du suivi de la progression");
+            // Vérifier si c'est une erreur d'authentification
+            const errorMsg = err?.message?.includes('unauthenticated') || err?.message?.includes('401')
+              ? "Session expirée. Veuillez vous reconnecter."
+              : "Erreur de connexion lors du suivi de la progression";
+            setError(errorMsg);
             setExtractingSkills(false);
             setGenerationProgress(null);
+            
+            // Rediriger vers login si authentification échouée
+            if (errorMsg.includes("Session expirée")) {
+              setTimeout(() => {
+                window.location.href = "/login";
+              }, 2000);
+            }
           }
         );
 
@@ -147,15 +158,23 @@ export default function NewQcmPage() {
       admin.listenToGenerationProgress(
         taskId,
         (progress) => {
+          console.log("[onGenerateQuestions] Progress update:", progress);
           setGenerationProgress(progress);
           
           // Si terminé avec succès, rediriger
-          if (progress.status === "completed" && progress.result?.qcm_id) {
-            setLoading(false);
-            // Petit délai pour que l'utilisateur voie "100%" avant la redirection
-            setTimeout(() => {
-              router.replace(`/admin/qcm/${progress.result.qcm_id}/review`);
-            }, 500);
+          if (progress.status === "completed") {
+            const qcmId = progress.result?.qcm_id || progress.result?.result?.qcm_id;
+            if (qcmId) {
+              setLoading(false);
+              // Petit délai pour que l'utilisateur voie "100%" avant la redirection
+              setTimeout(() => {
+                router.replace(`/admin/qcm/${qcmId}/review`);
+              }, 500);
+            } else {
+              console.error("[onGenerateQuestions] No qcm_id in result:", progress.result);
+              setError("Erreur: QCM ID manquant dans la réponse");
+              setLoading(false);
+            }
           }
           
           // Si erreur, afficher le message (mais ne pas rediriger)

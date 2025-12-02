@@ -273,15 +273,16 @@ export const admin = {
   // Écouter la progression d'une tâche Celery via SSE (générique)
   listenToTaskProgress: (taskId, onProgress, onError) => {
     const baseUrl = API_BASE.replace(/\/$/, "");
+    // EventSource envoie automatiquement les cookies, pas besoin de withCredentials
     const url = `${baseUrl}/tasks/${encodeURIComponent(taskId)}/stream`;
     
     let eventSource;
     let closed = false;
     
     try {
-      eventSource = new EventSource(url, {
-        withCredentials: true,
-      });
+      // EventSource n'accepte pas d'options dans le constructeur
+      // Les cookies sont envoyés automatiquement par le navigateur
+      eventSource = new EventSource(url);
     } catch (err) {
       console.error("Failed to create EventSource:", err);
       onError(err);
@@ -291,6 +292,16 @@ export const admin = {
     eventSource.onmessage = (event) => {
       try {
         const progress = JSON.parse(event.data);
+        console.log("[listenToTaskProgress] Received progress:", progress);
+        
+        // Vérifier si c'est une erreur d'authentification
+        if (progress.status === "error" && progress.error === "unauthenticated") {
+          closed = true;
+          eventSource.close();
+          onError(new Error("unauthenticated"));
+          return;
+        }
+        
         onProgress(progress);
         
         // Fermer la connexion si terminé
@@ -299,11 +310,15 @@ export const admin = {
           eventSource.close();
         }
       } catch (err) {
-        console.error("Error parsing progress:", err);
+        console.error("Error parsing progress:", err, "Raw data:", event.data);
         if (!closed) {
           onError(err);
         }
       }
+    };
+    
+    eventSource.onopen = () => {
+      console.log("[listenToTaskProgress] SSE connection opened for task:", taskId);
     };
     
     eventSource.onerror = (err) => {
@@ -312,20 +327,29 @@ export const admin = {
         return;
       }
       
+      const readyState = eventSource.readyState;
+      console.error(`[listenToTaskProgress] SSE error for task ${taskId}:`, {
+        readyState,
+        readyStateText: readyState === EventSource.CONNECTING ? 'CONNECTING' : 
+                        readyState === EventSource.OPEN ? 'OPEN' : 'CLOSED',
+        error: err
+      });
+      
       // EventSource peut déclencher onerror même lors d'une fermeture normale
       // Vérifier l'état de la connexion
-      if (eventSource.readyState === EventSource.CLOSED) {
+      if (readyState === EventSource.CLOSED) {
         // Connexion fermée normalement ou après erreur
-        // Ne pas rediriger vers login si c'est juste une fermeture normale
-        console.log("SSE connection closed");
+        console.log("[listenToTaskProgress] SSE connection closed normally");
         return;
       }
       
-      console.error("SSE error:", err);
-      if (!closed) {
-        closed = true;
-        eventSource.close();
-        onError(err);
+      // Si on est en train de se connecter ou ouvert, c'est une vraie erreur
+      if (readyState === EventSource.CONNECTING || readyState === EventSource.OPEN) {
+        if (!closed) {
+          closed = true;
+          eventSource.close();
+          onError(new Error(`SSE connection error (state: ${readyState === EventSource.CONNECTING ? 'CONNECTING' : 'OPEN'})`));
+        }
       }
     };
     
