@@ -283,7 +283,8 @@ export const admin = {
     
     // Fonction de fallback vers polling
     const startPolling = () => {
-      if (closed) return;
+      // Vérifier si le polling a déjà été démarré
+      if (closed || fallbackToPolling || pollingInterval) return;
       
       console.log(`[listenToTaskProgress] Falling back to polling for task ${taskId}`);
       fallbackToPolling = true;
@@ -300,12 +301,13 @@ export const admin = {
           });
           
           if (!response.ok) {
-            if (response.status === 401) {
-              closed = true;
-              if (pollingInterval) clearInterval(pollingInterval);
-              onError(new Error("unauthenticated"));
-              return;
-            }
+          if (response.status === 401) {
+            closed = true;
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = null;
+            onError(new Error("unauthenticated"));
+            return;
+          }
             throw new Error(`HTTP ${response.status}`);
           }
           
@@ -314,10 +316,12 @@ export const admin = {
           if (data.status === 'completed') {
             closed = true;
             if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = null;
             onProgress({ status: 'completed', result: data.result });
           } else if (data.status === 'error') {
             closed = true;
             if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = null;
             onProgress({ status: 'error', error: data.error });
           } else {
             // Tâche en cours
@@ -333,6 +337,7 @@ export const admin = {
           if (!closed) {
             closed = true;
             if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = null;
             onError(err);
           }
         }
@@ -364,9 +369,10 @@ export const admin = {
           // Basculer vers polling au lieu de déclencher une erreur
           // EventSource ne peut pas envoyer les cookies en cross-origin
           console.log(`[listenToTaskProgress] SSE returned unauthenticated, switching to polling`);
-          if (!fallbackToPolling) {
+          if (!fallbackToPolling && !pollingInterval) {
             closed = true;
             eventSource.close();
+            closed = false; // Réinitialiser pour permettre le polling
             startPolling();
           }
           return;
@@ -407,7 +413,7 @@ export const admin = {
       // Si la connexion est fermée ou en erreur (y compris 401), basculer vers polling
       // EventSource ne peut pas envoyer les cookies en cross-origin, donc on bascule directement vers polling
       if (readyState === EventSource.CLOSED || readyState === EventSource.CONNECTING) {
-        if (!fallbackToPolling) {
+        if (!fallbackToPolling && !pollingInterval) {
           console.log(`[listenToTaskProgress] SSE failed (likely CORS/cookie issue), switching to polling`);
           eventSource.close();
           startPolling();
@@ -426,7 +432,10 @@ export const admin = {
       if (!closed) {
         closed = true;
         if (eventSource) eventSource.close();
-        if (pollingInterval) clearInterval(pollingInterval);
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          pollingInterval = null;
+        }
       }
     };
   },
