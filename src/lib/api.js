@@ -292,6 +292,10 @@ export const admin = {
       const poll = async () => {
         if (closed) return;
         
+        // Ajouter un flag pour éviter les appels simultanés
+        if (poll.isRunning) return;
+        poll.isRunning = true;
+        
         try {
           const response = await fetch(`${baseUrl}/tasks/${encodeURIComponent(taskId)}/status`, {
             credentials: 'include',
@@ -340,6 +344,8 @@ export const admin = {
             pollingInterval = null;
             onError(err);
           }
+        } finally {
+          poll.isRunning = false;
         }
       };
       
