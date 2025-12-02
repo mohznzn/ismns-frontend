@@ -309,7 +309,6 @@ export const admin = {
             closed = true;
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = null;
-            poll.isRunning = false; // Réinitialiser le flag avant de retourner
             onError(new Error("unauthenticated"));
             return;
           }
