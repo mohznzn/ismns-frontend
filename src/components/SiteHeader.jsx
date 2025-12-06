@@ -64,8 +64,12 @@ export default function SiteHeader() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Hide header for candidate flow
-  if (pathname?.startsWith("/invite") || pathname?.startsWith("/test")) return null;
+  // Hide header for candidate flow and verification pages
+  if (
+    pathname?.startsWith("/invite") || 
+    pathname?.startsWith("/test") || 
+    pathname?.startsWith("/verify-email")
+  ) return null;
 
   const onLogout = async () => {
     try {
