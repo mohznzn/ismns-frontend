@@ -187,8 +187,10 @@ function withQuery(path, params) {
 // ================= AUTH =================
 export const auth = {
   me: () => apiGet(`/auth/me`),
-  register: (email, password) => apiPost(`/auth/register`, { email, password }),
-  login: (email, password) => apiPost(`/auth/login`, { email, password }),
+  register: (email, password, phone_number) => apiPost(`/auth/register`, { email, password, phone_number }),
+  verifyEmail: (email, code, user_id) => apiPost(`/auth/verify-email`, { email, code, user_id }),
+  resendVerificationCode: (email) => apiPost(`/auth/resend-verification-code`, { email }),
+  login: (email, password, verification_code) => apiPost(`/auth/login`, { email, password, verification_code }),
   logout: () => apiPost(`/auth/logout`, {}),
   getOpenAIUsage: () => apiGet(`/auth/openai_usage`),
 };
@@ -271,99 +273,22 @@ export const admin = {
     }),
 
   // Écouter la progression d'une tâche Celery via SSE (générique)
-  // Fallback automatique vers polling si SSE échoue
   listenToTaskProgress: (taskId, onProgress, onError) => {
     const baseUrl = API_BASE.replace(/\/$/, "");
+    // EventSource envoie automatiquement les cookies, pas besoin de withCredentials
     const url = `${baseUrl}/tasks/${encodeURIComponent(taskId)}/stream`;
     
     let eventSource;
     let closed = false;
-    let fallbackToPolling = false;
-    let pollingInterval = null;
-    
-    // Fonction de fallback vers polling
-    const startPolling = () => {
-      // Vérifier si le polling a déjà été démarré
-      if (closed || fallbackToPolling || pollingInterval) return;
-      
-      console.log(`[listenToTaskProgress] Falling back to polling for task ${taskId}`);
-      fallbackToPolling = true;
-      
-      const poll = async () => {
-        if (closed) return;
-        
-        // Ajouter un flag pour éviter les appels simultanés
-        if (poll.isRunning) return;
-        poll.isRunning = true;
-        
-        try {
-          const response = await fetch(`${baseUrl}/tasks/${encodeURIComponent(taskId)}/status`, {
-            credentials: 'include',
-            headers: {
-              'Accept': 'application/json',
-            },
-          });
-          
-          if (!response.ok) {
-          if (response.status === 401) {
-            closed = true;
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = null;
-            poll.isRunning = false; // Réinitialiser le flag avant de retourner
-            onError(new Error("unauthenticated"));
-            return;
-          }
-            throw new Error(`HTTP ${response.status}`);
-          }
-          
-          const data = await response.json();
-          
-          if (data.status === 'completed') {
-            closed = true;
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = null;
-            onProgress({ status: 'completed', result: data.result });
-          } else if (data.status === 'error') {
-            closed = true;
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = null;
-            onProgress({ status: 'error', error: data.error });
-          } else {
-            // Tâche en cours
-            onProgress({
-              status: data.status || 'processing',
-              current: data.current || 0,
-              total: data.total || 1,
-              message: data.message || 'Processing...',
-            });
-          }
-        } catch (err) {
-          console.error(`[listenToTaskProgress] Polling error:`, err);
-          if (!closed) {
-            closed = true;
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = null;
-            onError(err);
-          }
-        } finally {
-          poll.isRunning = false;
-        }
-      };
-      
-      // Poller immédiatement puis toutes les 2 secondes
-      poll();
-      pollingInterval = setInterval(poll, 2000);
-    };
     
     try {
+      // EventSource n'accepte pas d'options dans le constructeur
+      // Les cookies sont envoyés automatiquement par le navigateur
       eventSource = new EventSource(url);
     } catch (err) {
       console.error("Failed to create EventSource:", err);
-      startPolling();
-      return () => {
-        closed = true;
-        if (pollingInterval) clearInterval(pollingInterval);
-      };
+      onError(err);
+      return () => {}; // Cleanup function vide
     }
     
     eventSource.onmessage = (event) => {
@@ -373,15 +298,9 @@ export const admin = {
         
         // Vérifier si c'est une erreur d'authentification
         if (progress.status === "error" && progress.error === "unauthenticated") {
-          // Basculer vers polling au lieu de déclencher une erreur
-          // EventSource ne peut pas envoyer les cookies en cross-origin
-          console.log(`[listenToTaskProgress] SSE returned unauthenticated, switching to polling`);
-          if (!fallbackToPolling && !pollingInterval) {
-            closed = true;
-            eventSource.close();
-            closed = false; // Réinitialiser pour permettre le polling
-            startPolling();
-          }
+          closed = true;
+          eventSource.close();
+          onError(new Error("unauthenticated"));
           return;
         }
         
@@ -405,6 +324,7 @@ export const admin = {
     };
     
     eventSource.onerror = (err) => {
+      // Ne pas appeler onError si déjà fermé ou si c'est juste la fermeture normale
       if (closed) {
         return;
       }
@@ -417,32 +337,29 @@ export const admin = {
         error: err
       });
       
-      // Si la connexion est fermée ou en erreur (y compris 401), basculer vers polling
-      // EventSource ne peut pas envoyer les cookies en cross-origin, donc on bascule directement vers polling
-      if (readyState === EventSource.CLOSED || readyState === EventSource.CONNECTING) {
-        if (!fallbackToPolling && !pollingInterval) {
-          console.log(`[listenToTaskProgress] SSE failed (likely CORS/cookie issue), switching to polling`);
-          eventSource.close();
-          startPolling();
-        }
+      // EventSource peut déclencher onerror même lors d'une fermeture normale
+      // Vérifier l'état de la connexion
+      if (readyState === EventSource.CLOSED) {
+        // Connexion fermée normalement ou après erreur
+        console.log("[listenToTaskProgress] SSE connection closed normally");
         return;
       }
       
-      // Si on est ouvert mais erreur, continuer à essayer SSE
-      if (readyState === EventSource.OPEN) {
-        // Ne rien faire, laisser SSE continuer
+      // Si on est en train de se connecter ou ouvert, c'est une vraie erreur
+      if (readyState === EventSource.CONNECTING || readyState === EventSource.OPEN) {
+        if (!closed) {
+          closed = true;
+          eventSource.close();
+          onError(new Error(`SSE connection error (state: ${readyState === EventSource.CONNECTING ? 'CONNECTING' : 'OPEN'})`));
+        }
       }
     };
     
     // Retourner une fonction de cleanup
     return () => {
-      if (!closed) {
+      if (!closed && eventSource) {
         closed = true;
-        if (eventSource) eventSource.close();
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-          pollingInterval = null;
-        }
+        eventSource.close();
       }
     };
   },
