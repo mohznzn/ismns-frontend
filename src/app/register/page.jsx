@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/api";
-import { useAuth } from "@/lib/useAuth";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -11,21 +10,33 @@ export default function RegisterPage() {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   const router = useRouter();
-  const { refresh } = useAuth(); // ✅ pour mettre à jour le header après inscription
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErr("");
+    setSuccess(false);
     try {
-      await auth.register(email, pw); // crée le compte + session côté API
-      await refresh();                // ✅ met à jour le contexte (user non-null)
-      router.replace("/admin/qcm");   // ✅ route corrigée
+      const result = await auth.register(email, pw);
+      
+      // Vérifier si la vérification est requise
+      if (result?.requires_verification) {
+        setSuccess(true);
+        setUserId(result.user_id);
+        // Rediriger vers la page de vérification
+        router.push(`/verify-email?email=${encodeURIComponent(email)}&user_id=${result.user_id}`);
+      } else {
+        // Ancien comportement (fallback)
+        router.replace("/admin/qcm");
+      }
     } catch (error) {
       console.error("register error:", error);
-      setErr(error?.data?.error || error?.message || "Registration failed");
+      const errorMessage = error?.data?.message || error?.data?.error || error?.message || "Registration failed";
+      setErr(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -39,7 +50,13 @@ export default function RegisterPage() {
           Register to start generating QCMs.
         </p>
 
-        {err && <div className="mb-3 text-sm text-red-600">{err}</div>}
+        {err && <div className="mb-3 p-3 text-sm text-red-600 bg-red-50 rounded-lg">{err}</div>}
+        
+        {success && (
+          <div className="mb-3 p-3 text-sm text-green-600 bg-green-50 rounded-lg">
+            Account created! Please check your email for verification code.
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
@@ -51,6 +68,7 @@ export default function RegisterPage() {
               className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
               placeholder="you@company.com"
               required
+              disabled={loading}
             />
           </div>
           <div>
@@ -63,7 +81,11 @@ export default function RegisterPage() {
               placeholder="••••••••"
               required
               minLength={8}
+              disabled={loading}
             />
+            <p className="mt-1 text-xs text-gray-500">
+              At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+            </p>
           </div>
           <button
             disabled={loading}
