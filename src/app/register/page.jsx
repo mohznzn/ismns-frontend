@@ -35,8 +35,17 @@ export default function RegisterPage() {
       }
     } catch (error) {
       console.error("register error:", error);
-      const errorMessage = error?.data?.message || error?.data?.error || error?.message || "Registration failed";
-      setErr(errorMessage);
+      
+      // Si c'est une erreur "email_taken" mais que le compte n'est pas vérifié,
+      // rediriger vers la page de vérification
+      if (error?.status === 409 && error?.data?.error === "email_taken") {
+        // Vérifier si on peut réessayer avec le même email
+        // En fait, le backend devrait gérer cela, mais au cas où...
+        setErr("Cet email est déjà utilisé. Si vous n'avez pas vérifié votre email, essayez de vous connecter ou utilisez un autre email.");
+      } else {
+        const errorMessage = error?.data?.message || error?.data?.error || error?.message || "Registration failed";
+        setErr(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
