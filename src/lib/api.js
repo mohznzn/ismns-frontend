@@ -92,8 +92,11 @@ async function apiFetch(path, init = {}, retries = 2) {
       
       // Gestion spéciale des erreurs d'authentification
       if (res.status === 401) {
-        // Rediriger vers login si non authentifié (sauf si déjà sur /login)
-        if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+        // Ne pas rediriger si on est sur /verify-email (l'utilisateur doit pouvoir réessayer)
+        // ou si on est déjà sur /login
+        if (typeof window !== "undefined" && 
+            !window.location.pathname.includes("/login") &&
+            !window.location.pathname.includes("/verify-email")) {
           window.location.href = "/login";
         }
       }
