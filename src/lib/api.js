@@ -92,11 +92,8 @@ async function apiFetch(path, init = {}, retries = 2) {
       
       // Gestion spéciale des erreurs d'authentification
       if (res.status === 401) {
-        // Ne pas rediriger si on est sur /verify-email (l'utilisateur doit pouvoir réessayer)
-        // ou si on est déjà sur /login
-        if (typeof window !== "undefined" && 
-            !window.location.pathname.includes("/login") &&
-            !window.location.pathname.includes("/verify-email")) {
+        // Rediriger vers login si non authentifié (sauf si déjà sur /login)
+        if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
           window.location.href = "/login";
         }
       }
@@ -192,7 +189,7 @@ export const auth = {
   me: () => apiGet(`/auth/me`),
   register: (email, password, phone_number) => apiPost(`/auth/register`, { email, password, phone_number }),
   verifyEmail: (email, code, user_id) => apiPost(`/auth/verify-email`, { email, code, user_id }),
-  resendVerificationCode: (email) => apiPost(`/auth/resend-verification-code`, { email }),
+  resendVerificationCode: (email, context = "register") => apiPost(`/auth/resend-verification-code`, { email, context }),
   login: (email, password, verification_code) => apiPost(`/auth/login`, { email, password, verification_code }),
   logout: () => apiPost(`/auth/logout`, {}),
   getOpenAIUsage: () => apiGet(`/auth/openai_usage`),

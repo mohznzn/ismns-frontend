@@ -36,8 +36,8 @@ function LoginForm() {
       if (result?.error === "email_not_verified" || result?.requires_verification) {
         setRequiresVerification(true);
         setErr(result?.message || "Your email has not been verified. A verification code has been sent.");
-        // Rediriger vers la page de vérification
-        router.push(`/verify-email?email=${encodeURIComponent(email)}&user_id=${result?.user_id || ""}`);
+        // Rediriger vers la page de vérification avec le contexte "login"
+        router.push(`/verify-email?email=${encodeURIComponent(email)}&user_id=${result?.user_id || ""}&context=login`);
         return;
       }
       
@@ -58,7 +58,7 @@ function LoginForm() {
       // Vérifier si c'est une erreur de vérification d'email
       if (e?.status === 403 && e?.data?.error === "email_not_verified") {
         setRequiresVerification(true);
-        router.push(`/verify-email?email=${encodeURIComponent(email)}&user_id=${e?.data?.user_id || ""}`);
+        router.push(`/verify-email?email=${encodeURIComponent(email)}&user_id=${e?.data?.user_id || ""}&context=login`);
       }
     } finally {
       setLoading(false);

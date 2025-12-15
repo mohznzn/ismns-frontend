@@ -19,6 +19,7 @@ function VerifyEmailForm() {
   
   const email = searchParams.get("email") || "";
   const userId = searchParams.get("user_id") || "";
+  const context = searchParams.get("context") || "register"; // "register" ou "login"
 
   useEffect(() => {
     if (!email && !userId) {
@@ -64,7 +65,7 @@ function VerifyEmailForm() {
     setResendSuccess(false);
     
     try {
-      await auth.resendVerificationCode(email);
+      await auth.resendVerificationCode(email, context);
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 5000);
     } catch (error) {
@@ -82,13 +83,24 @@ function VerifyEmailForm() {
     setErr("");
   };
 
+  // Texte différencié selon le contexte
+  const isLoginContext = context === "login";
+  const title = isLoginContext ? "Verify your email to sign in" : "Verify your email";
+  const description = isLoginContext 
+    ? "We sent a verification code to your email. Please enter it below to complete your sign in."
+    : `We sent a verification code to <strong>${email}</strong>`;
+  const buttonText = isLoginContext ? "Verify & Sign In" : "Verify Email";
+  const backLink = isLoginContext ? "/login" : "/register";
+  const backLinkText = isLoginContext ? "Back to login" : "Go back";
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white shadow rounded-2xl p-6">
-        <h1 className="text-2xl font-bold mb-1">Verify your email</h1>
-        <p className="text-sm text-gray-500 mb-4">
-          We sent a verification code to <strong>{email}</strong>
-        </p>
+        <h1 className="text-2xl font-bold mb-1">{title}</h1>
+        <p 
+          className="text-sm text-gray-500 mb-4"
+          dangerouslySetInnerHTML={{ __html: description }}
+        />
 
         {err && <div className="mb-3 p-3 text-sm text-red-600 bg-red-50 rounded-lg">{err}</div>}
         
@@ -122,7 +134,7 @@ function VerifyEmailForm() {
             disabled={loading || code.length !== 6}
             className="w-full mt-2 px-4 py-2 rounded-xl bg-black text-white hover:bg-gray-800 disabled:opacity-40"
           >
-            {loading ? "Verifying…" : "Verify Email"}
+            {loading ? "Verifying…" : buttonText}
           </button>
         </form>
 
@@ -137,8 +149,8 @@ function VerifyEmailForm() {
           
           <div className="text-center text-sm text-gray-600">
             Wrong email?{" "}
-            <Link className="text-blue-600 hover:underline" href="/register">
-              Go back
+            <Link className="text-blue-600 hover:underline" href={backLink}>
+              {backLinkText}
             </Link>
           </div>
         </div>

@@ -27,8 +27,8 @@ export default function RegisterPage() {
       if (result?.requires_verification) {
         setSuccess(true);
         setUserId(result.user_id);
-        // Rediriger vers la page de vérification
-        router.push(`/verify-email?email=${encodeURIComponent(email)}&user_id=${result.user_id}`);
+        // Rediriger vers la page de vérification avec le contexte "register"
+        router.push(`/verify-email?email=${encodeURIComponent(email)}&user_id=${result.user_id}&context=register`);
       } else {
         // Ancien comportement (fallback)
         router.replace("/admin/qcm");
