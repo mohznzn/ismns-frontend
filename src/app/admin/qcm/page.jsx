@@ -134,12 +134,12 @@ export default function MyQCMsPage() {
             const shareUrl = shareUrlFor(q.share_token);
             return (
               <div key={q.id} className="bg-white shadow rounded-2xl p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_auto_auto_auto] md:items-center">
                   {/* JD preview */}
-                  <div className="min-w-0 max-w-2xl">
+                  <div className="min-w-0">
                     <div className="text-sm text-gray-500">Job description</div>
                     <div
-                      className="font-medium text-gray-900 truncate"
+                      className="font-medium text-gray-900 line-clamp-2"
                       title={q.jd_preview || ""}
                     >
                       {q.jd_preview || "—"}
@@ -170,7 +170,7 @@ export default function MyQCMsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={`/admin/qcm/${q.id}/review`}
                       className="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50"
@@ -184,7 +184,14 @@ export default function MyQCMsPage() {
                       Results
                     </Link>
 
-                    {q.share_token ? (
+                    {q.status === "draft" ? (
+                      <button
+                        onClick={() => onPublish(q.id)}
+                        className="px-3 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-800"
+                      >
+                        Publish
+                      </button>
+                    ) : q.share_token ? (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => copy(shareUrl)}
