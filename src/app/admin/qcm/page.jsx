@@ -134,10 +134,10 @@ export default function MyQCMsPage() {
             const shareUrl = shareUrlFor(q.share_token);
             return (
               <div key={q.id} className="bg-white shadow rounded-2xl p-4">
-                <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_auto_auto_auto] md:items-center">
+                <div className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_auto_auto_auto] md:items-start">
                   {/* JD preview */}
                   <div className="min-w-0">
-                    <div className="text-sm text-gray-500">Job description</div>
+                    <div className="text-sm text-gray-500 mb-1">Job description</div>
                     <div
                       className="font-medium text-gray-900 line-clamp-2"
                       title={q.jd_preview || ""}
@@ -148,7 +148,7 @@ export default function MyQCMsPage() {
 
                   {/* Meta */}
                   <div className="text-sm">
-                    <div>
+                    <div className="mb-1">
                       <span className="text-gray-500">Language: </span>
                       <span className="font-medium">{q.language}</span>
                     </div>
@@ -159,7 +159,7 @@ export default function MyQCMsPage() {
                   </div>
 
                   <div className="text-sm">
-                    <div>
+                    <div className="mb-1">
                       <span className="text-gray-500">Skills: </span>
                       <span className="font-medium">{q.skills_count}</span>
                     </div>
@@ -170,7 +170,7 @@ export default function MyQCMsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-start gap-2">
                     <Link
                       href={`/admin/qcm/${q.id}/review`}
                       className="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50"
