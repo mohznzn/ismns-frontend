@@ -626,27 +626,45 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
     const startAngleRad = (startAngle * Math.PI) / 180;
     const endAngleRad = (endAngle * Math.PI) / 180;
 
-    // Coordonnées pour l'arc externe
-    const x1 = centerX + radius * Math.cos(startAngleRad);
-    const y1 = centerY + radius * Math.sin(startAngleRad);
-    const x2 = centerX + radius * Math.cos(endAngleRad);
-    const y2 = centerY + radius * Math.sin(endAngleRad);
+    // Gérer le cas où le segment occupe 100% (cercle complet)
+    let path;
+    if (Math.abs(angle - 360) < 0.01) {
+      // Cercle complet - créer un anneau avec deux cercles (even-odd rule)
+      // Commencer par le cercle externe (sens horaire)
+      const outerStart = centerX + radius;
+      const outerEnd = centerX - radius;
+      // Cercle externe complet
+      const outerArc1 = `M ${outerStart} ${centerY} A ${radius} ${radius} 0 1 1 ${outerEnd} ${centerY}`;
+      const outerArc2 = `A ${radius} ${radius} 0 1 1 ${outerStart} ${centerY}`;
+      // Cercle interne (sens anti-horaire pour créer le trou)
+      const innerStart = centerX + innerRadius;
+      const innerEnd = centerX - innerRadius;
+      const innerArc1 = `M ${innerStart} ${centerY} A ${innerRadius} ${innerRadius} 0 1 0 ${innerEnd} ${centerY}`;
+      const innerArc2 = `A ${innerRadius} ${innerRadius} 0 1 0 ${innerStart} ${centerY}`;
+      path = `${outerArc1} ${outerArc2} ${innerArc1} ${innerArc2} Z`;
+    } else {
+      // Arc normal
+      const x1 = centerX + radius * Math.cos(startAngleRad);
+      const y1 = centerY + radius * Math.sin(startAngleRad);
+      const x2 = centerX + radius * Math.cos(endAngleRad);
+      const y2 = centerY + radius * Math.sin(endAngleRad);
 
-    // Coordonnées pour l'arc interne
-    const x3 = centerX + innerRadius * Math.cos(endAngleRad);
-    const y3 = centerY + innerRadius * Math.sin(endAngleRad);
-    const x4 = centerX + innerRadius * Math.cos(startAngleRad);
-    const y4 = centerY + innerRadius * Math.sin(startAngleRad);
+      // Coordonnées pour l'arc interne
+      const x3 = centerX + innerRadius * Math.cos(endAngleRad);
+      const y3 = centerY + innerRadius * Math.sin(endAngleRad);
+      const x4 = centerX + innerRadius * Math.cos(startAngleRad);
+      const y4 = centerY + innerRadius * Math.sin(startAngleRad);
 
-    const largeArcFlag = angle > 180 ? 1 : 0;
+      const largeArcFlag = angle > 180 ? 1 : 0;
 
-    const path = [
-      `M ${x1} ${y1}`,
-      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-      `L ${x3} ${y3}`,
-      `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
-      `Z`,
-    ].join(" ");
+      path = [
+        `M ${x1} ${y1}`,
+        `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+        `L ${x3} ${y3}`,
+        `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
+        `Z`,
+      ].join(" ");
+    }
 
     const segmentData = {
       ...seg,
@@ -669,21 +687,50 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
       {/* Graphique Donut */}
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="transform -rotate-90">
-          {pathData.map((seg) => (
-            <path
-              key={seg.id}
-              d={seg.path}
-              fill={seg.color}
-              stroke="white"
-              strokeWidth="2"
-              className="cursor-pointer transition-opacity"
-              style={{
-                opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
-              }}
-              onMouseEnter={() => onSegmentHover(seg.id)}
-              onMouseLeave={() => onSegmentHover(null)}
-            />
-          ))}
+          {pathData.map((seg) => {
+            const isFullCircle = Math.abs(parseFloat(seg.percentage) - 100) < 0.01;
+            return isFullCircle ? (
+              // Pour un cercle complet, utiliser deux cercles avec fill-rule="evenodd"
+              <g
+                key={seg.id}
+                className="cursor-pointer transition-opacity"
+                style={{
+                  opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+                }}
+                onMouseEnter={() => onSegmentHover(seg.id)}
+                onMouseLeave={() => onSegmentHover(null)}
+              >
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r={radius}
+                  fill={seg.color}
+                  stroke="white"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r={innerRadius}
+                  fill="white"
+                />
+              </g>
+            ) : (
+              <path
+                key={seg.id}
+                d={seg.path}
+                fill={seg.color}
+                stroke="white"
+                strokeWidth="2"
+                className="cursor-pointer transition-opacity"
+                style={{
+                  opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+                }}
+                onMouseEnter={() => onSegmentHover(seg.id)}
+                onMouseLeave={() => onSegmentHover(null)}
+              />
+            );
+          })}
         </svg>
 
         {/* Centre du donut avec statistiques principales */}
@@ -898,27 +945,42 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
     const startAngleRad = (startAngle * Math.PI) / 180;
     const endAngleRad = (endAngle * Math.PI) / 180;
 
-    // Coordonnées pour l'arc externe
-    const x1 = centerX + radius * Math.cos(startAngleRad);
-    const y1 = centerY + radius * Math.sin(startAngleRad);
-    const x2 = centerX + radius * Math.cos(endAngleRad);
-    const y2 = centerY + radius * Math.sin(endAngleRad);
+    // Gérer le cas où le segment occupe 100% (cercle complet)
+    let path;
+    if (Math.abs(angle - 360) < 0.01) {
+      // Cercle complet - utiliser deux arcs pour créer un anneau complet
+      path = [
+        `M ${centerX + radius} ${centerY}`,
+        `A ${radius} ${radius} 0 1 1 ${centerX - radius} ${centerY}`,
+        `A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}`,
+        `M ${centerX + innerRadius} ${centerY}`,
+        `A ${innerRadius} ${innerRadius} 0 1 0 ${centerX - innerRadius} ${centerY}`,
+        `A ${innerRadius} ${innerRadius} 0 1 0 ${centerX + innerRadius} ${centerY}`,
+        `Z`,
+      ].join(" ");
+    } else {
+      // Arc normal
+      const x1 = centerX + radius * Math.cos(startAngleRad);
+      const y1 = centerY + radius * Math.sin(startAngleRad);
+      const x2 = centerX + radius * Math.cos(endAngleRad);
+      const y2 = centerY + radius * Math.sin(endAngleRad);
 
-    // Coordonnées pour l'arc interne
-    const x3 = centerX + innerRadius * Math.cos(endAngleRad);
-    const y3 = centerY + innerRadius * Math.sin(endAngleRad);
-    const x4 = centerX + innerRadius * Math.cos(startAngleRad);
-    const y4 = centerY + innerRadius * Math.sin(startAngleRad);
+      // Coordonnées pour l'arc interne
+      const x3 = centerX + innerRadius * Math.cos(endAngleRad);
+      const y3 = centerY + innerRadius * Math.sin(endAngleRad);
+      const x4 = centerX + innerRadius * Math.cos(startAngleRad);
+      const y4 = centerY + innerRadius * Math.sin(startAngleRad);
 
-    const largeArcFlag = angle > 180 ? 1 : 0;
+      const largeArcFlag = angle > 180 ? 1 : 0;
 
-    const path = [
-      `M ${x1} ${y1}`,
-      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-      `L ${x3} ${y3}`,
-      `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
-      `Z`,
-    ].join(" ");
+      path = [
+        `M ${x1} ${y1}`,
+        `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+        `L ${x3} ${y3}`,
+        `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
+        `Z`,
+      ].join(" ");
+    }
 
     const segmentData = {
       ...seg,
@@ -944,21 +1006,50 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
       {/* Graphique Donut */}
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="transform -rotate-90">
-          {pathData.map((seg) => (
-            <path
-              key={seg.id}
-              d={seg.path}
-              fill={seg.color}
-              stroke="white"
-              strokeWidth="2"
-              className="cursor-pointer transition-opacity"
-              style={{
-                opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
-              }}
-              onMouseEnter={() => onSegmentHover(seg.id)}
-              onMouseLeave={() => onSegmentHover(null)}
-            />
-          ))}
+          {pathData.map((seg) => {
+            const isFullCircle = Math.abs(parseFloat(seg.percentage) - 100) < 0.01;
+            return isFullCircle ? (
+              // Pour un cercle complet, utiliser deux cercles avec fill-rule="evenodd"
+              <g
+                key={seg.id}
+                className="cursor-pointer transition-opacity"
+                style={{
+                  opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+                }}
+                onMouseEnter={() => onSegmentHover(seg.id)}
+                onMouseLeave={() => onSegmentHover(null)}
+              >
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r={radius}
+                  fill={seg.color}
+                  stroke="white"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r={innerRadius}
+                  fill="white"
+                />
+              </g>
+            ) : (
+              <path
+                key={seg.id}
+                d={seg.path}
+                fill={seg.color}
+                stroke="white"
+                strokeWidth="2"
+                className="cursor-pointer transition-opacity"
+                style={{
+                  opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+                }}
+                onMouseEnter={() => onSegmentHover(seg.id)}
+                onMouseLeave={() => onSegmentHover(null)}
+              />
+            );
+          })}
         </svg>
 
         {/* Centre du donut avec statistiques principales */}
