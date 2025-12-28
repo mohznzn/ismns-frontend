@@ -134,12 +134,12 @@ export default function MyQCMsPage() {
             const shareUrl = shareUrlFor(q.share_token);
             return (
               <div key={q.id} className="bg-white shadow rounded-2xl p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-[400px_140px_120px_1fr] gap-4 items-start">
                   {/* JD preview */}
-                  <div className="min-w-0 max-w-2xl">
-                    <div className="text-sm text-gray-500">Job description</div>
+                  <div className="min-w-0">
+                    <div className="text-sm text-gray-500 mb-1">Job description</div>
                     <div
-                      className="font-medium text-gray-900 truncate"
+                      className="font-medium text-gray-900 line-clamp-2"
                       title={q.jd_preview || ""}
                     >
                       {q.jd_preview || "—"}
@@ -148,7 +148,7 @@ export default function MyQCMsPage() {
 
                   {/* Meta */}
                   <div className="text-sm">
-                    <div>
+                    <div className="mb-1">
                       <span className="text-gray-500">Language: </span>
                       <span className="font-medium">{q.language}</span>
                     </div>
@@ -159,7 +159,7 @@ export default function MyQCMsPage() {
                   </div>
 
                   <div className="text-sm">
-                    <div>
+                    <div className="mb-1">
                       <span className="text-gray-500">Skills: </span>
                       <span className="font-medium">{q.skills_count}</span>
                     </div>
