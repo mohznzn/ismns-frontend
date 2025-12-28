@@ -17,6 +17,7 @@ export default function QcmResultsPage() {
   const [downloadingId, setDownloadingId] = useState(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [selectedCvUrl, setSelectedCvUrl] = useState(null);
+  const [showDashboardDetails, setShowDashboardDetails] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -272,71 +273,85 @@ export default function QcmResultsPage() {
             />
           </div>
 
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Status Distribution */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
-                Répartition par Statut
-              </h3>
-              <StatusChart
-                passed={dashboardStats.passed}
-                failed={dashboardStats.failed}
-                ongoing={dashboardStats.ongoing}
-              />
-            </div>
-
-            {/* Score Distribution */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
-                Distribution des Scores
-              </h3>
-              <ScoreDistributionChart distribution={dashboardStats.scoreDistribution} />
-            </div>
+          {/* See More Details Button */}
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={() => setShowDashboardDetails(!showDashboardDetails)}
+              className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 underline hover:opacity-80"
+            >
+              {showDashboardDetails ? "Hide details" : "See more details"}
+            </button>
           </div>
 
-          {/* Top Candidates */}
-          {dashboardStats.topCandidates.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
-                Top 5 Candidats
-              </h3>
-              <div className="space-y-2">
-                {dashboardStats.topCandidates.map((candidate, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold text-gray-400">
-                        #{idx + 1}
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {candidate.email}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-sm font-semibold ${
-                          candidate.passed ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {candidate.score}%
-                      </span>
-                      {candidate.passed ? (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                          Passed
-                        </span>
-                      ) : (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
-                          Failed
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+          {/* Charts Row - Only visible when showDashboardDetails is true */}
+          {showDashboardDetails && (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Status Distribution */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Répartition par Statut
+                  </h3>
+                  <StatusChart
+                    passed={dashboardStats.passed}
+                    failed={dashboardStats.failed}
+                    ongoing={dashboardStats.ongoing}
+                  />
+                </div>
+
+                {/* Score Distribution */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Distribution des Scores
+                  </h3>
+                  <ScoreDistributionChart distribution={dashboardStats.scoreDistribution} />
+                </div>
               </div>
-            </div>
+
+              {/* Top Candidates */}
+              {dashboardStats.topCandidates.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Top 5 Candidats
+                  </h3>
+                  <div className="space-y-2">
+                    {dashboardStats.topCandidates.map((candidate, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg font-bold text-gray-400">
+                            #{idx + 1}
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {candidate.email}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-sm font-semibold ${
+                              candidate.passed ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {candidate.score}%
+                          </span>
+                          {candidate.passed ? (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                              Passed
+                            </span>
+                          ) : (
+                            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+                              Failed
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
