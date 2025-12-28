@@ -546,15 +546,8 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
   const centerX = size / 2;
   const centerY = size / 2;
 
-  // Préparer les données pour le graphique
+  // Préparer les données pour le graphique - seulement les statuts (pas le total)
   const segments = [
-    {
-      id: "total",
-      label: "Total Candidats",
-      value: stats.total,
-      color: "#3B82F6", // blue
-      icon: "👥",
-    },
     {
       id: "passed",
       label: "Réussis",
@@ -578,11 +571,12 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
     },
   ];
 
-  // Calculer les angles pour chaque segment
-  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  // Calculer les angles pour chaque segment - basé sur le total des candidats
+  const total = stats.total || 1; // Utiliser le total pour calculer les pourcentages
   let currentAngle = -90; // Commencer en haut
 
   const pathData = segments.map((seg) => {
+    // Calculer le pourcentage basé sur le total des candidats
     const percentage = total > 0 ? seg.value / total : 0;
     const angle = percentage * 360;
     const startAngle = currentAngle;
@@ -664,17 +658,17 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
         {/* Tooltip */}
         {hoveredData && (
           <div
-            className="absolute z-10 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg pointer-events-none"
+            className="absolute z-10 bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg pointer-events-none"
             style={{
-              left: centerX + (radius + innerRadius) / 2 * Math.cos((hoveredData.midAngle * Math.PI) / 180) - 60,
-              top: centerY + (radius + innerRadius) / 2 * Math.sin((hoveredData.midAngle * Math.PI) / 180) - 30,
-              transform: "translate(-50%, -50%) rotate(90deg)",
+              left: centerX + (radius + 20) * Math.cos((hoveredData.midAngle * Math.PI) / 180),
+              top: centerY + (radius + 20) * Math.sin((hoveredData.midAngle * Math.PI) / 180),
+              transform: "translate(-50%, -50%)",
             }}
           >
             <div className="flex items-center gap-2">
               <span>{hoveredData.icon}</span>
               <div>
-                <div className="font-semibold">{hoveredData.label}</div>
+                <div className="font-semibold text-sm">{hoveredData.label}</div>
                 <div className="text-xs opacity-90">
                   {hoveredData.value} ({hoveredData.percentage}%)
                 </div>
@@ -687,6 +681,21 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
       {/* Légende */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Statistiques</h3>
+        
+        {/* Total Candidats - séparé */}
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+          <div className="w-4 h-4 rounded-full bg-gray-400" />
+          <div className="flex-1">
+            <div className="text-sm font-medium text-gray-900">
+              Total Candidats
+            </div>
+            <div className="text-xs text-gray-500">
+              {stats.total} candidat{stats.total > 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+
+        {/* Segments du graphique */}
         {segments.map((seg) => {
           const segData = pathData.find((s) => s.id === seg.id);
           return (
