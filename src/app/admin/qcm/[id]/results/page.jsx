@@ -17,9 +17,6 @@ export default function QcmResultsPage() {
   const [downloadingId, setDownloadingId] = useState(null);
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [selectedCvUrl, setSelectedCvUrl] = useState(null);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedAttemptDetails, setSelectedAttemptDetails] = useState(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -91,26 +88,6 @@ export default function QcmResultsPage() {
     }
   };
 
-  const handleViewDetails = async (e, attemptId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!attemptId || loadingDetails) return;
-    
-    setLoadingDetails(true);
-    setDetailsModalOpen(true);
-    try {
-      const data = await admin.getAttemptDetail(attemptId);
-      setSelectedAttemptDetails(data);
-    } catch (err) {
-      console.error("[handleViewDetails] Failed to load attempt details", err);
-      const message = err?.data?.message || err?.message || "Impossible de charger les détails.";
-      alert(message);
-      setDetailsModalOpen(false);
-    } finally {
-      setLoadingDetails(false);
-    }
-  };
-
   // statut dérivé (ongoing/passed/failed/finished)
   const derivedStatus = (it) => {
     const base = (it.status || "").toLowerCase();
@@ -131,6 +108,86 @@ export default function QcmResultsPage() {
       return okQuery && okStatus;
     });
   }, [items, query, status]);
+
+  // Calcul des statistiques pour le dashboard
+  const dashboardStats = useMemo(() => {
+    if (!items || items.length === 0) {
+      return {
+        total: 0,
+        passed: 0,
+        failed: 0,
+        ongoing: 0,
+        passRate: 0,
+        avgScore: 0,
+        avgDuration: 0,
+        topCandidates: [],
+        scoreDistribution: {
+          "0-20": 0,
+          "21-40": 0,
+          "41-60": 0,
+          "61-80": 0,
+          "81-100": 0,
+        },
+      };
+    }
+
+    const finished = items.filter((it) => it.status === "finished");
+    const passed = finished.filter((it) => it.passed === true);
+    const failed = finished.filter((it) => it.passed === false);
+    const ongoing = items.filter((it) => it.status === "ongoing");
+
+    const scores = finished.map((it) => it.score || 0).filter((s) => s > 0);
+    const avgScore = scores.length > 0 
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) 
+      : 0;
+
+    const durations = finished.map((it) => it.duration_s || 0).filter((d) => d > 0);
+    const avgDuration = durations.length > 0
+      ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+      : 0;
+
+    const passRate = finished.length > 0 
+      ? Math.round((passed.length / finished.length) * 100) 
+      : 0;
+
+    // Top 5 candidats
+    const topCandidates = [...finished]
+      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .slice(0, 5)
+      .map((it) => ({
+        email: it.candidate_email || "—",
+        score: it.score || 0,
+        passed: it.passed,
+      }));
+
+    // Distribution des scores
+    const scoreDistribution = {
+      "0-20": 0,
+      "21-40": 0,
+      "41-60": 0,
+      "61-80": 0,
+      "81-100": 0,
+    };
+    scores.forEach((score) => {
+      if (score <= 20) scoreDistribution["0-20"]++;
+      else if (score <= 40) scoreDistribution["21-40"]++;
+      else if (score <= 60) scoreDistribution["41-60"]++;
+      else if (score <= 80) scoreDistribution["61-80"]++;
+      else scoreDistribution["81-100"]++;
+    });
+
+    return {
+      total: items.length,
+      passed: passed.length,
+      failed: failed.length,
+      ongoing: ongoing.length,
+      passRate,
+      avgScore,
+      avgDuration,
+      topCandidates,
+      scoreDistribution,
+    };
+  }, [items]);
 
   return (
     <div className="space-y-6">
@@ -179,6 +236,110 @@ export default function QcmResultsPage() {
           <div className="text-sm text-gray-500">Loading QCM…</div>
         )}
       </div>
+
+      {/* Dashboard Section */}
+      {!loading && !error && items.length > 0 && (
+        <div className="bg-white shadow rounded-2xl p-6">
+          <h2 className="text-lg font-semibold mb-4">Dashboard</h2>
+          
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <StatCard
+              label="Total Candidats"
+              value={dashboardStats.total}
+              icon="👥"
+            />
+            <StatCard
+              label="Taux de Réussite"
+              value={`${dashboardStats.passRate}%`}
+              icon="✅"
+              color={dashboardStats.passRate >= 50 ? "green" : "red"}
+            />
+            <StatCard
+              label="Score Moyen"
+              value={`${dashboardStats.avgScore}%`}
+              icon="📊"
+            />
+            <StatCard
+              label="Durée Moyenne"
+              value={formatDuration(dashboardStats.avgDuration)}
+              icon="⏱️"
+            />
+            <StatCard
+              label="En Cours"
+              value={dashboardStats.ongoing}
+              icon="🔄"
+            />
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Status Distribution */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
+                Répartition par Statut
+              </h3>
+              <StatusChart
+                passed={dashboardStats.passed}
+                failed={dashboardStats.failed}
+                ongoing={dashboardStats.ongoing}
+              />
+            </div>
+
+            {/* Score Distribution */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
+                Distribution des Scores
+              </h3>
+              <ScoreDistributionChart distribution={dashboardStats.scoreDistribution} />
+            </div>
+          </div>
+
+          {/* Top Candidates */}
+          {dashboardStats.topCandidates.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
+                Top 5 Candidats
+              </h3>
+              <div className="space-y-2">
+                {dashboardStats.topCandidates.map((candidate, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold text-gray-400">
+                        #{idx + 1}
+                      </span>
+                      <span className="text-sm text-gray-900">
+                        {candidate.email}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-sm font-semibold ${
+                          candidate.passed ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {candidate.score}%
+                      </span>
+                      {candidate.passed ? (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                          Passed
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+                          Failed
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tools / Filters */}
       <div className="bg-white shadow rounded-2xl p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
@@ -231,13 +392,12 @@ export default function QcmResultsPage() {
                   <Th>Duration</Th>
                   <Th>CV</Th>
                   <Th>Actions</Th>
-                  <Th>Détails</Th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-6 text-center text-gray-500">
+                    <td colSpan={8} className="py-6 text-center text-gray-500">
                       No attempts yet.
                     </td>
                   </tr>
@@ -282,18 +442,6 @@ export default function QcmResultsPage() {
                             {downloadingId === it.attempt_id ? "Downloading…" : "Report"}
                           </button>
                         </Td>
-                        <Td onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={(e) => handleViewDetails(e, it.attempt_id)}
-                            className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                            disabled={loadingDetails || !it.finished_at}
-                            style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
-                            title={!it.finished_at ? "Le test n'est pas encore terminé" : "Voir les questions et réponses"}
-                          >
-                            {loadingDetails ? "Loading…" : "Voir détails"}
-                          </button>
-                        </Td>
                       </tr>
                     );
                   })
@@ -311,18 +459,6 @@ export default function QcmResultsPage() {
           onClose={() => {
             setCvModalOpen(false);
             setSelectedCvUrl(null);
-          }}
-        />
-      )}
-
-      {/* Details Modal */}
-      {detailsModalOpen && (
-        <DetailsModal
-          attemptDetails={selectedAttemptDetails}
-          loading={loadingDetails}
-          onClose={() => {
-            setDetailsModalOpen(false);
-            setSelectedAttemptDetails(null);
           }}
         />
       )}
@@ -406,6 +542,118 @@ function toCsvRow(arr) {
     .join(",");
 }
 
+/* ───────────────── Dashboard Components ───────────────── */
+
+function StatCard({ label, value, icon, color = "gray" }) {
+  const colorClasses = {
+    green: "bg-green-50 border-green-200",
+    red: "bg-red-50 border-red-200",
+    blue: "bg-blue-50 border-blue-200",
+    gray: "bg-gray-50 border-gray-200",
+  };
+
+  return (
+    <div className={`p-4 rounded-lg border ${colorClasses[color]}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-2xl">{icon}</span>
+      </div>
+      <div className="text-2xl font-bold text-gray-900">{value}</div>
+      <div className="text-xs text-gray-600 mt-1">{label}</div>
+    </div>
+  );
+}
+
+function StatusChart({ passed, failed, ongoing }) {
+  const total = passed + failed + ongoing;
+  if (total === 0) {
+    return (
+      <div className="text-sm text-gray-500 text-center py-8">
+        Aucune donnée disponible
+      </div>
+    );
+  }
+
+  const passedPercent = (passed / total) * 100;
+  const failedPercent = (failed / total) * 100;
+  const ongoingPercent = (ongoing / total) * 100;
+
+  return (
+    <div className="space-y-3">
+      {/* Bar Chart */}
+      <div className="space-y-2">
+        <div>
+          <div className="flex justify-between text-xs text-gray-600 mb-1">
+            <span>Passed ({passed})</span>
+            <span>{Math.round(passedPercent)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className="bg-green-500 h-3 rounded-full transition-all"
+              style={{ width: `${passedPercent}%` }}
+            />
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-between text-xs text-gray-600 mb-1">
+            <span>Failed ({failed})</span>
+            <span>{Math.round(failedPercent)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className="bg-red-500 h-3 rounded-full transition-all"
+              style={{ width: `${failedPercent}%` }}
+            />
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-between text-xs text-gray-600 mb-1">
+            <span>Ongoing ({ongoing})</span>
+            <span>{Math.round(ongoingPercent)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className="bg-yellow-500 h-3 rounded-full transition-all"
+              style={{ width: `${ongoingPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScoreDistributionChart({ distribution }) {
+  const max = Math.max(...Object.values(distribution));
+  if (max === 0) {
+    return (
+      <div className="text-sm text-gray-500 text-center py-8">
+        Aucune donnée disponible
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {Object.entries(distribution).map(([range, count]) => {
+        const percent = max > 0 ? (count / max) * 100 : 0;
+        return (
+          <div key={range}>
+            <div className="flex justify-between text-xs text-gray-600 mb-1">
+              <span>{range}% ({count})</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3">
+              <div
+                className="bg-blue-500 h-3 rounded-full transition-all"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ───────────────── CV Modal Component ───────────────── */
 
 function CvModal({ cvUrl, onClose }) {
@@ -458,228 +706,6 @@ function CvModal({ cvUrl, onClose }) {
 
         {/* Footer */}
         <div className="p-4 border-t flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm"
-          >
-            Fermer
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ───────────────── Details Modal Component ───────────────── */
-
-function DetailsModal({ attemptDetails, loading, onClose }) {
-  useEffect(() => {
-    // Fermer avec la touche Escape
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleEscape);
-    // Empêcher le scroll du body quand le modal est ouvert
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [onClose]);
-
-  if (loading) {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-        onClick={onClose}
-      >
-        <div
-          className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="text-center text-gray-500">Chargement des détails...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!attemptDetails || !attemptDetails.answers || attemptDetails.answers.length === 0) {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-        onClick={onClose}
-      >
-        <div
-          className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Détails du test</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
-              aria-label="Fermer"
-            >
-              ×
-            </button>
-          </div>
-          <div className="text-center text-gray-500 py-8">
-            Aucune réponse disponible pour ce test.
-          </div>
-          <div className="flex justify-end mt-4">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm"
-            >
-              Fermer
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const attempt = attemptDetails.attempt || {};
-  const answers = attemptDetails.answers || [];
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div>
-            <h2 className="text-lg font-semibold">Détails du test</h2>
-            <div className="text-sm text-gray-500 mt-1">
-              {attempt.candidate_email || "—"} • Score: {attempt.score || 0}%
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
-            aria-label="Fermer"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
-            {answers.map((answer, idx) => (
-              <div
-                key={answer.question_id || idx}
-                className={`border rounded-lg p-4 ${
-                  answer.correct ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
-                }`}
-              >
-                {/* Question */}
-                <div className="mb-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="text-xs text-gray-500 mb-1">
-                        Question {idx + 1}
-                        {answer.question_skill && (
-                          <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded text-xs">
-                            {answer.question_skill}
-                          </span>
-                        )}
-                      </div>
-                      <div className="font-medium text-gray-900">
-                        {answer.question_text || "Question non disponible"}
-                      </div>
-                    </div>
-                    <div
-                      className={`ml-4 px-2 py-1 rounded text-xs font-semibold ${
-                        answer.correct
-                          ? "bg-green-200 text-green-800"
-                          : "bg-red-200 text-red-800"
-                      }`}
-                    >
-                      {answer.correct ? "✓ Correct" : "✗ Incorrect"}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Options */}
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-gray-700 mb-2">Options :</div>
-                  {answer.all_options && answer.all_options.length > 0 ? (
-                    answer.all_options.map((option) => {
-                      const isSelected = option.id === answer.option_id;
-                      const isCorrect = option.is_correct;
-                      return (
-                        <div
-                          key={option.id}
-                          className={`p-2 rounded border ${
-                            isSelected
-                              ? isCorrect
-                                ? "bg-green-100 border-green-300"
-                                : "bg-red-100 border-red-300"
-                              : isCorrect
-                              ? "bg-blue-50 border-blue-200"
-                              : "bg-gray-50 border-gray-200"
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <span
-                              className={`text-xs font-semibold mt-0.5 ${
-                                isSelected
-                                  ? isCorrect
-                                    ? "text-green-700"
-                                    : "text-red-700"
-                                  : isCorrect
-                                  ? "text-blue-700"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              {isSelected ? "→" : isCorrect ? "✓" : "○"}
-                            </span>
-                            <div className="flex-1">
-                              <div className="text-sm text-gray-900">{option.text}</div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {isSelected
-                                  ? "Réponse du candidat"
-                                  : isCorrect
-                                  ? "Bonne réponse"
-                                  : ""}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-sm text-gray-500 italic">
-                      Option sélectionnée: {answer.option_text || "—"}
-                    </div>
-                  )}
-                </div>
-
-                {/* Explanation */}
-                {answer.question_explanation && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="text-xs font-medium text-gray-700 mb-1">Explication :</div>
-                    <div className="text-sm text-gray-600">{answer.question_explanation}</div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {answers.filter((a) => a.correct).length} / {answers.length} réponses correctes
-          </div>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm"
