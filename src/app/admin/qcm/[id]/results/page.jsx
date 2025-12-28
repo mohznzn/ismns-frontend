@@ -244,94 +244,78 @@ export default function QcmResultsPage() {
         <div className="bg-white shadow rounded-2xl p-6">
           <h2 className="text-lg font-semibold mb-4">Dashboard</h2>
           
-          {/* Dashboard Donut Chart */}
-          <div className="mb-6">
-            <DashboardDonutChart
-              stats={dashboardStats}
-              hoveredSegment={hoveredSegment}
-              onSegmentHover={setHoveredSegment}
-            />
+          {/* Dashboard Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Donut Chart */}
+            <div>
+              <DashboardDonutChart
+                stats={dashboardStats}
+                hoveredSegment={hoveredSegment}
+                onSegmentHover={setHoveredSegment}
+              />
+            </div>
+
+            {/* Score Distribution Chart */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                Distribution des Scores
+              </h3>
+              <ScoreDistributionChart distribution={dashboardStats.scoreDistribution} />
+            </div>
           </div>
 
-          {/* See More Details Button */}
+          {/* Show Top Candidates Button */}
           <div className="flex justify-center mb-6">
             <button
               onClick={() => setShowDashboardDetails(!showDashboardDetails)}
               className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 underline hover:opacity-80"
             >
-              {showDashboardDetails ? "Hide details" : "See more details"}
+              {showDashboardDetails ? "Hide top candidates" : "Show top candidates"}
             </button>
           </div>
 
-          {/* Charts Row - Only visible when showDashboardDetails is true */}
-          {showDashboardDetails && (
-            <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Status Distribution */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    Répartition par Statut
-                  </h3>
-                  <StatusChart
-                    passed={dashboardStats.passed}
-                    failed={dashboardStats.failed}
-                    ongoing={dashboardStats.ongoing}
-                  />
-                </div>
-
-                {/* Score Distribution */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    Distribution des Scores
-                  </h3>
-                  <ScoreDistributionChart distribution={dashboardStats.scoreDistribution} />
-                </div>
-              </div>
-
-              {/* Top Candidates */}
-              {dashboardStats.topCandidates.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    Top 5 Candidats
-                  </h3>
-                  <div className="space-y-2">
-                    {dashboardStats.topCandidates.map((candidate, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+          {/* Top Candidates - Only visible when showDashboardDetails is true */}
+          {showDashboardDetails && dashboardStats.topCandidates.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                Top 5 Candidats
+              </h3>
+              <div className="space-y-2">
+                {dashboardStats.topCandidates.map((candidate, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold text-gray-400">
+                        #{idx + 1}
+                      </span>
+                      <span className="text-sm text-gray-900">
+                        {candidate.email}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-sm font-semibold ${
+                          candidate.passed ? "text-green-600" : "text-red-600"
+                        }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-lg font-bold text-gray-400">
-                            #{idx + 1}
-                          </span>
-                          <span className="text-sm text-gray-900">
-                            {candidate.email}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-sm font-semibold ${
-                              candidate.passed ? "text-green-600" : "text-red-600"
-                            }`}
-                          >
-                            {candidate.score}%
-                          </span>
-                          {candidate.passed ? (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                              Passed
-                            </span>
-                          ) : (
-                            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
-                              Failed
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                        {candidate.score}%
+                      </span>
+                      {candidate.passed ? (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                          Passed
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+                          Failed
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -625,7 +609,7 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
   const hoveredData = pathData.find((seg) => seg.id === hoveredSegment);
 
   return (
-    <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+    <div className="flex flex-col items-center gap-6">
       {/* Graphique Donut */}
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="transform -rotate-90">
@@ -679,8 +663,8 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
       </div>
 
       {/* Légende */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Statistiques</h3>
+      <div className="w-full space-y-3">
+        <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">Statistiques</h3>
         
         {/* Total Candidats - séparé */}
         <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
