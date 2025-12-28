@@ -532,33 +532,87 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
   const centerX = size / 2;
   const centerY = size / 2;
 
+  // Vérifier si stats existe
+  if (!stats) {
+    return (
+      <div className="flex flex-col items-center gap-6">
+        <div className="text-sm text-gray-500 text-center py-8">
+          Aucune donnée disponible
+        </div>
+      </div>
+    );
+  }
+
   // Préparer les données pour le graphique - seulement les statuts (pas le total)
-  const segments = [
+  const allSegments = [
     {
       id: "passed",
       label: "Réussis",
-      value: stats.passed,
+      value: stats.passed || 0,
       color: "#10B981", // green
       icon: "✅",
     },
     {
       id: "failed",
       label: "Échoués",
-      value: stats.failed,
+      value: stats.failed || 0,
       color: "#EF4444", // red
       icon: "❌",
     },
     {
       id: "ongoing",
       label: "En Cours",
-      value: stats.ongoing,
+      value: stats.ongoing || 0,
       color: "#F59E0B", // yellow
       icon: "🔄",
     },
   ];
+  
+  // Filtrer seulement pour le graphique (pas pour la légende)
+  const segments = allSegments.filter((seg) => seg.value > 0);
 
   // Calculer les angles pour chaque segment - basé sur le total des candidats
-  const total = stats.total || 1; // Utiliser le total pour calculer les pourcentages
+  const total = stats.total || 0;
+  
+  // Si aucun segment ou total est 0, afficher un graphique vide
+  if (segments.length === 0 || total === 0) {
+    return (
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative" style={{ width: size, height: size }}>
+          <svg width={size} height={size} className="transform -rotate-90">
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={radius}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth="2"
+            />
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={innerRadius}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth="2"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <div className="text-3xl font-bold text-gray-400">{total}</div>
+            <div className="text-sm text-gray-500">Total Candidats</div>
+            <div className="text-xs text-gray-400 mt-1">0% réussite</div>
+          </div>
+        </div>
+        <div className="w-full space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">Statistiques</h3>
+          <div className="text-sm text-gray-500 text-center py-4">
+            Aucun candidat pour le moment
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   let currentAngle = -90; // Commencer en haut
 
   const pathData = segments.map((seg) => {
@@ -682,8 +736,9 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
         </div>
 
         {/* Segments du graphique */}
-        {segments.map((seg) => {
+        {allSegments.map((seg) => {
           const segData = pathData.find((s) => s.id === seg.id);
+          const percentage = total > 0 ? ((seg.value / total) * 100).toFixed(1) : "0.0";
           return (
             <div
               key={seg.id}
@@ -707,7 +762,7 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
                 </div>
               </div>
               <div className="text-sm font-semibold text-gray-700">
-                {segData?.percentage}%
+                {percentage}%
               </div>
             </div>
           );
@@ -738,8 +793,19 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
   const centerX = size / 2;
   const centerY = size / 2;
 
+  // Vérifier si distribution existe
+  if (!distribution) {
+    return (
+      <div className="flex flex-col items-center gap-6">
+        <div className="text-sm text-gray-500 text-center py-8">
+          Aucune donnée disponible
+        </div>
+      </div>
+    );
+  }
+
   // Préparer les données pour le graphique - seulement les tranches avec des valeurs > 0
-  const segments = [
+  const allSegments = [
     {
       id: "0-20",
       label: "0-20%",
@@ -770,10 +836,55 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
       value: distribution["81-100"] || 0,
       color: "#10B981", // green
     },
-  ].filter((seg) => seg.value > 0); // Filtrer les segments avec valeur 0
+  ];
+  
+  // Filtrer seulement pour le graphique (pas pour la légende)
+  const segments = allSegments.filter((seg) => seg.value > 0);
 
   // Calculer le total pour les pourcentages
-  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  const total = allSegments.reduce((sum, seg) => sum + seg.value, 0);
+  
+  // Si aucun segment, afficher un message
+  if (segments.length === 0 || total === 0) {
+    return (
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative" style={{ width: size, height: size }}>
+          <svg width={size} height={size} className="transform -rotate-90">
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={radius}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth="2"
+            />
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={innerRadius}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth="2"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <div className="text-3xl font-bold text-gray-400">0</div>
+            <div className="text-sm text-gray-500">Candidats</div>
+            <div className="text-xs text-gray-400 mt-1">avec score</div>
+          </div>
+        </div>
+        <div className="w-full space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
+            Distribution des Scores
+          </h3>
+          <div className="text-sm text-gray-500 text-center py-4">
+            Aucun candidat n'a encore complété le test
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   let currentAngle = -90; // Commencer en haut
 
   const pathData = segments.map((seg) => {
@@ -901,8 +1012,9 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
         </div>
 
         {/* Segments du graphique */}
-        {segments.map((seg) => {
+        {allSegments.map((seg) => {
           const segData = pathData.find((s) => s.id === seg.id);
+          const percentage = total > 0 ? ((seg.value / total) * 100).toFixed(1) : "0.0";
           return (
             <div
               key={seg.id}
@@ -926,7 +1038,7 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
                 </div>
               </div>
               <div className="text-sm font-semibold text-gray-700">
-                {segData?.percentage}%
+                {percentage}%
               </div>
             </div>
           );
