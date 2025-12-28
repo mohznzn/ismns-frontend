@@ -134,12 +134,12 @@ export default function MyQCMsPage() {
             const shareUrl = shareUrlFor(q.share_token);
             return (
               <div key={q.id} className="bg-white shadow rounded-2xl p-4">
-                <div className="grid gap-4 md:grid-cols-[400px_140px_120px_280px] md:items-start">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   {/* JD preview */}
-                  <div className="min-w-0 w-[400px]">
-                    <div className="text-sm text-gray-500 mb-1">Job description</div>
+                  <div className="min-w-0 max-w-2xl">
+                    <div className="text-sm text-gray-500">Job description</div>
                     <div
-                      className="font-medium text-gray-900 line-clamp-2"
+                      className="font-medium text-gray-900 truncate"
                       title={q.jd_preview || ""}
                     >
                       {q.jd_preview || "—"}
@@ -147,8 +147,8 @@ export default function MyQCMsPage() {
                   </div>
 
                   {/* Meta */}
-                  <div className="text-sm w-[140px]">
-                    <div className="mb-1">
+                  <div className="text-sm">
+                    <div>
                       <span className="text-gray-500">Language: </span>
                       <span className="font-medium">{q.language}</span>
                     </div>
@@ -158,8 +158,8 @@ export default function MyQCMsPage() {
                     </div>
                   </div>
 
-                  <div className="text-sm w-[120px]">
-                    <div className="mb-1">
+                  <div className="text-sm">
+                    <div>
                       <span className="text-gray-500">Skills: </span>
                       <span className="font-medium">{q.skills_count}</span>
                     </div>
@@ -170,16 +170,16 @@ export default function MyQCMsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-start gap-2 w-[280px]">
+                  <div className="flex flex-nowrap items-center gap-1.5">
                     <Link
                       href={`/admin/qcm/${q.id}/review`}
-                      className="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50"
+                      className="px-2.5 py-1.5 rounded-lg border text-xs hover:bg-gray-50 whitespace-nowrap"
                     >
                       Review
                     </Link>
                     <Link
                       href={`/admin/qcm/${q.id}/results`}
-                      className="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50"
+                      className="px-2.5 py-1.5 rounded-lg border text-xs hover:bg-gray-50 whitespace-nowrap"
                     >
                       Results
                     </Link>
@@ -187,15 +187,15 @@ export default function MyQCMsPage() {
                     {q.status === "draft" ? (
                       <button
                         onClick={() => onPublish(q.id)}
-                        className="px-3 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-800"
+                        className="px-2.5 py-1.5 rounded-lg bg-black text-white text-xs hover:bg-gray-800 whitespace-nowrap"
                       >
                         Publish
                       </button>
                     ) : q.share_token ? (
-                      <div className="flex items-center gap-2">
+                      <>
                         <button
                           onClick={() => copy(shareUrl)}
-                          className="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50"
+                          className="px-2.5 py-1.5 rounded-lg border text-xs hover:bg-gray-50 whitespace-nowrap"
                         >
                           Copy link
                         </button>
@@ -203,11 +203,11 @@ export default function MyQCMsPage() {
                           href={shareUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-3 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-800"
+                          className="px-2.5 py-1.5 rounded-lg bg-black text-white text-xs hover:bg-gray-800 whitespace-nowrap"
                         >
                           Open link
                         </a>
-                      </div>
+                      </>
                     ) : null}
                   </div>
                 </div>
