@@ -139,7 +139,7 @@ export default function MyQCMsPage() {
                   <div className="min-w-0">
                     <div className="text-sm text-gray-500 mb-1">Job description</div>
                     <div
-                      className="font-medium text-gray-900 line-clamp-2"
+                      className="font-medium text-gray-900 truncate"
                       title={q.jd_preview || ""}
                     >
                       {q.jd_preview || "—"}
