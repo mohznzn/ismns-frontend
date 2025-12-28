@@ -19,6 +19,7 @@ export default function QcmResultsPage() {
   const [selectedCvUrl, setSelectedCvUrl] = useState(null);
   const [showDashboardDetails, setShowDashboardDetails] = useState(false);
   const [hoveredSegment, setHoveredSegment] = useState(null);
+  const [hoveredScoreSegment, setHoveredScoreSegment] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -255,12 +256,13 @@ export default function QcmResultsPage() {
               />
             </div>
 
-            {/* Score Distribution Chart */}
+            {/* Score Distribution Donut Chart */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">
-                Distribution des Scores
-              </h3>
-              <ScoreDistributionChart distribution={dashboardStats.scoreDistribution} />
+              <ScoreDonutChart
+                distribution={dashboardStats.scoreDistribution}
+                hoveredSegment={hoveredScoreSegment}
+                onSegmentHover={setHoveredScoreSegment}
+              />
             </div>
           </div>
 
@@ -724,6 +726,211 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
             </span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
+  const size = 300;
+  const radius = 100;
+  const innerRadius = 60;
+  const centerX = size / 2;
+  const centerY = size / 2;
+
+  // Préparer les données pour le graphique - seulement les tranches avec des valeurs > 0
+  const segments = [
+    {
+      id: "0-20",
+      label: "0-20%",
+      value: distribution["0-20"] || 0,
+      color: "#EF4444", // red
+    },
+    {
+      id: "21-40",
+      label: "21-40%",
+      value: distribution["21-40"] || 0,
+      color: "#F59E0B", // orange
+    },
+    {
+      id: "41-60",
+      label: "41-60%",
+      value: distribution["41-60"] || 0,
+      color: "#EAB308", // yellow
+    },
+    {
+      id: "61-80",
+      label: "61-80%",
+      value: distribution["61-80"] || 0,
+      color: "#3B82F6", // blue
+    },
+    {
+      id: "81-100",
+      label: "81-100%",
+      value: distribution["81-100"] || 0,
+      color: "#10B981", // green
+    },
+  ].filter((seg) => seg.value > 0); // Filtrer les segments avec valeur 0
+
+  // Calculer le total pour les pourcentages
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  let currentAngle = -90; // Commencer en haut
+
+  const pathData = segments.map((seg) => {
+    // Calculer le pourcentage basé sur le total
+    const percentage = total > 0 ? seg.value / total : 0;
+    const angle = percentage * 360;
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + angle;
+
+    // Convertir les angles en radians
+    const startAngleRad = (startAngle * Math.PI) / 180;
+    const endAngleRad = (endAngle * Math.PI) / 180;
+
+    // Coordonnées pour l'arc externe
+    const x1 = centerX + radius * Math.cos(startAngleRad);
+    const y1 = centerY + radius * Math.sin(startAngleRad);
+    const x2 = centerX + radius * Math.cos(endAngleRad);
+    const y2 = centerY + radius * Math.sin(endAngleRad);
+
+    // Coordonnées pour l'arc interne
+    const x3 = centerX + innerRadius * Math.cos(endAngleRad);
+    const y3 = centerY + innerRadius * Math.sin(endAngleRad);
+    const x4 = centerX + innerRadius * Math.cos(startAngleRad);
+    const y4 = centerY + innerRadius * Math.sin(startAngleRad);
+
+    const largeArcFlag = angle > 180 ? 1 : 0;
+
+    const path = [
+      `M ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      `L ${x3} ${y3}`,
+      `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
+      `Z`,
+    ].join(" ");
+
+    const segmentData = {
+      ...seg,
+      path,
+      startAngle,
+      endAngle,
+      percentage: total > 0 ? ((seg.value / total) * 100).toFixed(1) : "0",
+      midAngle: startAngle + angle / 2,
+    };
+
+    currentAngle = endAngle;
+    return segmentData;
+  });
+
+  // Trouver le segment survolé pour le tooltip
+  const hoveredData = pathData.find((seg) => seg.id === hoveredSegment);
+
+  // Calculer le total des candidats qui ont un score
+  const totalCandidates = Object.values(distribution).reduce((sum, val) => sum + val, 0);
+
+  return (
+    <div className="flex flex-col items-center gap-6">
+      {/* Graphique Donut */}
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="transform -rotate-90">
+          {pathData.map((seg) => (
+            <path
+              key={seg.id}
+              d={seg.path}
+              fill={seg.color}
+              stroke="white"
+              strokeWidth="2"
+              className="cursor-pointer transition-opacity"
+              style={{
+                opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+              }}
+              onMouseEnter={() => onSegmentHover(seg.id)}
+              onMouseLeave={() => onSegmentHover(null)}
+            />
+          ))}
+        </svg>
+
+        {/* Centre du donut avec statistiques principales */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="text-3xl font-bold text-gray-900">{totalCandidates}</div>
+          <div className="text-sm text-gray-600">Candidats</div>
+          <div className="text-xs text-gray-500 mt-1">
+            avec score
+          </div>
+        </div>
+
+        {/* Tooltip */}
+        {hoveredData && (
+          <div
+            className="absolute z-10 bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg pointer-events-none"
+            style={{
+              left: centerX + (radius + 20) * Math.cos((hoveredData.midAngle * Math.PI) / 180),
+              top: centerY + (radius + 20) * Math.sin((hoveredData.midAngle * Math.PI) / 180),
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <div>
+                <div className="font-semibold text-sm">{hoveredData.label}</div>
+                <div className="text-xs opacity-90">
+                  {hoveredData.value} candidat{hoveredData.value > 1 ? "s" : ""} ({hoveredData.percentage}%)
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Légende */}
+      <div className="w-full space-y-3">
+        <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
+          Distribution des Scores
+        </h3>
+        
+        {/* Total Candidats - séparé */}
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+          <div className="w-4 h-4 rounded-full bg-gray-400" />
+          <div className="flex-1">
+            <div className="text-sm font-medium text-gray-900">
+              Total avec Score
+            </div>
+            <div className="text-xs text-gray-500">
+              {totalCandidates} candidat{totalCandidates > 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+
+        {/* Segments du graphique */}
+        {segments.map((seg) => {
+          const segData = pathData.find((s) => s.id === seg.id);
+          return (
+            <div
+              key={seg.id}
+              className="flex items-center gap-3 cursor-pointer transition-opacity"
+              style={{
+                opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+              }}
+              onMouseEnter={() => onSegmentHover(seg.id)}
+              onMouseLeave={() => onSegmentHover(null)}
+            >
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: seg.color }}
+              />
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900">
+                  {seg.label}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {seg.value} candidat{seg.value > 1 ? "s" : ""}
+                </div>
+              </div>
+              <div className="text-sm font-semibold text-gray-700">
+                {segData?.percentage}%
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
