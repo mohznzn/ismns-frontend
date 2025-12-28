@@ -18,6 +18,7 @@ export default function QcmResultsPage() {
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [selectedCvUrl, setSelectedCvUrl] = useState(null);
   const [showDashboardDetails, setShowDashboardDetails] = useState(false);
+  const [hoveredSegment, setHoveredSegment] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -243,33 +244,12 @@ export default function QcmResultsPage() {
         <div className="bg-white shadow rounded-2xl p-6">
           <h2 className="text-lg font-semibold mb-4">Dashboard</h2>
           
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <StatCard
-              label="Total Candidats"
-              value={dashboardStats.total}
-              icon="👥"
-            />
-            <StatCard
-              label="Taux de Réussite"
-              value={`${dashboardStats.passRate}%`}
-              icon="✅"
-              color={dashboardStats.passRate >= 50 ? "green" : "red"}
-            />
-            <StatCard
-              label="Score Moyen"
-              value={`${dashboardStats.avgScore}%`}
-              icon="📊"
-            />
-            <StatCard
-              label="Durée Moyenne"
-              value={formatDuration(dashboardStats.avgDuration)}
-              icon="⏱️"
-            />
-            <StatCard
-              label="En Cours"
-              value={dashboardStats.ongoing}
-              icon="🔄"
+          {/* Dashboard Donut Chart */}
+          <div className="mb-6">
+            <DashboardDonutChart
+              stats={dashboardStats}
+              hoveredSegment={hoveredSegment}
+              onSegmentHover={setHoveredSegment}
             />
           </div>
 
@@ -558,6 +538,203 @@ function toCsvRow(arr) {
 }
 
 /* ───────────────── Dashboard Components ───────────────── */
+
+function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
+  const size = 300;
+  const radius = 100;
+  const innerRadius = 60;
+  const centerX = size / 2;
+  const centerY = size / 2;
+
+  // Préparer les données pour le graphique
+  const segments = [
+    {
+      id: "total",
+      label: "Total Candidats",
+      value: stats.total,
+      color: "#3B82F6", // blue
+      icon: "👥",
+    },
+    {
+      id: "passed",
+      label: "Réussis",
+      value: stats.passed,
+      color: "#10B981", // green
+      icon: "✅",
+    },
+    {
+      id: "failed",
+      label: "Échoués",
+      value: stats.failed,
+      color: "#EF4444", // red
+      icon: "❌",
+    },
+    {
+      id: "ongoing",
+      label: "En Cours",
+      value: stats.ongoing,
+      color: "#F59E0B", // yellow
+      icon: "🔄",
+    },
+  ];
+
+  // Calculer les angles pour chaque segment
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  let currentAngle = -90; // Commencer en haut
+
+  const pathData = segments.map((seg) => {
+    const percentage = total > 0 ? seg.value / total : 0;
+    const angle = percentage * 360;
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + angle;
+
+    // Convertir les angles en radians
+    const startAngleRad = (startAngle * Math.PI) / 180;
+    const endAngleRad = (endAngle * Math.PI) / 180;
+
+    // Coordonnées pour l'arc externe
+    const x1 = centerX + radius * Math.cos(startAngleRad);
+    const y1 = centerY + radius * Math.sin(startAngleRad);
+    const x2 = centerX + radius * Math.cos(endAngleRad);
+    const y2 = centerY + radius * Math.sin(endAngleRad);
+
+    // Coordonnées pour l'arc interne
+    const x3 = centerX + innerRadius * Math.cos(endAngleRad);
+    const y3 = centerY + innerRadius * Math.sin(endAngleRad);
+    const x4 = centerX + innerRadius * Math.cos(startAngleRad);
+    const y4 = centerY + innerRadius * Math.sin(startAngleRad);
+
+    const largeArcFlag = angle > 180 ? 1 : 0;
+
+    const path = [
+      `M ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      `L ${x3} ${y3}`,
+      `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
+      `Z`,
+    ].join(" ");
+
+    const segmentData = {
+      ...seg,
+      path,
+      startAngle,
+      endAngle,
+      percentage: (percentage * 100).toFixed(1),
+      midAngle: startAngle + angle / 2,
+    };
+
+    currentAngle = endAngle;
+    return segmentData;
+  });
+
+  // Trouver le segment survolé pour le tooltip
+  const hoveredData = pathData.find((seg) => seg.id === hoveredSegment);
+
+  return (
+    <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+      {/* Graphique Donut */}
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="transform -rotate-90">
+          {pathData.map((seg) => (
+            <path
+              key={seg.id}
+              d={seg.path}
+              fill={seg.color}
+              stroke="white"
+              strokeWidth="2"
+              className="cursor-pointer transition-opacity"
+              style={{
+                opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+              }}
+              onMouseEnter={() => onSegmentHover(seg.id)}
+              onMouseLeave={() => onSegmentHover(null)}
+            />
+          ))}
+        </svg>
+
+        {/* Centre du donut avec statistiques principales */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
+          <div className="text-sm text-gray-600">Total Candidats</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {stats.passRate}% réussite
+          </div>
+        </div>
+
+        {/* Tooltip */}
+        {hoveredData && (
+          <div
+            className="absolute z-10 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg pointer-events-none"
+            style={{
+              left: centerX + (radius + innerRadius) / 2 * Math.cos((hoveredData.midAngle * Math.PI) / 180) - 60,
+              top: centerY + (radius + innerRadius) / 2 * Math.sin((hoveredData.midAngle * Math.PI) / 180) - 30,
+              transform: "translate(-50%, -50%) rotate(90deg)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span>{hoveredData.icon}</span>
+              <div>
+                <div className="font-semibold">{hoveredData.label}</div>
+                <div className="text-xs opacity-90">
+                  {hoveredData.value} ({hoveredData.percentage}%)
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Légende */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-gray-700 mb-4">Statistiques</h3>
+        {segments.map((seg) => {
+          const segData = pathData.find((s) => s.id === seg.id);
+          return (
+            <div
+              key={seg.id}
+              className="flex items-center gap-3 cursor-pointer transition-opacity"
+              style={{
+                opacity: hoveredSegment && hoveredSegment !== seg.id ? 0.3 : 1,
+              }}
+              onMouseEnter={() => onSegmentHover(seg.id)}
+              onMouseLeave={() => onSegmentHover(null)}
+            >
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: seg.color }}
+              />
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900">
+                  {seg.label}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {seg.value} candidat{seg.value > 1 ? "s" : ""}
+                </div>
+              </div>
+              <div className="text-sm font-semibold text-gray-700">
+                {segData?.percentage}%
+              </div>
+            </div>
+          );
+        })}
+        
+        {/* Statistiques supplémentaires */}
+        <div className="pt-4 mt-4 border-t border-gray-200 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Score Moyen:</span>
+            <span className="font-semibold text-gray-900">{stats.avgScore}%</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Durée Moyenne:</span>
+            <span className="font-semibold text-gray-900">
+              {formatDuration(stats.avgDuration)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ label, value, icon, color = "gray" }) {
   const colorClasses = {
