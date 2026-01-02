@@ -149,8 +149,9 @@ export default function QcmResultsPage() {
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
       : 0;
 
-    const passRate = finished.length > 0 
-      ? Math.round((passed.length / finished.length) * 100) 
+    // Taux de réussite basé sur le total des candidats (pas seulement ceux qui ont terminé)
+    const passRate = items.length > 0 
+      ? Math.round((passed.length / items.length) * 100) 
       : 0;
 
     // Top 5 candidats
