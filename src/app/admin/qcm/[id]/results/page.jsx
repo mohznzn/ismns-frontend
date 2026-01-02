@@ -368,7 +368,7 @@ export default function QcmResultsPage() {
                 <tr className="text-left border-b bg-gray-50">
                   <Th>Candidate</Th>
                   <Th>Status</Th>
-                  <Th>Score</Th>
+                  <Th>QCM Score</Th>
                   <Th>Overall Score</Th>
                   <Th>Started</Th>
                   <Th>Finished</Th>
@@ -1325,7 +1325,7 @@ function downloadCsv(rows) {
     "attempt_id",
     "candidate_email",
     "status_derived",
-    "score",
+    "qcm_score",
     "overall_score",
     "started_at",
     "finished_at",
