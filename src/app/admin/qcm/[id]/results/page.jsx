@@ -369,6 +369,7 @@ export default function QcmResultsPage() {
                   <Th>Candidate</Th>
                   <Th>Status</Th>
                   <Th>Score</Th>
+                  <Th>Overall Score</Th>
                   <Th>Started</Th>
                   <Th>Finished</Th>
                   <Th>Duration</Th>
@@ -379,7 +380,7 @@ export default function QcmResultsPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-gray-500">
+                    <td colSpan={9} className="py-6 text-center text-gray-500">
                       No attempts yet.
                     </td>
                   </tr>
@@ -393,6 +394,11 @@ export default function QcmResultsPage() {
                           <AttemptBadge status={st} />
                         </Td>
                         <Td>{isNil(it.score) ? "—" : `${it.score}%`}</Td>
+                        <Td>
+                          {it.overall_score !== null && it.overall_score !== undefined
+                            ? `${it.overall_score}%`
+                            : "—"}
+                        </Td>
                         <Td>{formatDate(it.started_at)}</Td>
                         <Td>{formatDate(it.finished_at)}</Td>
                         <Td>{formatDuration(it.duration_s)}</Td>
@@ -1320,6 +1326,7 @@ function downloadCsv(rows) {
     "candidate_email",
     "status_derived",
     "score",
+    "overall_score",
     "started_at",
     "finished_at",
     "duration_s",
@@ -1339,6 +1346,7 @@ function downloadCsv(rows) {
             : "finished"
           : (r.status || ""),
         isNil(r.score) ? "" : r.score,
+        r.overall_score !== null && r.overall_score !== undefined ? r.overall_score : "",
         r.started_at || "",
         r.finished_at || "",
         isNil(r.duration_s) ? "" : r.duration_s,
