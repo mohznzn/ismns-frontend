@@ -154,13 +154,14 @@ export default function QcmResultsPage() {
       ? Math.round((passed.length / items.length) * 100) 
       : 0;
 
-    // Top 5 candidats
+    // Top 5 candidats - triés par overall_score, mais affichant le QCM score
     const topCandidates = [...finished]
-      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0))
       .slice(0, 5)
       .map((it) => ({
         email: it.candidate_email || "—",
-        score: it.score || 0,
+        score: it.score || 0, // QCM Score pour l'affichage
+        overallScore: it.overall_score || 0, // Overall Score pour le tri
         passed: it.passed,
       }));
 
@@ -297,14 +298,25 @@ export default function QcmResultsPage() {
                         {candidate.email}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-sm font-semibold ${
-                          candidate.passed ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {candidate.score}%
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">Overall:</span>
+                          <span className="text-sm font-semibold text-blue-600">
+                            {candidate.overallScore}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">QCM:</span>
+                          <span
+                            className={`text-sm font-semibold ${
+                              candidate.passed ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {candidate.score}%
+                          </span>
+                        </div>
+                      </div>
                       {candidate.passed ? (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
                           Passed
