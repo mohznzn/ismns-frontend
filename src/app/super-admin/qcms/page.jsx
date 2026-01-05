@@ -37,13 +37,16 @@ export default function SuperAdminQCMs() {
       const res = await fetch(`${BACKEND}/super-admin/qcms?${params}`, {
         credentials: "include",
       });
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `API ${res.status}`);
+      }
       const json = await res.json();
       setQcms(json.items || []);
       setTotal(json.total || 0);
     } catch (err) {
       console.error("[QCMs] Load failed:", err);
-      alert("Erreur lors du chargement des QCMs");
+      alert(`Erreur lors du chargement des QCMs: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -155,50 +158,62 @@ export default function SuperAdminQCMs() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {qcms.map((qcm) => (
-              <tr key={qcm.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">{qcm.jd_preview}</div>
-                  <div className="text-xs text-gray-500">{qcm.skills_count} compétences</div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{qcm.owner_email}</td>
-                <td className="px-6 py-4">
-                  <select
-                    value={qcm.status}
-                    onChange={(e) => handleStatusChange(qcm.id, e.target.value)}
-                    className={`text-xs px-2 py-1 rounded ${
-                      qcm.status === "published" ? "bg-green-100 text-green-800" :
-                      qcm.status === "draft" ? "bg-yellow-100 text-yellow-800" :
-                      "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{qcm.language}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {qcm.attempts_finished} / {qcm.attempts_total}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{qcm.pass_rate.toFixed(1)}%</td>
-                <td className="px-6 py-4 text-sm text-gray-500">{qcm.avg_score.toFixed(1)}%</td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  <Link
-                    href={`/admin/qcm/${qcm.id}/results`}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                  >
-                    Voir
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(qcm.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Supprimer
-                  </button>
+            {qcms.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                  Aucun QCM trouvé
                 </td>
               </tr>
-            ))}
+            ) : (
+              qcms.map((qcm) => (
+                <tr key={qcm.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">{qcm.jd_preview || "—"}</div>
+                    <div className="text-xs text-gray-500">{qcm.skills_count || 0} compétences</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{qcm.owner_email || "—"}</td>
+                  <td className="px-6 py-4">
+                    <select
+                      value={qcm.status || "draft"}
+                      onChange={(e) => handleStatusChange(qcm.id, e.target.value)}
+                      className={`text-xs px-2 py-1 rounded ${
+                        qcm.status === "published" ? "bg-green-100 text-green-800" :
+                        qcm.status === "draft" ? "bg-yellow-100 text-yellow-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{qcm.language || "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {qcm.attempts_finished ?? 0} / {qcm.attempts_total ?? 0}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {(qcm.pass_rate ?? 0).toFixed(1)}%
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {(qcm.avg_score ?? 0).toFixed(1)}%
+                  </td>
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    <Link
+                      href={`/admin/qcm/${qcm.id}/results`}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                    >
+                      Voir
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(qcm.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
