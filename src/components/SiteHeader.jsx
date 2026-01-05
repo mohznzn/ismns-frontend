@@ -147,6 +147,15 @@ export default function SiteHeader() {
                 </span>
               </div>
             )}
+            {/* Lien Super Admin pour les utilisateurs avec le rôle super_admin */}
+            {user?.role === "super_admin" && (
+              <Link
+                href="/super-admin"
+                className={`hover:text-blue-600 ${isActive("/super-admin") ? "font-semibold" : ""}`}
+              >
+                Super Admin
+              </Link>
+            )}
             <Link
               href="/admin/qcm/new"
               className={`hover:text-blue-600 ${isActive("/admin/qcm/new") ? "font-semibold" : ""}`}

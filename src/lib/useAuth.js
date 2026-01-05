@@ -50,8 +50,8 @@ export function AuthProvider({ children }) {
   };
 
   const refresh = useCallback(
-    async ({ silent = false } = {}) => {
-      if (refreshingRef.current) return;
+    async ({ silent = false, force = false } = {}) => {
+      if (refreshingRef.current && !force) return;
       refreshingRef.current = true;
 
       if (!silent) setLoading(true);
