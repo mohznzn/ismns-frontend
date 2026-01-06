@@ -248,8 +248,16 @@ export default function SuperAdminCandidates() {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {attempt.overall_score !== null ? `${attempt.overall_score}%` : "—"}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {Math.floor((attempt.duration_s || 0) / 60)}min
+                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                  {(() => {
+                    const duration = attempt.duration_s || 0;
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = duration % 60;
+                    if (minutes > 0) {
+                      return `${minutes}min ${seconds}s`;
+                    }
+                    return `${seconds}s`;
+                  })()}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {attempt.started_at ? new Date(attempt.started_at).toLocaleDateString() : "—"}
