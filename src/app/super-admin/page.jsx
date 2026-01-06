@@ -38,7 +38,7 @@ export default function SuperAdminDashboard() {
     );
   }
 
-  const { metrics, distributions, top_recruiters, top_qcms, openai_tokens, evolution } = data;
+  const { metrics, distributions, top_recruiters, top_qcms, openai_tokens } = data;
 
   return (
     <div className="space-y-6">
@@ -198,27 +198,6 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Évolution */}
-      {evolution && evolution.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Évolution (30 derniers jours)</h2>
-          <div className="h-64 flex items-end gap-1">
-            {evolution.map((item, idx) => {
-              const maxCount = Math.max(...evolution.map((e) => e.count));
-              const height = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
-              return (
-                <div
-                  key={idx}
-                  className="flex-1 bg-blue-500 rounded-t hover:bg-blue-600 transition-colors"
-                  style={{ height: `${height}%` }}
-                  title={`${new Date(item.date).toLocaleDateString()}: ${item.count} candidats`}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
