@@ -214,7 +214,7 @@ export default function SuperAdminCandidates() {
       </div>
 
       {/* Liste */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -224,7 +224,7 @@ export default function SuperAdminCandidates() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score QCM</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overall Score</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durée</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Durée</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
