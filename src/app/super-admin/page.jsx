@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -9,11 +9,7 @@ export default function SuperAdminDashboard() {
   const [data, setData] = useState(null);
   const [period, setPeriod] = useState("all");
 
-  useEffect(() => {
-    loadDashboard();
-  }, [period]);
-
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`${BACKEND}/super-admin/dashboard?period=${period}`, {
@@ -28,7 +24,11 @@ export default function SuperAdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [period]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   if (loading || !data) {
     return (
