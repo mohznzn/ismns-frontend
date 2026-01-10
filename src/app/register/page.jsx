@@ -7,7 +7,11 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [pw, setPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -20,8 +24,33 @@ export default function RegisterPage() {
     setLoading(true);
     setErr("");
     setSuccess(false);
+
+    // Validation de la confirmation du mot de passe
+    if (pw !== confirmPw) {
+      setErr("Les mots de passe ne correspondent pas.");
+      setLoading(false);
+      return;
+    }
+
+    // Validation du format du téléphone (optionnel mais si fourni, doit être valide)
+    if (phoneNumber && phoneNumber.trim()) {
+      const phoneRegex = /^[\d\s\-\+\(\)]{10,15}$/;
+      const cleanedPhone = phoneNumber.replace(/[\s\-\+\(\)]/g, "");
+      if (cleanedPhone.length < 10 || cleanedPhone.length > 15) {
+        setErr("Le numéro de téléphone doit contenir entre 10 et 15 chiffres.");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
-      const result = await auth.register(email, pw);
+      const result = await auth.register(
+        email, 
+        pw, 
+        phoneNumber.trim() || undefined,
+        firstName.trim() || undefined,
+        lastName.trim() || undefined
+      );
       
       // Vérifier si la vérification est requise
       if (result?.requires_verification) {
@@ -80,6 +109,32 @@ export default function RegisterPage() {
               disabled={loading}
             />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">First Name</label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
+                placeholder="John"
+                maxLength={100}
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Last Name</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
+                placeholder="Doe"
+                maxLength={100}
+                disabled={loading}
+              />
+            </div>
+          </div>
           <div>
             <label className="block text-sm mb-1">Password</label>
             <input
@@ -94,6 +149,40 @@ export default function RegisterPage() {
             />
             <p className="mt-1 text-xs text-gray-500">
               At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm mb-1">Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPw}
+              onChange={(e) => setConfirmPw(e.target.value)}
+              className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
+              placeholder="••••••••"
+              required
+              minLength={8}
+              disabled={loading}
+            />
+            {confirmPw && pw !== confirmPw && (
+              <p className="mt-1 text-xs text-red-500">
+                Les mots de passe ne correspondent pas
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm mb-1">
+              Phone Number <span className="text-gray-400">(optional)</span>
+            </label>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/10"
+              placeholder="+33 6 12 34 56 78"
+              disabled={loading}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Format: 10-15 digits (spaces, dashes, parentheses allowed)
             </p>
           </div>
           <button

@@ -187,7 +187,7 @@ function withQuery(path, params) {
 // ================= AUTH =================
 export const auth = {
   me: () => apiGet(`/auth/me`),
-  register: (email, password, phone_number) => apiPost(`/auth/register`, { email, password, phone_number }),
+  register: (email, password, phone_number, first_name, last_name) => apiPost(`/auth/register`, { email, password, phone_number, first_name, last_name }),
   verifyEmail: (email, code, user_id) => apiPost(`/auth/verify-email`, { email, code, user_id }),
   resendVerificationCode: (email, context = "register") => apiPost(`/auth/resend-verification-code`, { email, context }),
   login: (email, password, verification_code) => apiPost(`/auth/login`, { email, password, verification_code }),
