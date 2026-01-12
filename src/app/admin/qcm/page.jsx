@@ -97,7 +97,7 @@ export default function MyQCMsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">My QCMs</h1>
+      <h1 className="text-2xl font-bold">My Assessments</h1>
 
       <div className="bg-white shadow rounded-2xl p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex gap-2">
