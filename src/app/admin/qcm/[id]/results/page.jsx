@@ -833,20 +833,6 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
             </div>
           );
         })}
-        
-        {/* Statistiques supplémentaires */}
-        <div className="pt-4 mt-4 border-t border-gray-200 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Score Moyen:</span>
-            <span className="font-semibold text-gray-900">{stats.avgScore}%</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Durée Moyenne:</span>
-            <span className="font-semibold text-gray-900">
-              {formatDuration(stats.avgDuration)}
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );
