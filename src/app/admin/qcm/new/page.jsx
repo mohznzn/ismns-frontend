@@ -75,26 +75,20 @@ export default function NewQcmPage() {
             }
           },
           (err) => {
-            console.error("SSE/polling error:", err);
-            // Ne pas déclencher d'erreur si c'est juste un problème de connexion SSE
-            // Le polling devrait prendre le relais automatiquement
-            // Seulement afficher une erreur si le polling échoue aussi après plusieurs tentatives
+            console.error("SSE error:", err);
+            // Vérifier si c'est une erreur d'authentification
             const errorMsg = err?.message?.includes('unauthenticated') || err?.message?.includes('401')
               ? "Session expirée. Veuillez vous reconnecter."
-              : "Erreur de connexion lors du suivi de la progression. Tentative de récupération...";
+              : "Erreur de connexion lors du suivi de la progression";
+            setError(errorMsg);
+            setExtractingSkills(false);
+            setGenerationProgress(null);
             
-            // Ne pas afficher d'erreur immédiatement, laisser le polling essayer
-            // Seulement si c'est vraiment une erreur d'authentification, alors déconnecter
-            if (err?.message?.includes('unauthenticated') || err?.message?.includes('401')) {
-              setError("Session expirée. Veuillez vous reconnecter.");
-              setExtractingSkills(false);
-              setGenerationProgress(null);
+            // Rediriger vers login si authentification échouée
+            if (errorMsg.includes("Session expirée")) {
               setTimeout(() => {
                 window.location.href = "/login";
               }, 2000);
-            } else {
-              // Pour les autres erreurs, ne pas bloquer, le polling devrait récupérer
-              console.log("SSE failed, polling should take over");
             }
           }
         );
@@ -278,7 +272,7 @@ export default function NewQcmPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Create QCM from Job Description</h1>
+      <h1 className="text-2xl font-bold">Build Your Candidate Assessment</h1>
 
       {step === 1 && (
         <form
