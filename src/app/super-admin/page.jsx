@@ -20,7 +20,7 @@ export default function SuperAdminDashboard() {
       setData(json);
     } catch (err) {
       console.error("[Dashboard] Load failed:", err);
-      alert("Erreur lors du chargement du dashboard");
+      alert("Error loading dashboard");
     } finally {
       setLoading(false);
     }
@@ -33,7 +33,7 @@ export default function SuperAdminDashboard() {
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Chargement...</div>
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
@@ -43,60 +43,60 @@ export default function SuperAdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Super Admin</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          <option value="today">Aujourd'hui</option>
-          <option value="week">Cette semaine</option>
-          <option value="month">Ce mois</option>
-          <option value="year">Cette année</option>
-          <option value="all">Tout</option>
+          <option value="today">Today</option>
+          <option value="week">This week</option>
+          <option value="month">This month</option>
+          <option value="year">This year</option>
+          <option value="all">All</option>
         </select>
       </div>
 
       {/* Métriques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Total Recruteurs"
+          title="Total Recruiters"
           value={metrics.total_recruiters}
           icon="👥"
           color="blue"
         />
         <MetricCard
-          title="Total QCMs"
+          title="Total Assessments"
           value={metrics.total_qcms}
           icon="📝"
           color="green"
         />
         <MetricCard
-          title="Total Candidats"
+          title="Total Candidates"
           value={metrics.total_candidates}
           icon="🎯"
           color="purple"
         />
         <MetricCard
-          title="Candidats Terminés"
+          title="Finished Candidates"
           value={metrics.finished_candidates}
           icon="✅"
           color="indigo"
         />
         <MetricCard
-          title="Taux de Réussite"
+          title="Pass Rate"
           value={`${metrics.pass_rate.toFixed(1)}%`}
           icon="📊"
           color="green"
         />
         <MetricCard
-          title="Score Moyen"
+          title="Average Score"
           value={`${metrics.avg_score.toFixed(1)}%`}
           icon="⭐"
           color="yellow"
         />
         <MetricCard
-          title="Durée Moyenne"
+          title="Average Duration"
           value={`${Math.floor(metrics.avg_duration / 60)}min`}
           icon="⏱️"
           color="orange"
@@ -113,7 +113,7 @@ export default function SuperAdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Répartition des QCMs par statut */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Répartition des QCMs par Statut</h2>
+          <h2 className="text-xl font-semibold mb-4">Assessments by Status</h2>
           <div className="space-y-2">
             {Object.entries(distributions.qcms_by_status).map(([status, count]) => (
               <div key={status} className="flex items-center justify-between">
@@ -136,7 +136,7 @@ export default function SuperAdminDashboard() {
 
         {/* Répartition des scores */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Répartition des Scores</h2>
+          <h2 className="text-xl font-semibold mb-4">Score Distribution</h2>
           <div className="space-y-2">
             {Object.entries(distributions.scores).map(([range, count]) => (
               <div key={range} className="flex items-center justify-between">
@@ -162,7 +162,7 @@ export default function SuperAdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top 10 Recruteurs */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Top 10 Recruteurs</h2>
+          <h2 className="text-xl font-semibold mb-4">Top 10 Recruiters</h2>
           <div className="space-y-2">
             {top_recruiters.map((recruiter, idx) => (
               <div
@@ -173,7 +173,7 @@ export default function SuperAdminDashboard() {
                   <span className="text-gray-400 font-bold">#{idx + 1}</span>
                   <span className="text-sm text-gray-700">{recruiter.email}</span>
                 </div>
-                <span className="text-sm font-medium">{recruiter.attempts_count} candidats</span>
+                <span className="text-sm font-medium">{recruiter.attempts_count} candidates</span>
               </div>
             ))}
           </div>
@@ -181,7 +181,7 @@ export default function SuperAdminDashboard() {
 
         {/* Top 10 QCMs */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Top 10 QCMs</h2>
+          <h2 className="text-xl font-semibold mb-4">Top 10 Assessments</h2>
           <div className="space-y-2">
             {top_qcms.map((qcm, idx) => (
               <div
@@ -192,7 +192,7 @@ export default function SuperAdminDashboard() {
                   <span className="text-gray-400 font-bold">#{idx + 1}</span>
                   <span className="text-sm text-gray-700 truncate">{qcm.jd_preview}</span>
                 </div>
-                <span className="text-sm font-medium ml-2">{qcm.attempts_count} candidats</span>
+                <span className="text-sm font-medium ml-2">{qcm.attempts_count} candidates</span>
               </div>
             ))}
           </div>

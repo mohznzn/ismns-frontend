@@ -46,7 +46,7 @@ export default function SuperAdminQCMs() {
       setTotal(json.total || 0);
     } catch (err) {
       console.error("[QCMs] Load failed:", err);
-      alert(`Erreur lors du chargement des QCMs: ${err.message}`);
+      alert(`Error loading assessments: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -63,12 +63,12 @@ export default function SuperAdminQCMs() {
       if (!res.ok) throw new Error("Erreur");
       loadQCMs();
     } catch (err) {
-      alert("Erreur lors de la modification");
+      alert("Error updating");
     }
   }
 
   async function handleDelete(qcmId) {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce QCM ?")) return;
+    if (!confirm("Are you sure you want to delete this assessment?")) return;
     try {
       const res = await fetch(`${BACKEND}/super-admin/qcms/${qcmId}`, {
         method: "DELETE",
@@ -77,27 +77,27 @@ export default function SuperAdminQCMs() {
       if (!res.ok) throw new Error("Erreur");
       loadQCMs();
     } catch (err) {
-      alert("Erreur lors de la suppression");
+      alert("Error deleting");
     }
   }
 
   if (loading && qcms.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Chargement...</div>
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Vue Globale des QCMs</h1>
+      <h1 className="text-3xl font-bold text-gray-900">Global Assessments View</h1>
 
       {/* Filtres */}
       <div className="bg-white p-4 rounded-lg shadow grid grid-cols-1 md:grid-cols-4 gap-4">
         <input
           type="text"
-          placeholder="Rechercher..."
+          placeholder="Search..."
           value={filters.search}
           onChange={(e) => {
             setFilters({ ...filters, search: e.target.value });
@@ -113,7 +113,7 @@ export default function SuperAdminQCMs() {
           }}
           className="px-4 py-2 border border-gray-300 rounded-lg"
         >
-          <option value="">Tous les statuts</option>
+          <option value="">All statuses</option>
           <option value="draft">Draft</option>
           <option value="published">Published</option>
           <option value="archived">Archived</option>
@@ -126,7 +126,7 @@ export default function SuperAdminQCMs() {
           }}
           className="px-4 py-2 border border-gray-300 rounded-lg"
         >
-          <option value="">Toutes les langues</option>
+          <option value="">All languages</option>
           <option value="fr">Français</option>
           <option value="en">English</option>
         </select>
@@ -147,13 +147,13 @@ export default function SuperAdminQCMs() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">QCM</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recruteur</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Langue</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Candidats</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Taux Réussite</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score Moyen</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assessment</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recruiter</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Language</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Candidates</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pass Rate</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Average Score</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -161,7 +161,7 @@ export default function SuperAdminQCMs() {
             {qcms.length === 0 ? (
               <tr>
                 <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                  Aucun QCM trouvé
+                  No assessments found
                 </td>
               </tr>
             ) : (
@@ -169,7 +169,7 @@ export default function SuperAdminQCMs() {
                 <tr key={qcm.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{qcm.jd_preview || "—"}</div>
-                    <div className="text-xs text-gray-500">{qcm.skills_count || 0} compétences</div>
+                    <div className="text-xs text-gray-500">{qcm.skills_count || 0} skills</div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{qcm.owner_email || "—"}</td>
                   <td className="px-6 py-4">
@@ -202,13 +202,13 @@ export default function SuperAdminQCMs() {
                       href={`/admin/qcm/${qcm.id}/results`}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
-                      Voir
+                      View
                     </Link>
                     <button
                       onClick={() => handleDelete(qcm.id)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      Supprimer
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -226,17 +226,17 @@ export default function SuperAdminQCMs() {
             disabled={page === 1}
             className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
           >
-            Précédent
+            Previous
           </button>
           <span className="text-sm text-gray-600">
-            Page {page} sur {Math.ceil(total / pageSize)}
+            Page {page} of {Math.ceil(total / pageSize)}
           </span>
           <button
             onClick={() => setPage(Math.min(Math.ceil(total / pageSize), page + 1))}
             disabled={page >= Math.ceil(total / pageSize)}
             className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
           >
-            Suivant
+            Next
           </button>
         </div>
       )}

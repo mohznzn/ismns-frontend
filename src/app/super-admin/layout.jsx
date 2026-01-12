@@ -39,7 +39,7 @@ export default function SuperAdminLayout({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Chargement...</div>
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
@@ -50,9 +50,9 @@ export default function SuperAdminLayout({ children }) {
 
   const navItems = [
     { href: "/super-admin", label: "Dashboard", icon: "📊" },
-    { href: "/super-admin/recruiters", label: "Recruteurs", icon: "👥" },
-    { href: "/super-admin/qcms", label: "QCMs", icon: "📝" },
-    { href: "/super-admin/candidates", label: "Candidats", icon: "🎯" },
+    { href: "/super-admin/recruiters", label: "Recruiters", icon: "👥" },
+    { href: "/super-admin/qcms", label: "Assessments", icon: "📝" },
+    { href: "/super-admin/candidates", label: "Candidates", icon: "🎯" },
     { href: "/super-admin/config", label: "Configuration", icon: "⚙️" },
   ];
 
@@ -92,7 +92,7 @@ export default function SuperAdminLayout({ children }) {
                 href="/admin/qcm"
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
-                Retour Admin
+                Back to Admin
               </Link>
             </div>
           </div>

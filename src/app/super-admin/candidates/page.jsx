@@ -46,14 +46,14 @@ export default function SuperAdminCandidates() {
       setTotal(json.total || 0);
     } catch (err) {
       console.error("[Candidates] Load failed:", err);
-      alert("Erreur lors du chargement des candidats");
+      alert("Error loading candidates");
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(attemptId) {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette tentative ?")) return;
+    if (!confirm("Are you sure you want to delete this attempt?")) return;
     try {
       const res = await fetch(`${BACKEND}/super-admin/attempts/${attemptId}`, {
         method: "DELETE",
@@ -62,7 +62,7 @@ export default function SuperAdminCandidates() {
       if (!res.ok) throw new Error("Erreur");
       loadAttempts();
     } catch (err) {
-      alert("Erreur lors de la suppression");
+      alert("Error deleting");
     }
   }
 
@@ -103,14 +103,14 @@ export default function SuperAdminCandidates() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert("Erreur lors de l'export");
+      alert("Error exporting");
     }
   }
 
   if (loading && attempts.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Chargement...</div>
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
@@ -118,12 +118,12 @@ export default function SuperAdminCandidates() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Vue Globale des Candidats</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Global Candidates View</h1>
         <button
           onClick={exportCSV}
           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
         >
-          Exporter CSV
+          Export CSV
         </button>
       </div>
 
@@ -131,7 +131,7 @@ export default function SuperAdminCandidates() {
       <div className="bg-white p-4 rounded-lg shadow grid grid-cols-1 md:grid-cols-4 gap-4">
         <input
           type="text"
-          placeholder="Email candidat"
+          placeholder="Candidate email"
           value={filters.email}
           onChange={(e) => {
             setFilters({ ...filters, email: e.target.value });
@@ -147,13 +147,13 @@ export default function SuperAdminCandidates() {
           }}
           className="px-4 py-2 border border-gray-300 rounded-lg"
         >
-          <option value="">Tous les statuts</option>
-          <option value="finished">Terminé</option>
-          <option value="ongoing">En cours</option>
+          <option value="">All statuses</option>
+          <option value="finished">Finished</option>
+          <option value="ongoing">In Progress</option>
         </select>
         <input
           type="number"
-          placeholder="Score min"
+          placeholder="Min score"
           value={filters.score_min}
           onChange={(e) => {
             setFilters({ ...filters, score_min: e.target.value });
@@ -163,7 +163,7 @@ export default function SuperAdminCandidates() {
         />
         <input
           type="number"
-          placeholder="Score max"
+          placeholder="Max score"
           value={filters.score_max}
           onChange={(e) => {
             setFilters({ ...filters, score_max: e.target.value });
@@ -220,11 +220,11 @@ export default function SuperAdminCandidates() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">QCM</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recruteur</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score QCM</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recruiter</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">QCM Score</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overall Score</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Durée</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Duration</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
@@ -241,7 +241,7 @@ export default function SuperAdminCandidates() {
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     attempt.status === "finished" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
                   }`}>
-                    {attempt.status === "finished" ? "Terminé" : "En cours"}
+                    {attempt.status === "finished" ? "Finished" : "In Progress"}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">{attempt.score.toFixed(1)}%</td>
@@ -267,13 +267,13 @@ export default function SuperAdminCandidates() {
                     href={`/admin/attempt/${attempt.attempt_id}/report`}
                     className="text-blue-600 hover:text-blue-900 mr-3"
                   >
-                    Voir
+                    View
                   </Link>
                   <button
                     onClick={() => handleDelete(attempt.attempt_id)}
                     className="text-red-600 hover:text-red-900"
                   >
-                    Supprimer
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -290,17 +290,17 @@ export default function SuperAdminCandidates() {
             disabled={page === 1}
             className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
           >
-            Précédent
+            Previous
           </button>
           <span className="text-sm text-gray-600">
-            Page {page} sur {Math.ceil(total / pageSize)}
+            Page {page} of {Math.ceil(total / pageSize)}
           </span>
           <button
             onClick={() => setPage(Math.min(Math.ceil(total / pageSize), page + 1))}
             disabled={page >= Math.ceil(total / pageSize)}
             className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
           >
-            Suivant
+            Next
           </button>
         </div>
       )}

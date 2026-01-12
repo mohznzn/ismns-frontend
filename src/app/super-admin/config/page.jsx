@@ -62,7 +62,7 @@ export default function SuperAdminConfig() {
   }
 
   async function handleRevokeInvite(inviteId) {
-    if (!confirm("Êtes-vous sûr de vouloir révoquer ce lien ?")) return;
+    if (!confirm("Are you sure you want to revoke this link?")) return;
     try {
       const res = await fetch(`${BACKEND}/super-admin/invites/${inviteId}`, {
         method: "DELETE",
@@ -71,50 +71,50 @@ export default function SuperAdminConfig() {
       if (!res.ok) throw new Error("Erreur");
       loadInvites();
     } catch (err) {
-      alert("Erreur lors de la révocation");
+      alert("Error revoking link");
     }
   }
 
   if (loading || !config) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Chargement...</div>
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Gestion de l'Application</h1>
+      <h1 className="text-3xl font-bold text-gray-900">Application Management</h1>
 
       {/* Configuration système */}
       <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Configuration Système</h2>
+        <h2 className="text-xl font-semibold mb-4">System Configuration</h2>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-700">Seuil de réussite par défaut:</span>
+            <span className="text-gray-700">Default pass threshold:</span>
             <span className="font-medium">{config.pass_threshold}%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-700">Durée d'expiration des liens:</span>
-            <span className="font-medium">{config.invite_expiration_days} jours</span>
+            <span className="text-gray-700">Link expiration duration:</span>
+            <span className="font-medium">{config.invite_expiration_days} days</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-700">Max candidats par lien:</span>
-            <span className="font-medium">{config.max_candidates_per_link === 0 ? "Illimité" : config.max_candidates_per_link}</span>
+            <span className="text-gray-700">Max candidates per link:</span>
+            <span className="font-medium">{config.max_candidates_per_link === 0 ? "Unlimited" : config.max_candidates_per_link}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-700">Durée max des tests:</span>
-            <span className="font-medium">{config.max_test_duration_minutes || "Illimité"}</span>
+            <span className="text-gray-700">Max test duration:</span>
+            <span className="font-medium">{config.max_test_duration_minutes || "Unlimited"}</span>
           </div>
         </div>
         <div className="mt-4 pt-4 border-t">
-          <h3 className="font-semibold mb-2">Variables d'environnement (lecture seule)</h3>
+          <h3 className="font-semibold mb-2">Environment Variables (read-only)</h3>
           <div className="space-y-1 text-sm">
             {Object.entries(config.environment_variables).map(([key, value]) => (
               <div key={key} className="flex justify-between">
                 <span className="text-gray-600">{key}:</span>
-                <span className="font-mono text-gray-800">{value || "Non défini"}</span>
+                <span className="font-mono text-gray-800">{value || "Not defined"}</span>
               </div>
             ))}
           </div>
@@ -124,7 +124,7 @@ export default function SuperAdminConfig() {
       {/* Consommation OpenAI */}
       {openaiUsage && (
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Consommation OpenAI</h2>
+          <h2 className="text-xl font-semibold mb-4">OpenAI Usage</h2>
           <div className="mb-4">
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium">Total:</span>
@@ -137,7 +137,7 @@ export default function SuperAdminConfig() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Recruteur</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Recruiter</th>
                   <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Tokens</th>
                 </tr>
               </thead>
@@ -159,15 +159,15 @@ export default function SuperAdminConfig() {
       {/* Liens d'invitation */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Liens d'Invitation</h2>
+          <h2 className="text-xl font-semibold">Invitation Links</h2>
           <select
             value={inviteFilter}
             onChange={(e) => setInviteFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg"
           >
-            <option value="all">Tous</option>
-            <option value="active">Actifs</option>
-            <option value="expired">Expirés</option>
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="expired">Expired</option>
           </select>
         </div>
         <div className="max-h-96 overflow-y-auto">
@@ -175,11 +175,11 @@ export default function SuperAdminConfig() {
             <thead className="bg-gray-50 sticky top-0">
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Token</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">QCM</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Recruteur</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Assessment</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Recruiter</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Expiration</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Utilisation</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Usage</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
@@ -203,7 +203,7 @@ export default function SuperAdminConfig() {
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       invite.is_valid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                     }`}>
-                      {invite.is_valid ? "Valide" : "Invalide"}
+                      {invite.is_valid ? "Valid" : "Invalid"}
                     </span>
                   </td>
                   <td className="px-4 py-2 text-right">
@@ -212,7 +212,7 @@ export default function SuperAdminConfig() {
                         onClick={() => handleRevokeInvite(invite.id)}
                         className="text-red-600 hover:text-red-900 text-sm"
                       >
-                        Révoquer
+                        Revoke
                       </button>
                     )}
                   </td>
