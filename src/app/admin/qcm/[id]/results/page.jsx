@@ -282,7 +282,7 @@ export default function QcmResultsPage() {
           {showDashboardDetails && dashboardStats.topCandidates.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-4">
-                Top 5 Candidats
+                Top 5 Candidates
               </h3>
               <div className="space-y-2">
                 {dashboardStats.topCandidates.map((candidate, idx) => (
@@ -421,7 +421,7 @@ export default function QcmResultsPage() {
                             className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             disabled={!it.has_cv}
                             style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
-                            title={!it.has_cv ? "Le candidat n'a pas importé son CV" : ""}
+                            title={!it.has_cv ? "The candidate has not uploaded their CV" : ""}
                           >
                             View CV
                           </button>
@@ -437,7 +437,7 @@ export default function QcmResultsPage() {
                             className="text-blue-600 hover:text-blue-800 underline hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             disabled={downloadingId === it.attempt_id || !it.has_cv}
                             style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
-                            title={!it.has_cv ? "Le candidat n'a pas importé son CV" : ""}
+                            title={!it.has_cv ? "The candidate has not uploaded their CV" : ""}
                           >
                             {downloadingId === it.attempt_id ? "Downloading…" : "Report"}
                           </button>
@@ -566,21 +566,21 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
   const allSegments = [
     {
       id: "passed",
-      label: "Réussis",
+      label: "Passed",
       value: stats.passed || 0,
       color: "#10B981", // green
       icon: "✅",
     },
     {
       id: "failed",
-      label: "Échoués",
+      label: "Failed",
       value: stats.failed || 0,
       color: "#EF4444", // red
       icon: "❌",
     },
     {
       id: "ongoing",
-      label: "En Cours",
+      label: "In Progress",
       value: stats.ongoing || 0,
       color: "#F59E0B", // yellow
       icon: "🔄",
@@ -618,14 +618,14 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <div className="text-3xl font-bold text-gray-400">{total}</div>
-            <div className="text-sm text-gray-500">Total Candidats</div>
-            <div className="text-xs text-gray-400 mt-1">0% réussite</div>
+            <div className="text-sm text-gray-500">Total Candidates</div>
+            <div className="text-xs text-gray-400 mt-1">0% success</div>
           </div>
         </div>
         <div className="w-full space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">Statistiques</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">Statistics</h3>
           <div className="text-sm text-gray-500 text-center py-4">
-            Aucun candidat pour le moment
+            No candidates yet
           </div>
         </div>
       </div>
@@ -755,9 +755,9 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
         {/* Centre du donut avec statistiques principales */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Total Candidats</div>
+          <div className="text-sm text-gray-600">Total Candidates</div>
           <div className="text-xs text-gray-500 mt-1">
-            {stats.passRate}% réussite
+            {stats.passRate}% success
           </div>
         </div>
 
@@ -786,17 +786,17 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
 
       {/* Légende */}
       <div className="w-full space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">Statistiques</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">Statistics</h3>
         
         {/* Total Candidats - séparé */}
         <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
           <div className="w-4 h-4 rounded-full bg-gray-400" />
           <div className="flex-1">
             <div className="text-sm font-medium text-gray-900">
-              Total Candidats
+              Total Candidates
             </div>
             <div className="text-xs text-gray-500">
-              {stats.total} candidat{stats.total > 1 ? "s" : ""}
+              {stats.total} candidate{stats.total > 1 ? "s" : ""}
             </div>
           </div>
         </div>
@@ -824,7 +824,7 @@ function DashboardDonutChart({ stats, hoveredSegment, onSegmentHover }) {
                   {seg.label}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {seg.value} candidat{seg.value > 1 ? "s" : ""}
+                  {seg.value} candidate{seg.value > 1 ? "s" : ""}
                 </div>
               </div>
               <div className="text-sm font-semibold text-gray-700">
@@ -921,16 +921,16 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <div className="text-3xl font-bold text-gray-400">0</div>
-            <div className="text-sm text-gray-500">Candidats</div>
-            <div className="text-xs text-gray-400 mt-1">avec score</div>
+            <div className="text-sm text-gray-500">Candidates</div>
+            <div className="text-xs text-gray-400 mt-1">with score</div>
           </div>
         </div>
         <div className="w-full space-y-3">
           <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
-            Distribution des Scores
+            Score Distribution
           </h3>
           <div className="text-sm text-gray-500 text-center py-4">
-            Aucun candidat n'a encore complété le test
+            No candidate has completed the test yet
           </div>
         </div>
       </div>
@@ -1060,9 +1060,9 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
         {/* Centre du donut avec statistiques principales */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <div className="text-3xl font-bold text-gray-900">{totalCandidates}</div>
-          <div className="text-sm text-gray-600">Candidats</div>
+          <div className="text-sm text-gray-600">Candidates</div>
           <div className="text-xs text-gray-500 mt-1">
-            avec score
+            with score
           </div>
         </div>
 
@@ -1080,7 +1080,7 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
               <div>
                 <div className="font-semibold text-sm">{hoveredData.label}</div>
                 <div className="text-xs opacity-90">
-                  {hoveredData.value} candidat{hoveredData.value > 1 ? "s" : ""} ({hoveredData.percentage}%)
+                  {hoveredData.value} candidate{hoveredData.value > 1 ? "s" : ""} ({hoveredData.percentage}%)
                 </div>
               </div>
             </div>
@@ -1091,7 +1091,7 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
       {/* Légende */}
       <div className="w-full space-y-3">
         <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
-          Distribution des Scores
+          Score Distribution
         </h3>
         
         {/* Total Candidats - séparé */}
@@ -1099,10 +1099,10 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
           <div className="w-4 h-4 rounded-full bg-gray-400" />
           <div className="flex-1">
             <div className="text-sm font-medium text-gray-900">
-              Total avec Score
+              Total with Score
             </div>
             <div className="text-xs text-gray-500">
-              {totalCandidates} candidat{totalCandidates > 1 ? "s" : ""}
+              {totalCandidates} candidate{totalCandidates > 1 ? "s" : ""}
             </div>
           </div>
         </div>
@@ -1130,7 +1130,7 @@ function ScoreDonutChart({ distribution, hoveredSegment, onSegmentHover }) {
                   {seg.label}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {seg.value} candidat{seg.value > 1 ? "s" : ""}
+                  {seg.value} candidate{seg.value > 1 ? "s" : ""}
                 </div>
               </div>
               <div className="text-sm font-semibold text-gray-700">
@@ -1284,7 +1284,7 @@ function CvModal({ cvUrl, onClose }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">CV du candidat</h2>
+          <h2 className="text-lg font-semibold">Candidate CV</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
