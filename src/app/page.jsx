@@ -4,12 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-export const metadata = {
-  title: "ISMNS – AI Recruiting Assessments",
-  description:
-    "Create skills assessments in minutes. Share a unique link, get clear AI reports, hire faster.",
-};
-
 function Badge({ children }) {
   return (
     <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
@@ -159,7 +153,7 @@ function AnimatedGradient() {
   );
 }
 
-export default function Landing() {
+export default function LandingClient() {
   const heroRef = useRef(null);
   const [scrollY, setScrollY] = useState(0);
 
@@ -218,7 +212,7 @@ export default function Landing() {
         }
       `}</style>
 
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8">
         {/* Animated Background */}
         <div
           aria-hidden="true"
