@@ -33,6 +33,15 @@ export default function InvitePage() {
       setLoading(false);
       return;
     }
+    
+    // Vérifier si ce token a déjà été utilisé (localStorage)
+    const usedTokens = JSON.parse(localStorage.getItem('used_test_tokens') || '[]');
+    if (usedTokens.includes(token)) {
+      setErr("Vous avez déjà utilisé ce lien de test. Chaque candidat ne peut passer le test qu'une seule fois.");
+      setLoading(false);
+      return;
+    }
+    
     (async () => {
       try {
         const url = `${BACKEND}/public/qcm/${encodeURIComponent(token)}`;
@@ -76,19 +85,45 @@ export default function InvitePage() {
 
   // démarre la tentative
   const onStart = async () => {
+    // Validation email obligatoire
+    if (!email || !email.trim()) {
+      alert("L'email est obligatoire pour passer le test.");
+      return;
+    }
+    
+    // Validation format email basique
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      alert("Veuillez entrer une adresse email valide.");
+      return;
+    }
+    
     try {
       setLoading(true);
+      
+      // Vérification locale avant même d'appeler le backend
+      const usedTokens = JSON.parse(localStorage.getItem('used_test_tokens') || '[]');
+      if (usedTokens.includes(token)) {
+        alert("Vous avez déjà utilisé ce lien de test.");
+        setLoading(false);
+        return;
+      }
+      
       const res = await fetch(`${BACKEND}/attempts/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token,
-          candidate_email: email || undefined,
+          candidate_email: email.trim(),
         }),
       });
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
       if (!res.ok) throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+
+      // Marquer le token comme utilisé dans localStorage
+      const updatedTokens = [...usedTokens, token];
+      localStorage.setItem('used_test_tokens', JSON.stringify(updatedTokens));
 
       // Le backend renvoie attempt_id + (optionnellement) qcm/questions "gelés" pour la tentative
       if (data?.questions?.length) {
@@ -192,17 +227,18 @@ export default function InvitePage() {
             </p>
 
             <div className="grid gap-1 text-sm text-gray-600 mb-6">
-              <span>• You’ll answer one question at a time.</span>
+              <span>• You'll answer one question at a time.</span>
               <span>• Each question has 4 options — pick exactly one.</span>
-              <span>• Explanations are hidden from candidates.</span>
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Email (optional)</label>
+              <label className="block text-sm font-medium mb-1">Email <span className="text-red-500">*</span></label>
               <input
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+                required
                 className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
               />
             </div>
