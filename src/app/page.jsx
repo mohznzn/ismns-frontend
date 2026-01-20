@@ -92,8 +92,7 @@ export default function LandingClient() {
           </h1>
 
           <p className="mt-4 max-w-2xl text-base text-gray-600 md:text-lg">
-            Transform your hiring process with intelligent skills assessments. Generate role-specific questions in seconds, evaluate candidates objectively, and get actionable insights—
-            <br />
+            Transform your hiring process with intelligent skills assessments. Generate role-specific questions in seconds, evaluate candidates objectively, and get actionable insights—<br />
             all while saving hours of manual screening.
           </p>
 
