@@ -91,7 +91,7 @@ export default function LandingClient() {
             that actually work.
           </h1>
 
-          <p className="mt-4 max-w-2xl text-base text-gray-600 md:text-lg">
+          <p className="mt-4 max-w-3xl text-base text-gray-600 md:text-lg">
             Transform your hiring process with intelligent skills assessments that generate role-specific questions, evaluate candidates objectively, and deliver actionable insights.
           </p>
 
