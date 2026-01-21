@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-function Badge({ children }: { children: React.ReactNode }) {
+function Badge({ children }) {
   return (
     <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
       {children}
@@ -11,19 +11,7 @@ function Badge({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Section({
-  id,
-  eyebrow,
-  title,
-  subtitle,
-  children,
-}: {
-  id?: string;
-  eyebrow?: string;
-  title?: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}) {
+function Section({ id, eyebrow, title, subtitle, children }) {
   return (
     <section id={id} className="relative mx-auto max-w-6xl px-4 py-16 md:py-24">
       {eyebrow && (
@@ -46,7 +34,7 @@ function Section({
   );
 }
 
-function FAQItem({ q, a }: { q: string; a: string }) {
+function FAQItem({ q, a }) {
   return (
     <details className="group rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
       <summary className="cursor-pointer list-none">
@@ -116,7 +104,7 @@ export default function LandingClient() {
           />
         </div>
 
-        {/* TOP NAV (added) */}
+        {/* TOP NAV */}
         <div className="relative mx-auto max-w-6xl px-4 pt-6">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-sm font-semibold text-gray-900">
@@ -154,9 +142,7 @@ export default function LandingClient() {
             </div>
           </div>
 
-          <div className="mt-3 text-xs text-gray-500">
-            No credit card required
-          </div>
+          <div className="mt-3 text-xs text-gray-500">No credit card required</div>
         </div>
 
         {/* HERO SECTION */}
@@ -177,9 +163,9 @@ export default function LandingClient() {
           </h1>
 
           <p className="mt-4 max-w-3xl text-base text-gray-600 md:text-lg">
-            Create a role-specific assessment from a job description, send one
-            secure link, and get clear scoring + insights—so you spend less time
-            screening and more time hiring the right people.
+            Create a role-specific assessment from a job description, send one secure
+            link, and get clear scoring + insights—so you spend less time screening
+            and more time hiring the right people.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -196,8 +182,7 @@ export default function LandingClient() {
               Create my first assessment
             </Link>
             <span className="text-xs text-gray-500">
-              No credit card • Setup in 2 minutes • Candidates don’t need an
-              account
+              No credit card • Setup in 2 minutes • Candidates don’t need an account
             </span>
           </div>
 
@@ -207,11 +192,7 @@ export default function LandingClient() {
               <div className="grid gap-0 md:grid-cols-2">
                 <div className="p-8 md:p-10">
                   <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
-                    <svg
-                      className="h-3 w-3"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
+                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fillRule="evenodd"
                         d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
@@ -220,47 +201,28 @@ export default function LandingClient() {
                     </svg>
                     AI-Powered
                   </div>
+
                   <h3 className="text-2xl font-bold text-gray-900 md:text-3xl">
                     Intelligent Question Generation
                   </h3>
+
                   <p className="mt-4 text-base text-gray-600 leading-relaxed">
-                    Paste the job description. ISMNS generates a complete
-                    role-specific assessment with questions, answer keys, and
-                    scoring—ready to send in minutes.
+                    Paste the job description. ISMNS generates a complete role-specific
+                    assessment with questions, answer keys, and scoring—ready to send
+                    in minutes.
                   </p>
+
                   <ul className="mt-6 space-y-3">
                     {[
-                      [
-                        "Role-specific questions",
-                        "Questions tailored to your stack and responsibilities",
-                      ],
-                      [
-                        "Answer keys + explanations",
-                        "Faster review with consistent evaluation criteria",
-                      ],
-                      [
-                        "Adaptive difficulty",
-                        "Junior → senior calibrated automatically",
-                      ],
-                      [
-                        "Multilingual by design",
-                        "Create assessments in English, French, Arabic, and more",
-                      ],
+                      ["Role-specific questions", "Questions tailored to your stack and responsibilities"],
+                      ["Answer keys + explanations", "Faster review with consistent evaluation criteria"],
+                      ["Adaptive difficulty", "Junior → senior calibrated automatically"],
+                      ["Multilingual by design", "Create assessments in English, French, Arabic, and more"],
                     ].map(([strong, rest]) => (
                       <li key={strong} className="flex items-start gap-3">
                         <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100">
-                          <svg
-                            className="h-3 w-3 text-blue-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={3}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M5 13l4 4L19 7"
-                            />
+                          <svg className="h-3 w-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                         <div className="flex-1">
@@ -270,15 +232,14 @@ export default function LandingClient() {
                       </li>
                     ))}
                   </ul>
+
                   <div className="mt-6">
-                    <Link
-                      href="/register"
-                      className="text-sm font-semibold text-blue-700 hover:text-blue-800"
-                    >
+                    <Link href="/register" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
                       Start free trial →
                     </Link>
                   </div>
                 </div>
+
                 <div className="relative aspect-[16/10] bg-gradient-to-br from-gray-50 via-white to-gray-50 border-l border-gray-200">
                   <Image
                     src="/hero-dashboard.png"
@@ -293,7 +254,7 @@ export default function LandingClient() {
           </div>
         </header>
 
-        {/* STATS SECTION */}
+        {/* STATS */}
         <Section>
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {[
@@ -303,16 +264,14 @@ export default function LandingClient() {
               { value: "24/7", label: "Candidate access worldwide" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-3xl font-bold text-blue-600 md:text-4xl">
-                  {stat.value}
-                </div>
+                <div className="text-3xl font-bold text-blue-600 md:text-4xl">{stat.value}</div>
                 <div className="mt-2 text-sm text-gray-600">{stat.label}</div>
               </div>
             ))}
           </div>
         </Section>
 
-        {/* FEATURES SECTION */}
+        {/* FEATURES */}
         <Section
           id="features"
           eyebrow="POWERFUL FEATURES"
@@ -321,35 +280,14 @@ export default function LandingClient() {
         >
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
-              [
-                "AI Question Generation",
-                "Generate job-specific questions that match real responsibilities—not generic quizzes.",
-              ],
-              [
-                "Secure Candidate Links",
-                "Send one link per candidate, track completion, and keep every attempt organized.",
-              ],
-              [
-                "Multilingual Assessments",
-                "Assess candidates in their strongest language to reduce bias and widen your talent pool.",
-              ],
-              [
-                "Anti-Cheat Protection",
-                "Timers, randomization, and smart flags to protect assessment integrity.",
-              ],
-              [
-                "Comprehensive AI Reports",
-                "Clear scoring + insights (strengths, gaps, recommended follow-ups) to shortlist faster.",
-              ],
-              [
-                "Enterprise-Grade Security",
-                "Privacy-first by default with strong access control and data protection.",
-              ],
+              ["AI Question Generation", "Generate job-specific questions that match real responsibilities—not generic quizzes."],
+              ["Secure Candidate Links", "Send one link per candidate, track completion, and keep every attempt organized."],
+              ["Multilingual Assessments", "Assess candidates in their strongest language to reduce bias and widen your talent pool."],
+              ["Anti-Cheat Protection", "Timers, randomization, and smart flags to protect assessment integrity."],
+              ["Comprehensive AI Reports", "Clear scoring + insights (strengths, gaps, recommended follow-ups) to shortlist faster."],
+              ["Enterprise-Grade Security", "Privacy-first by default with strong access control and data protection."],
             ].map(([t, d]) => (
-              <div
-                key={t}
-                className="h-full rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-shadow duration-300"
-              >
+              <div key={t} className="h-full rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-shadow duration-300">
                 <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600" />
                 <h3 className="mt-4 text-base font-semibold text-gray-900">{t}</h3>
                 <p className="mt-2 text-sm text-gray-600 leading-relaxed">{d}</p>
@@ -357,7 +295,6 @@ export default function LandingClient() {
             ))}
           </div>
 
-          {/* Inline CTA (added) */}
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <Link
               href="/register"
@@ -365,9 +302,7 @@ export default function LandingClient() {
             >
               Start free trial
             </Link>
-            <span className="text-xs text-gray-500">
-              No credit card required
-            </span>
+            <span className="text-xs text-gray-500">No credit card required</span>
           </div>
         </Section>
 
@@ -380,31 +315,17 @@ export default function LandingClient() {
         >
           <ol className="grid gap-6 md:grid-cols-4">
             {[
-              [
-                "Create Assessment",
-                "Paste the job description, choose seniority, and generate a complete test in minutes.",
-              ],
-              [
-                "Share Link",
-                "Send a secure link to candidates via email, ATS, or LinkedIn. No account needed.",
-              ],
-              [
-                "Candidates Complete",
-                "Candidates take the assessment on any device. Timed + structured for fair evaluation.",
-              ],
-              [
-                "Review & Decide",
-                "Compare results, see strengths and gaps, and move the best candidates to interview.",
-              ],
+              ["Create Assessment", "Paste the job description, choose seniority, and generate a complete test in minutes."],
+              ["Share Link", "Send a secure link to candidates via email, ATS, or LinkedIn. No account needed."],
+              ["Candidates Complete", "Candidates take the assessment on any device. Timed + structured for fair evaluation."],
+              ["Review & Decide", "Compare results, see strengths and gaps, and move the best candidates to interview."],
             ].map(([t, d], i) => (
               <li key={t}>
                 <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300 h-full">
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-sm font-bold">
                     {i + 1}
                   </div>
-                  <div className="text-xs font-semibold text-blue-600 mt-3">
-                    Step {i + 1}
-                  </div>
+                  <div className="text-xs font-semibold text-blue-600 mt-3">Step {i + 1}</div>
                   <div className="mt-2 text-base font-semibold text-gray-900">{t}</div>
                   <p className="mt-1 text-sm text-gray-600 leading-relaxed">{d}</p>
                 </div>
@@ -426,15 +347,13 @@ export default function LandingClient() {
                 src: "/screen-create.png",
                 alt: "Create assessment",
                 label: "Assessment Creation",
-                description:
-                  "Build a complete test from a job description, then customize in seconds.",
+                description: "Build a complete test from a job description, then customize in seconds.",
               },
               {
                 src: "/screen-report.png",
                 alt: "AI report",
                 label: "Candidate Report & Scoring",
-                description:
-                  "Clear scoring + AI insights so shortlisting becomes obvious.",
+                description: "Clear scoring + AI insights so shortlisting becomes obvious.",
               },
             ].map(({ src, alt, label, description }) => (
               <div key={alt}>
@@ -465,39 +384,26 @@ export default function LandingClient() {
                 name: "Starter",
                 price: "€19/mo",
                 kicker: "For solo recruiters & founders",
-                points: [
-                  "1 recruiter seat",
-                  "Candidate links + tracking",
-                  "Basic scoring report",
-                  "Email support",
-                ],
+                points: ["1 recruiter seat", "Candidate links + tracking", "Basic scoring report", "Email support"],
                 cta: "Start Starter",
+                href: "/register",
               },
               {
                 name: "Team",
                 price: "€49/mo",
                 kicker: "Built for teams hiring regularly",
-                points: [
-                  "Up to 5 recruiter seats",
-                  "Advanced reports + ranking",
-                  "Team dashboard",
-                  "Priority support",
-                  "Branding",
-                ],
+                points: ["Up to 5 recruiter seats", "Advanced reports + ranking", "Team dashboard", "Priority support", "Branding"],
                 cta: "Choose Team",
+                href: "/register",
                 highlight: true,
               },
               {
                 name: "Scale",
                 price: "Let’s talk",
                 kicker: "For agencies & high-volume hiring",
-                points: [
-                  "Custom seats + limits",
-                  "SLA & onboarding",
-                  "Advanced security options",
-                  "Integrations (ATS/API)",
-                ],
+                points: ["Custom seats + limits", "SLA & onboarding", "Advanced security options", "Integrations (ATS/API)"],
                 cta: "Contact sales",
+                href: "/contact",
               },
             ].map((t) => (
               <div
@@ -524,7 +430,7 @@ export default function LandingClient() {
                 </ul>
 
                 <Link
-                  href={t.name === "Scale" ? "/contact" : "/register"}
+                  href={t.href}
                   className={`mt-6 block rounded-xl px-4 py-2 text-center text-sm font-medium transition-all duration-300 hover:scale-105 ${
                     t.highlight
                       ? "bg-blue-600 text-white hover:bg-blue-700"
@@ -537,9 +443,7 @@ export default function LandingClient() {
             ))}
           </div>
 
-          <p className="mt-4 text-xs text-gray-500">
-            No credit card for trial • Cancel anytime
-          </p>
+          <p className="mt-4 text-xs text-gray-500">No credit card for trial • Cancel anytime</p>
         </Section>
 
         {/* TESTIMONIALS */}
@@ -551,72 +455,33 @@ export default function LandingClient() {
         >
           <div className="grid gap-6 md:grid-cols-3">
             {[
-              [
-                "Sofia Martinez",
-                "Head of Talent Acquisition",
-                "“We cut screening calls significantly. The role-specific questions and clear reports made shortlisting easy.”",
-              ],
-              [
-                "Adam Richardson",
-                "Tech Recruiter",
-                "“The reports give us exactly what we need to make informed decisions—clear strengths, gaps, and next interview questions.”",
-              ],
-              [
-                "Claire Dubois",
-                "HR Manager",
-                "“What used to take hours now takes minutes. Multilingual support is a game-changer for international hiring.”",
-              ],
+              ["Sofia Martinez", "Head of Talent Acquisition", "“We cut screening calls significantly. The role-specific questions and clear reports made shortlisting easy.”"],
+              ["Adam Richardson", "Tech Recruiter", "“The reports give us exactly what we need to make informed decisions—clear strengths, gaps, and next interview questions.”"],
+              ["Claire Dubois", "HR Manager", "“What used to take hours now takes minutes. Multilingual support is a game-changer for international hiring.”"],
             ].map(([name, role, text]) => (
-              <figure
-                key={name}
-                className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-shadow duration-300"
-              >
+              <figure key={name} className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-shadow duration-300">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm">
-                    {name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                    {name.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div>
-                    <figcaption className="text-sm font-medium text-gray-900">
-                      {name}
-                    </figcaption>
+                    <figcaption className="text-sm font-medium text-gray-900">{name}</figcaption>
                     <p className="text-xs text-gray-500">{role}</p>
                   </div>
                 </div>
-                <blockquote className="mt-3 text-sm text-gray-700 leading-relaxed">
-                  {text}
-                </blockquote>
+                <blockquote className="mt-3 text-sm text-gray-700 leading-relaxed">{text}</blockquote>
               </figure>
             ))}
           </div>
         </Section>
 
-        {/* FAQ (added) */}
-        <Section
-          id="faq"
-          eyebrow="FAQ"
-          title="Common questions"
-          subtitle="Everything you need to know before you start."
-        >
+        {/* FAQ */}
+        <Section id="faq" eyebrow="FAQ" title="Common questions" subtitle="Everything you need to know before you start.">
           <div className="grid gap-4 md:grid-cols-2">
-            <FAQItem
-              q="Do candidates need an account?"
-              a="No. Candidates receive one secure link and can start immediately on any device."
-            />
-            <FAQItem
-              q="Can I customize the generated questions?"
-              a="Yes. You can edit, add, or remove questions before publishing the assessment."
-            />
-            <FAQItem
-              q="How do you prevent cheating?"
-              a="You can use time limits, randomization, and smart flags that help detect suspicious patterns."
-            />
-            <FAQItem
-              q="Is this GDPR-friendly?"
-              a="ISMNS is privacy-first by design, with controls to handle candidate data responsibly."
-            />
+            <FAQItem q="Do candidates need an account?" a="No. Candidates receive one secure link and can start immediately on any device." />
+            <FAQItem q="Can I customize the generated questions?" a="Yes. You can edit, add, or remove questions before publishing the assessment." />
+            <FAQItem q="How do you prevent cheating?" a="You can use time limits, randomization, and smart flags that help detect suspicious patterns." />
+            <FAQItem q="Is this GDPR-friendly?" a="ISMNS is privacy-first by design, with controls to handle candidate data responsibly." />
           </div>
 
           <div className="mt-8">
@@ -629,15 +494,12 @@ export default function LandingClient() {
           </div>
         </Section>
 
-        {/* CTA FINAL */}
+        {/* FINAL CTA + FOOTER */}
         <Section>
           <div className="rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-8 md:p-12 text-white shadow-2xl">
-            <h3 className="text-2xl md:text-3xl font-semibold">
-              Ready to shortlist your next hire faster?
-            </h3>
+            <h3 className="text-2xl md:text-3xl font-semibold">Ready to shortlist your next hire faster?</h3>
             <p className="mt-3 text-white/90 text-base md:text-lg max-w-2xl">
-              Create your first AI-powered assessment in minutes. Send one link.
-              Get clear scoring and insights. Hire with confidence.
+              Create your first AI-powered assessment in minutes. Send one link. Get clear scoring and insights. Hire with confidence.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -653,40 +515,20 @@ export default function LandingClient() {
                 Create Your First Assessment
               </Link>
             </div>
-            <p className="mt-4 text-xs text-white/70">
-              ✓ No credit card required • ✓ Setup in 2 minutes • ✓ Candidates
-              don’t need an account
-            </p>
+            <p className="mt-4 text-xs text-white/70">✓ No credit card required • ✓ Setup in 2 minutes • ✓ Candidates don’t need an account</p>
           </div>
 
-          {/* Footer (added) */}
           <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-8 text-xs text-gray-500 md:flex-row">
             <div>© {new Date().getFullYear()} ISMNS. All rights reserved.</div>
             <div className="flex flex-wrap items-center gap-4">
-              <Link href="#features" className="hover:text-gray-700">
-                Features
-              </Link>
-              <Link href="#pricing" className="hover:text-gray-700">
-                Pricing
-              </Link>
-              <Link href="#how" className="hover:text-gray-700">
-                How it works
-              </Link>
-              <Link href="#faq" className="hover:text-gray-700">
-                FAQ
-              </Link>
-              <Link href="/contact" className="hover:text-gray-700">
-                Contact
-              </Link>
-              <Link href="/privacy" className="hover:text-gray-700">
-                Privacy
-              </Link>
-              <Link href="/terms" className="hover:text-gray-700">
-                Terms
-              </Link>
-              <Link href="/gdpr" className="hover:text-gray-700">
-                GDPR
-              </Link>
+              <Link href="#features" className="hover:text-gray-700">Features</Link>
+              <Link href="#pricing" className="hover:text-gray-700">Pricing</Link>
+              <Link href="#how" className="hover:text-gray-700">How it works</Link>
+              <Link href="#faq" className="hover:text-gray-700">FAQ</Link>
+              <Link href="/contact" className="hover:text-gray-700">Contact</Link>
+              <Link href="/privacy" className="hover:text-gray-700">Privacy</Link>
+              <Link href="/terms" className="hover:text-gray-700">Terms</Link>
+              <Link href="/gdpr" className="hover:text-gray-700">GDPR</Link>
             </div>
           </div>
         </Section>
