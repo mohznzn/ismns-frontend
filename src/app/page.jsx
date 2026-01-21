@@ -112,27 +112,57 @@ export default function LandingClient() {
           </div>
 
           {/* Hero mockup */}
-          <div className="mt-10">
-            <div className="overflow-hidden rounded-2xl border bg-white shadow-xl">
+          <div className="mt-12">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
               <div className="grid gap-0 md:grid-cols-2">
-                <div className="p-6">
-                  <h3 className="text-sm font-semibold text-gray-900">Intelligent Question Generation</h3>
-                  <p className="mt-2 text-sm text-gray-600">
+                <div className="p-8 md:p-10">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
+                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                    </svg>
+                    AI-Powered
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 md:text-3xl">Intelligent Question Generation</h3>
+                  <p className="mt-4 text-base text-gray-600 leading-relaxed">
                     Simply paste your job description. Our AI analyzes the role requirements, identifies key skills, and generates comprehensive, role-specific questions with detailed explanations—all in under 60 seconds.
                   </p>
-                  <ul className="mt-4 space-y-2 text-sm text-gray-700">
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">✓</span> <strong>Multilingual support</strong> — Create assessments in English, French, Arabic, and more
+                  <ul className="mt-6 space-y-3">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                        <svg className="h-3 w-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <strong className="text-gray-900">Multilingual support</strong>
+                        <span className="text-gray-600"> — Create assessments in English, French, Arabic, and more</span>
+                      </div>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">✓</span> <strong>Context-aware questions</strong> — Questions tailored to your specific role and requirements
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                        <svg className="h-3 w-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <strong className="text-gray-900">Context-aware questions</strong>
+                        <span className="text-gray-600"> — Questions tailored to your specific role and requirements</span>
+                      </div>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">✓</span> <strong>Adaptive difficulty</strong> — Questions calibrated to match the seniority level
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                        <svg className="h-3 w-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <strong className="text-gray-900">Adaptive difficulty</strong>
+                        <span className="text-gray-600"> — Questions calibrated to match the seniority level</span>
+                      </div>
                     </li>
                   </ul>
                 </div>
-                <div className="relative aspect-[16/10] bg-gradient-to-tr from-gray-50 to-white">
+                <div className="relative aspect-[16/10] bg-gradient-to-br from-gray-50 via-white to-gray-50 border-l border-gray-200">
                   <Image
                     src="/hero-dashboard.png"
                     alt="Assessment dashboard"
