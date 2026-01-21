@@ -193,6 +193,46 @@ export default function LandingClient() {
           </div>
         </Section>
 
+        {/* HOW IT WORKS */}
+        <Section
+          id="how"
+          eyebrow="Simple Process"
+          title="From job description to hiring decision in 4 steps"
+          subtitle="Our streamlined workflow gets you from posting a role to evaluating candidates faster than ever."
+        >
+          <ol className="grid gap-6 md:grid-cols-4">
+            {[
+              [
+                "Create Assessment",
+                "Paste your job description, select the language, and choose the difficulty level. Our AI generates a complete assessment in under 60 seconds.",
+              ],
+              [
+                "Share Link",
+                "Copy the unique assessment link and send it to candidates via email, ATS, or any channel. No accounts required for candidates—just click and start.",
+              ],
+              [
+                "Candidates Complete",
+                "Candidates take the assessment on any device—desktop, tablet, or mobile. Questions are randomized and timed to ensure fair evaluation.",
+              ],
+              [
+                "Review & Decide",
+                "Access comprehensive AI-generated reports with scores, skill breakdowns, and recommendations. Identify top candidates and move them to interview.",
+              ],
+            ].map(([t, d], i) => (
+              <li key={t}>
+                <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300 h-full">
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-sm font-bold">
+                    {i + 1}
+                  </div>
+                  <div className="text-xs font-semibold text-blue-600 mt-3">Step {i + 1}</div>
+                  <div className="mt-2 text-base font-semibold text-gray-900">{t}</div>
+                  <p className="mt-1 text-sm text-gray-600 leading-relaxed">{d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
+
         {/* FEATURES SECTION */}
         <Section
           id="features"
@@ -234,46 +274,6 @@ export default function LandingClient() {
               </div>
             ))}
           </div>
-        </Section>
-
-        {/* HOW IT WORKS */}
-        <Section
-          id="how"
-          eyebrow="Simple Process"
-          title="From job description to hiring decision in 4 steps"
-          subtitle="Our streamlined workflow gets you from posting a role to evaluating candidates faster than ever."
-        >
-          <ol className="grid gap-6 md:grid-cols-4">
-            {[
-              [
-                "Create Assessment",
-                "Paste your job description, select the language, and choose the difficulty level. Our AI generates a complete assessment in under 60 seconds.",
-              ],
-              [
-                "Share Link",
-                "Copy the unique assessment link and send it to candidates via email, ATS, or any channel. No accounts required for candidates—just click and start.",
-              ],
-              [
-                "Candidates Complete",
-                "Candidates take the assessment on any device—desktop, tablet, or mobile. Questions are randomized and timed to ensure fair evaluation.",
-              ],
-              [
-                "Review & Decide",
-                "Access comprehensive AI-generated reports with scores, skill breakdowns, and recommendations. Identify top candidates and move them to interview.",
-              ],
-            ].map(([t, d], i) => (
-              <li key={t}>
-                <div className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300 h-full">
-                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-sm font-bold">
-                    {i + 1}
-                  </div>
-                  <div className="text-xs font-semibold text-blue-600 mt-3">Step {i + 1}</div>
-                  <div className="mt-2 text-base font-semibold text-gray-900">{t}</div>
-                  <p className="mt-1 text-sm text-gray-600 leading-relaxed">{d}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
         </Section>
 
         {/* SCREENSHOTS */}
