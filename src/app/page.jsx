@@ -51,7 +51,7 @@ function FAQItem({ q, a }) {
   );
 }
 
-export default function LandingClient() {
+export default function Page() {
   return (
     <>
       <style jsx>{`
@@ -64,7 +64,6 @@ export default function LandingClient() {
             transform: translateY(-20px) translateX(10px);
           }
         }
-
         @keyframes gradientShift {
           0%,
           100% {
@@ -145,7 +144,7 @@ export default function LandingClient() {
           <div className="mt-3 text-xs text-gray-500">No credit card required</div>
         </div>
 
-        {/* HERO SECTION */}
+        {/* HERO */}
         <header className="relative mx-auto max-w-6xl px-4 pb-10 pt-10 md:pb-20 md:pt-12">
           <div className="inline-flex items-center gap-2">
             <Badge>AI Hiring Assessments</Badge>
@@ -186,7 +185,6 @@ export default function LandingClient() {
             </span>
           </div>
 
-          {/* Hero mockup */}
           <div className="mt-12">
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
               <div className="grid gap-0 md:grid-cols-2">
@@ -294,19 +292,9 @@ export default function LandingClient() {
               </div>
             ))}
           </div>
-
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Link
-              href="/register"
-              className="inline-flex h-11 items-center rounded-xl bg-blue-600 px-5 text-sm font-medium text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 hover:scale-105"
-            >
-              Start free trial
-            </Link>
-            <span className="text-xs text-gray-500">No credit card required</span>
-          </div>
         </Section>
 
-        {/* HOW IT WORKS */}
+        {/* HOW */}
         <Section
           id="how"
           eyebrow="SIMPLE WORKFLOW"
@@ -334,167 +322,17 @@ export default function LandingClient() {
           </ol>
         </Section>
 
-        {/* SCREENSHOTS */}
-        <Section
-          id="screens"
-          eyebrow="SEE IT IN ACTION"
-          title="Real platform. Real results."
-          subtitle="Create, send, and evaluate in one place—without spreadsheets or subjective reviews."
-        >
-          <div className="grid gap-6 md:grid-cols-2">
-            {[
-              {
-                src: "/screen-create.png",
-                alt: "Create assessment",
-                label: "Assessment Creation",
-                description: "Build a complete test from a job description, then customize in seconds.",
-              },
-              {
-                src: "/screen-report.png",
-                alt: "AI report",
-                label: "Candidate Report & Scoring",
-                description: "Clear scoring + AI insights so shortlisting becomes obvious.",
-              },
-            ].map(({ src, alt, label, description }) => (
-              <div key={alt}>
-                <div className="overflow-hidden rounded-2xl border bg-white shadow-sm hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative aspect-[16/9]">
-                    <Image src={src} alt={alt} fill className="object-cover" />
-                  </div>
-                  <div className="p-4">
-                    <div className="text-sm font-semibold text-gray-900">{label}</div>
-                    <div className="mt-1 text-xs text-gray-600">{description}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* PRICING */}
-        <Section
-          id="pricing"
-          eyebrow="PRICING"
-          title="Simple pricing"
-          subtitle="Start free. Upgrade as you grow. Cancel anytime."
-        >
-          <div className="grid gap-6 md:grid-cols-3">
-            {[
-              {
-                name: "Starter",
-                price: "€19/mo",
-                kicker: "For solo recruiters & founders",
-                points: ["1 recruiter seat", "Candidate links + tracking", "Basic scoring report", "Email support"],
-                cta: "Start Starter",
-                href: "/register",
-              },
-              {
-                name: "Team",
-                price: "€49/mo",
-                kicker: "Built for teams hiring regularly",
-                points: ["Up to 5 recruiter seats", "Advanced reports + ranking", "Team dashboard", "Priority support", "Branding"],
-                cta: "Choose Team",
-                href: "/register",
-                highlight: true,
-              },
-              {
-                name: "Scale",
-                price: "Let’s talk",
-                kicker: "For agencies & high-volume hiring",
-                points: ["Custom seats + limits", "SLA & onboarding", "Advanced security options", "Integrations (ATS/API)"],
-                cta: "Contact sales",
-                href: "/contact",
-              },
-            ].map((t) => (
-              <div
-                key={t.name}
-                className={`h-full rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300 ${
-                  t.highlight ? "ring-2 ring-blue-600" : ""
-                }`}
-              >
-                <div className="flex items-baseline justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">{t.name}</h3>
-                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    {t.price}
-                  </div>
-                </div>
-                <div className="mt-1 text-xs text-gray-500">{t.kicker}</div>
-
-                <ul className="mt-4 space-y-2 text-sm text-gray-700">
-                  {t.points.map((p) => (
-                    <li key={p} className="flex items-start gap-2">
-                      <span className="mt-1 text-blue-600">•</span>
-                      <span>{p}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={t.href}
-                  className={`mt-6 block rounded-xl px-4 py-2 text-center text-sm font-medium transition-all duration-300 hover:scale-105 ${
-                    t.highlight
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "border border-gray-300 hover:bg-gray-50 text-gray-900"
-                  }`}
-                >
-                  {t.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-4 text-xs text-gray-500">No credit card for trial • Cancel anytime</p>
-        </Section>
-
-        {/* TESTIMONIALS */}
-        <Section
-          id="testimonials"
-          eyebrow="TRUSTED BY RECRUITERS"
-          title="What hiring teams are saying"
-          subtitle="Recruiters use ISMNS to reduce screening time and make decisions based on consistent signals—not gut feeling."
-        >
-          <div className="grid gap-6 md:grid-cols-3">
-            {[
-              ["Sofia Martinez", "Head of Talent Acquisition", "“We cut screening calls significantly. The role-specific questions and clear reports made shortlisting easy.”"],
-              ["Adam Richardson", "Tech Recruiter", "“The reports give us exactly what we need to make informed decisions—clear strengths, gaps, and next interview questions.”"],
-              ["Claire Dubois", "HR Manager", "“What used to take hours now takes minutes. Multilingual support is a game-changer for international hiring.”"],
-            ].map(([name, role, text]) => (
-              <figure key={name} className="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-shadow duration-300">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm">
-                    {name.split(" ").map((n) => n[0]).join("")}
-                  </div>
-                  <div>
-                    <figcaption className="text-sm font-medium text-gray-900">{name}</figcaption>
-                    <p className="text-xs text-gray-500">{role}</p>
-                  </div>
-                </div>
-                <blockquote className="mt-3 text-sm text-gray-700 leading-relaxed">{text}</blockquote>
-              </figure>
-            ))}
-          </div>
-        </Section>
-
         {/* FAQ */}
         <Section id="faq" eyebrow="FAQ" title="Common questions" subtitle="Everything you need to know before you start.">
           <div className="grid gap-4 md:grid-cols-2">
             <FAQItem q="Do candidates need an account?" a="No. Candidates receive one secure link and can start immediately on any device." />
             <FAQItem q="Can I customize the generated questions?" a="Yes. You can edit, add, or remove questions before publishing the assessment." />
-            <FAQItem q="How do you prevent cheating?" a="You can use time limits, randomization, and smart flags that help detect suspicious patterns." />
+            <FAQItem q="How do you prevent cheating?" a="Use time limits, randomization, and smart flags that help detect suspicious patterns." />
             <FAQItem q="Is this GDPR-friendly?" a="ISMNS is privacy-first by design, with controls to handle candidate data responsibly." />
-          </div>
-
-          <div className="mt-8">
-            <Link
-              href="/register"
-              className="inline-flex h-11 items-center rounded-xl bg-blue-600 px-5 text-sm font-medium text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 hover:scale-105"
-            >
-              Start free trial
-            </Link>
           </div>
         </Section>
 
-        {/* FINAL CTA + FOOTER */}
+        {/* FINAL CTA */}
         <Section>
           <div className="rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-8 md:p-12 text-white shadow-2xl">
             <h3 className="text-2xl md:text-3xl font-semibold">Ready to shortlist your next hire faster?</h3>
@@ -516,20 +354,6 @@ export default function LandingClient() {
               </Link>
             </div>
             <p className="mt-4 text-xs text-white/70">✓ No credit card required • ✓ Setup in 2 minutes • ✓ Candidates don’t need an account</p>
-          </div>
-
-          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-8 text-xs text-gray-500 md:flex-row">
-            <div>© {new Date().getFullYear()} ISMNS. All rights reserved.</div>
-            <div className="flex flex-wrap items-center gap-4">
-              <Link href="#features" className="hover:text-gray-700">Features</Link>
-              <Link href="#pricing" className="hover:text-gray-700">Pricing</Link>
-              <Link href="#how" className="hover:text-gray-700">How it works</Link>
-              <Link href="#faq" className="hover:text-gray-700">FAQ</Link>
-              <Link href="/contact" className="hover:text-gray-700">Contact</Link>
-              <Link href="/privacy" className="hover:text-gray-700">Privacy</Link>
-              <Link href="/terms" className="hover:text-gray-700">Terms</Link>
-              <Link href="/gdpr" className="hover:text-gray-700">GDPR</Link>
-            </div>
           </div>
         </Section>
       </div>
