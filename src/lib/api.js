@@ -249,9 +249,10 @@ export const publicApi = {
 // ================= ADMIN (protégé par cookie) =================
 export const admin = {
   // Extraire uniquement les skills depuis la JD (via Celery, retourne task_id)
-  extractSkillsFromJD: async ({ job_description }) => {
+  extractSkillsFromJD: async ({ job_description, language }) => {
     const response = await apiPost(`/qcm/extract_skills_from_jd`, {
       job_description,
+      language: language || "en",
     });
     
     // Si on reçoit un task_id (code 202), retourner l'objet avec task_id

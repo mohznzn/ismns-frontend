@@ -33,6 +33,7 @@ export default function NewQcmPage() {
     try {
       const data = await admin.extractSkillsFromJD({
         job_description: jobDescription.trim(),
+        language: language,
       });
 
       // Si on reçoit un task_id, suivre la progression via SSE
