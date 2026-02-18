@@ -18,7 +18,10 @@ export default function InvitePage() {
   const [qcmMeta, setQcmMeta] = useState(null); // { id, language }
   const [questions, setQuestions] = useState([]); // liste de questions (publique)
   // tentative côté candidat
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [started, setStarted] = useState(false);
   const [attemptId, setAttemptId] = useState(null);
   const [index, setIndex] = useState(0);
@@ -85,26 +88,20 @@ export default function InvitePage() {
 
   // démarre la tentative
   const onStart = async () => {
-    // Validation email obligatoire
-    if (!email || !email.trim()) {
-      alert("L'email est obligatoire pour passer le test.");
-      return;
-    }
-    
-    // Validation format email basique
+    if (!firstName.trim()) { alert("First name is required."); return; }
+    if (!lastName.trim()) { alert("Last name is required."); return; }
+    if (!email.trim()) { alert("Email is required."); return; }
+    if (!phone.trim()) { alert("Phone number is required."); return; }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      alert("Veuillez entrer une adresse email valide.");
-      return;
-    }
+    if (!emailRegex.test(email.trim())) { alert("Please enter a valid email address."); return; }
     
     try {
       setLoading(true);
       
-      // Vérification locale avant même d'appeler le backend
       const usedTokens = JSON.parse(localStorage.getItem('used_test_tokens') || '[]');
       if (usedTokens.includes(token)) {
-        alert("Vous avez déjà utilisé ce lien de test.");
+        alert("You have already used this test link.");
         setLoading(false);
         return;
       }
@@ -115,6 +112,9 @@ export default function InvitePage() {
         body: JSON.stringify({
           token,
           candidate_email: email.trim(),
+          candidate_first_name: firstName.trim(),
+          candidate_last_name: lastName.trim(),
+          candidate_phone: phone.trim(),
         }),
       });
       const text = await res.text();
@@ -152,9 +152,15 @@ export default function InvitePage() {
       const data = text ? JSON.parse(text) : null;
       if (!res.ok) throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
 
-      // ⬇️ Nouveau: si le backend renvoie passed=true, on redirige vers /intake
       if (data?.passed) {
-        router.replace(`/intake?attempt_id=${encodeURIComponent(attemptId)}`);
+        const params = new URLSearchParams({
+          attempt_id: attemptId,
+          email: email.trim(),
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          phone: phone.trim(),
+        });
+        router.replace(`/intake?${params.toString()}`);
         return;
       }
 
@@ -231,21 +237,61 @@ export default function InvitePage() {
               <span>• Each question has 4 options — pick exactly one.</span>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Email <span className="text-red-500">*</span></label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
-              />
+            <div className="space-y-3 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">First Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="John"
+                    required
+                    className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Last Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Doe"
+                    required
+                    className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Email <span className="text-red-500">*</span></label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone <span className="text-red-500">*</span></label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+33 6 12 34 56 78"
+                  required
+                  className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
+                />
+              </div>
             </div>
 
             <button
               onClick={onStart}
-              className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-black text-white hover:bg-gray-800 transition"
+              disabled={!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim()}
+              className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-black text-white hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Start the test ({questions.length || 0} questions)
             </button>

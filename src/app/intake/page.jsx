@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +17,7 @@ export default function IntakePage() {
 function PageFallback() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
-      Loading…
+      Loadingâ€¦
     </div>
   );
 }
@@ -27,14 +27,22 @@ function IntakeInner() {
   const sp = useSearchParams();
   const attemptId = useMemo(() => sp.get("attempt_id") || "", [sp]);
 
+  // Pre-fill from URL params (collected before the test)
+  const prefillFirst = useMemo(() => sp.get("first_name") || "", [sp]);
+  const prefillLast = useMemo(() => sp.get("last_name") || "", [sp]);
+  const prefillEmail = useMemo(() => sp.get("email") || "", [sp]);
+  const prefillPhone = useMemo(() => sp.get("phone") || "", [sp]);
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
   const [salaryAmount, setSalaryAmount] = useState("");
   const [salaryCurrency, setSalaryCurrency] = useState("EUR");
-  const [salaryPeriod, setSalaryPeriod] = useState("year"); // "year" | "month"
+  const [salaryPeriod, setSalaryPeriod] = useState("year");
   const [availability, setAvailability] = useState("");
-  const [noticePeriod, setNoticePeriod] = useState(""); // préavis
+  const [noticePeriod, setNoticePeriod] = useState("");
 
   const [cvFile, setCvFile] = useState(null);
 
@@ -45,19 +53,23 @@ function IntakeInner() {
 
   useEffect(() => {
     if (!attemptId) setErr("Missing attempt_id");
-  }, [attemptId]);
+    if (prefillFirst) setFirstName(prefillFirst);
+    if (prefillLast) setLastName(prefillLast);
+    if (prefillEmail) setEmail(prefillEmail);
+    if (prefillPhone) setPhone(prefillPhone);
+  }, [attemptId, prefillFirst, prefillLast, prefillEmail, prefillPhone]);
 
   const validateFile = (file) => {
-    if (!file) return "Veuillez joindre votre CV.";
+    if (!file) return "Please upload your CV.";
     const name = file.name || "";
     const dot = name.lastIndexOf(".");
     const ext = dot >= 0 ? name.slice(dot).toLowerCase() : "";
     if (!ALLOWED_EXT.includes(ext)) {
-      return `Extension non autorisée. Formats acceptés : ${ALLOWED_EXT.join(", ")}`;
+      return `Unsupported file type. Accepted formats: ${ALLOWED_EXT.join(", ")}`;
     }
     const sizeMb = file.size / (1024 * 1024);
     if (sizeMb > MAX_MB) {
-      return `Fichier trop volumineux (max ${MAX_MB} Mo).`;
+      return `File too large (max ${MAX_MB} MB).`;
     }
     return null;
   };
@@ -80,7 +92,7 @@ function IntakeInner() {
 
     const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
     if (!baseUrl) {
-      setErr("NEXT_PUBLIC_BACKEND_URL manquant côté front.");
+      setErr("Configuration error: backend URL not set.");
       return;
     }
 
@@ -93,6 +105,8 @@ function IntakeInner() {
     if (firstName?.trim()) fd.append("first_name", firstName.trim());
     if (lastName?.trim()) fd.append("last_name", lastName.trim());
     if (email?.trim()) fd.append("email", email.trim());
+    if (phone?.trim()) fd.append("phone", phone.trim());
+    if (location?.trim()) fd.append("location", location.trim());
     if (salaryAmount) fd.append("salary_amount", String(Number(salaryAmount)));
     if (salaryCurrency) fd.append("salary_currency", salaryCurrency);
     if (salaryPeriod) fd.append("salary_period", salaryPeriod);
@@ -100,7 +114,7 @@ function IntakeInner() {
     if (noticePeriod?.trim()) fd.append("notice_period", noticePeriod.trim());
     fd.append("cv_file", cvFile);
 
-    // Log pour déboguer ce qui est envoyé
+    // Log pour dÃ©boguer ce qui est envoyÃ©
     console.log("[intake] Sending form data:");
     console.log("[intake] - first_name:", firstName);
     console.log("[intake] - last_name:", lastName);
@@ -120,7 +134,7 @@ function IntakeInner() {
       const res = await fetch(url, {
         method: "POST",
         credentials: "include",
-        headers: { "X-Ephemeral": "1" }, // hint côté backend
+        headers: { "X-Ephemeral": "1" }, // hint cÃ´tÃ© backend
         body: fd,
       });
 
@@ -134,11 +148,11 @@ function IntakeInner() {
       }
 
       const data = await safeJson(res);
-      console.log("[intake] ✅ Response received successfully");
+      console.log("[intake] âœ… Response received successfully");
       console.log("[intake] Response data keys:", Object.keys(data || {}));
       console.log("[intake] Response data:", data);
 
-      // Vérifier spécifiquement ai_report
+      // VÃ©rifier spÃ©cifiquement ai_report
       console.log("[intake] ai_report present?", !!data?.ai_report);
       if (data?.ai_report) {
         console.log("[intake] ai_report type:", typeof data.ai_report);
@@ -156,7 +170,7 @@ function IntakeInner() {
         console.log("[intake] ai_report.notice_period:", data.ai_report.notice_period);
         console.log("[intake] ai_report.salary_expectation:", data.ai_report.salary_expectation);
       } else {
-        console.warn("[intake] ⚠️ ai_report is missing from response!");
+        console.warn("[intake] âš ï¸ ai_report is missing from response!");
         console.warn("[intake] Available keys in response:", Object.keys(data || {}));
       }
 
@@ -164,12 +178,12 @@ function IntakeInner() {
         console.log("[intake] Setting aiSummary with:", data.ai_report);
         setAiSummary(data.ai_report);
       } else {
-        console.warn("[intake] ⚠️ Not setting aiSummary because ai_report is missing");
+        console.warn("[intake] âš ï¸ Not setting aiSummary because ai_report is missing");
         setAiSummary(null);
       }
       setOk(true);
     } catch (e) {
-      console.error("[intake] ❌ Error:", e);
+      console.error("[intake] âŒ Error:", e);
       console.error("[intake] Error message:", e?.message);
       console.error("[intake] Error stack:", e?.stack);
       setErr(e?.message || "API error");
@@ -191,12 +205,12 @@ function IntakeInner() {
           ) : ok ? (
             <div className="space-y-4">
               <div className="text-green-700 font-medium">
-                Merci ! Vos informations ont bien été envoyées.
+                Thank you! Your information has been submitted successfully.
               </div>
 
               {aiSummary && (
                 <div className="rounded-xl border p-4 space-y-2">
-                  <div className="text-sm font-semibold">Résumé IA</div>
+                  <div className="text-sm font-semibold">AI Summary</div>
                   <AIReportView report={aiSummary} />
                 </div>
               )}
@@ -206,7 +220,7 @@ function IntakeInner() {
                   onClick={() => router.replace("/")}
                   className="mt-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
                 >
-                  Retour à l’accueil
+                  Back to Home
                 </button>
               </div>
             </div>
@@ -214,46 +228,61 @@ function IntakeInner() {
             <form onSubmit={onSubmit} className="space-y-5">
               {err && <div className="text-sm text-red-600">API error: {err}</div>}
 
-              {/* Informations personnelles */}
+              {/* Personal info (pre-filled from test entry, read-only) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-1 font-medium">
-                    Prénom <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-sm mb-1 font-medium">First Name</label>
                   <input
                     type="text"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Ex: Jean"
-                    required
-                    className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                    readOnly={!!prefillFirst}
+                    onChange={(e) => !prefillFirst && setFirstName(e.target.value)}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 ${prefillFirst ? "bg-gray-50 text-gray-600" : ""}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1 font-medium">
-                    Nom <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-sm mb-1 font-medium">Last Name</label>
                   <input
                     type="text"
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Ex: Dupont"
-                    required
-                    className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                    readOnly={!!prefillLast}
+                    onChange={(e) => !prefillLast && setLastName(e.target.value)}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 ${prefillLast ? "bg-gray-50 text-gray-600" : ""}`}
                   />
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm mb-1 font-medium">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    readOnly={!!prefillEmail}
+                    onChange={(e) => !prefillEmail && setEmail(e.target.value)}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 ${prefillEmail ? "bg-gray-50 text-gray-600" : ""}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1 font-medium">Phone</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    readOnly={!!prefillPhone}
+                    onChange={(e) => !prefillPhone && setPhone(e.target.value)}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 ${prefillPhone ? "bg-gray-50 text-gray-600" : ""}`}
+                  />
+                </div>
+              </div>
+
+              {/* Location */}
               <div>
-                <label className="block text-sm mb-1 font-medium">
-                  Email <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm mb-1 font-medium">Location / City</label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Ex: jean.dupont@example.com"
-                  required
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Paris, Casablanca, Remote"
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                 />
               </div>
@@ -261,7 +290,7 @@ function IntakeInner() {
               {/* Salary */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
-                  Prétentions salariales
+                  Salary Expectations
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <input
@@ -269,7 +298,7 @@ function IntakeInner() {
                     inputMode="numeric"
                     step="1"
                     min="0"
-                    placeholder="ex: 45000"
+                    placeholder="e.g. 45000"
                     value={salaryAmount}
                     onChange={(e) => setSalaryAmount(e.target.value)}
                     className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
@@ -282,56 +311,66 @@ function IntakeInner() {
                     <option>EUR</option>
                     <option>USD</option>
                     <option>GBP</option>
+                    <option>MAD</option>
                   </select>
                   <select
                     value={salaryPeriod}
                     onChange={(e) => setSalaryPeriod(e.target.value)}
                     className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                   >
-                    <option value="year">/an</option>
-                    <option value="month">/mois</option>
+                    <option value="year">/year</option>
+                    <option value="month">/month</option>
                   </select>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Indiquez un montant brut (ex: 45 000 EUR/an).
+                  Gross amount (e.g. 45,000 EUR/year).
                 </p>
               </div>
 
               {/* Availability */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
-                  Disponibilités
+                  Availability
                 </label>
-                <textarea
-                  rows={3}
+                <select
                   value={availability}
                   onChange={(e) => setAvailability(e.target.value)}
-                  placeholder="Ex: Disponible immédiatement, ou à partir du 1er mars"
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-                />
+                >
+                  <option value="">Select...</option>
+                  <option value="Immediate">Immediate</option>
+                  <option value="2 weeks">2 weeks</option>
+                  <option value="1 month">1 month</option>
+                  <option value="2 months">2 months</option>
+                  <option value="3 months">3 months</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
               {/* Notice Period */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
-                  Préavis
+                  Notice Period
                 </label>
-                <input
-                  type="text"
+                <select
                   value={noticePeriod}
                   onChange={(e) => setNoticePeriod(e.target.value)}
-                  placeholder="Ex: 2 semaines, 1 mois, immédiat"
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Durée de préavis nécessaire avant de pouvoir commencer.
-                </p>
+                >
+                  <option value="">Select...</option>
+                  <option value="None">None (can start immediately)</option>
+                  <option value="1 week">1 week</option>
+                  <option value="2 weeks">2 weeks</option>
+                  <option value="1 month">1 month</option>
+                  <option value="2 months">2 months</option>
+                  <option value="3 months">3 months</option>
+                </select>
               </div>
 
               {/* CV upload */}
               <div className="space-y-2">
                 <label className="block text-sm mb-1 font-medium">
-                  CV (upload obligatoire)
+                  CV (required)
                 </label>
                 <input
                   type="file"
@@ -341,11 +380,11 @@ function IntakeInner() {
                   required
                 />
                 <div className="text-xs text-gray-500">
-                  Formats acceptés : {ALLOWED_EXT.join(", ")} (max ~{MAX_MB} Mo).
+                  Accepted formats: {ALLOWED_EXT.join(", ")} (max {MAX_MB} MB).
                 </div>
                 {cvFile && (
                   <div className="text-xs text-gray-600">
-                    Sélectionné : <b>{cvFile.name}</b>{" "}
+                    Selected: <b>{cvFile.name}</b>{" "}
                     <span className="text-gray-400">
                       ({(cvFile.size / (1024 * 1024)).toFixed(1)} Mo)
                     </span>
@@ -359,7 +398,7 @@ function IntakeInner() {
                   disabled={loading}
                   className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-40"
                 >
-                  {loading ? "Envoi…" : "Envoyer"}
+                  {loading ? "Submittingâ€¦" : "Submit"}
                 </button>
               </div>
             </form>
@@ -371,7 +410,7 @@ function IntakeInner() {
 }
 
 function AIReportView({ report }) {
-  // Logs de débogage complets
+  // Logs de dÃ©bogage complets
   console.log("[AIReportView] ========== RENDER ==========");
   console.log("[AIReportView] Report received:", report);
   console.log("[AIReportView] Report type:", typeof report);
@@ -396,20 +435,20 @@ function AIReportView({ report }) {
     console.log("[AIReportView] Report.vision_insights:", report.vision_insights);
     console.log("[AIReportView] Full report JSON:", JSON.stringify(report, null, 2));
   } else {
-    console.warn("[AIReportView] ⚠️ Report is not a valid object!");
+    console.warn("[AIReportView] âš ï¸ Report is not a valid object!");
   }
   console.log("[AIReportView] ============================");
 
   if (!report || typeof report !== "object") {
     console.warn("[AIReportView] Returning fallback because report is invalid");
-    return <div className="text-sm text-gray-500">—</div>;
+    return <div className="text-sm text-gray-500">â€”</div>;
   }
-  const overall = typeof report.overall_score === "number" ? `${report.overall_score}%` : "—";
+  const overall = typeof report.overall_score === "number" ? `${report.overall_score}%` : "â€”";
   const decision = typeof report.decision === "string" ? report.decision : (report.decision?.label || null);
 
   return (
     <div className="space-y-4 text-sm">
-      {/* Header avec score et décision */}
+      {/* Header avec score et dÃ©cision */}
       <div className="flex items-center justify-between pb-3 border-b">
         <div className="font-semibold">Score global: <b>{overall}</b></div>
         {decision && (
@@ -475,7 +514,7 @@ function AIReportView({ report }) {
             <ul className="space-y-1 text-gray-700 text-xs">
               {report.strengths.map((s, i) => (
                 <li key={i} className="flex items-start">
-                  <span className="text-green-600 mr-1">✓</span>
+                  <span className="text-green-600 mr-1">âœ“</span>
                   <span>{s}</span>
                 </li>
               ))}
@@ -488,7 +527,7 @@ function AIReportView({ report }) {
             <ul className="space-y-1 text-gray-700 text-xs">
               {report.gaps.map((g, i) => (
                 <li key={i} className="flex items-start">
-                  <span className="text-orange-600 mr-1">⚠</span>
+                  <span className="text-orange-600 mr-1">âš </span>
                   <span>{g}</span>
                 </li>
               ))}
@@ -510,28 +549,28 @@ function AIReportView({ report }) {
         )}
       </div>
 
-      {/* Disponibilité et préavis */}
+      {/* DisponibilitÃ© et prÃ©avis */}
       {(report.availability || report.notice_period) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {report.availability && (
             <div>
-              <div className="font-medium mb-1 text-gray-700">Disponibilité</div>
+              <div className="font-medium mb-1 text-gray-700">DisponibilitÃ©</div>
               <div className="text-gray-600">{report.availability}</div>
             </div>
           )}
           {report.notice_period && (
             <div>
-              <div className="font-medium mb-1 text-gray-700">Préavis</div>
+              <div className="font-medium mb-1 text-gray-700">PrÃ©avis</div>
               <div className="text-gray-600">{report.notice_period}</div>
             </div>
           )}
         </div>
       )}
 
-      {/* Prétention salariale */}
+      {/* PrÃ©tention salariale */}
       {report.salary_expectation && (
         <div>
-          <div className="font-medium mb-1 text-gray-700">Prétention salariale</div>
+          <div className="font-medium mb-1 text-gray-700">PrÃ©tention salariale</div>
           <div className="font-medium text-gray-900">{report.salary_expectation}</div>
         </div>
       )}
@@ -547,20 +586,20 @@ function AIReportView({ report }) {
 function VisionInsights({ insights }) {
   if (!insights || typeof insights !== "object") return null;
   
-  const quality = insights.visual_quality || "—";
-  const layout = insights.layout_type || "—";
-  const structure = typeof insights.structure_score === "number" ? `${insights.structure_score}%` : "—";
-  const hasPhoto = insights.has_photo === true ? "Oui" : insights.has_photo === false ? "Non" : "—";
-  const richness = insights.content_richness || "—";
+  const quality = insights.visual_quality || "â€”";
+  const layout = insights.layout_type || "â€”";
+  const structure = typeof insights.structure_score === "number" ? `${insights.structure_score}%` : "â€”";
+  const hasPhoto = insights.has_photo === true ? "Oui" : insights.has_photo === false ? "Non" : "â€”";
+  const richness = insights.content_richness || "â€”";
   const sections = Array.isArray(insights.sections_detected) ? insights.sections_detected : [];
   const notes = insights.visual_notes || "";
   
   return (
     <div className="border-t pt-3 mt-3 space-y-2">
-      <div className="font-medium text-sm">📄 Analyse visuelle du CV</div>
+      <div className="font-medium text-sm">ðŸ“„ Analyse visuelle du CV</div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
         <div>
-          <span className="text-gray-500">Qualité visuelle:</span>{" "}
+          <span className="text-gray-500">QualitÃ© visuelle:</span>{" "}
           <span className="font-medium">{quality}</span>
         </div>
         <div>
@@ -578,11 +617,11 @@ function VisionInsights({ insights }) {
       </div>
       {sections.length > 0 && (
         <div className="text-xs">
-          <span className="text-gray-500">Sections détectées:</span>{" "}
+          <span className="text-gray-500">Sections dÃ©tectÃ©es:</span>{" "}
           <span className="text-gray-700">{sections.join(", ")}</span>
         </div>
       )}
-      {richness && richness !== "—" && (
+      {richness && richness !== "â€”" && (
         <div className="text-xs">
           <span className="text-gray-500">Richesse du contenu:</span>{" "}
           <span className="font-medium">{richness}</span>
@@ -604,7 +643,7 @@ function Section({ title, children }) {
   );
 }
 function Metric({ label, v }) {
-  const value = typeof v === "number" ? `${v}%` : "—";
+  const value = typeof v === "number" ? `${v}%` : "â€”";
   return (
     <div className="rounded-lg border p-2">
       <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
@@ -616,3 +655,4 @@ function Metric({ label, v }) {
 async function safeJson(res) {
   try { return await res.json(); } catch { return null; }
 }
+
