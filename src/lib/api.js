@@ -403,72 +403,80 @@ export const admin = {
 
   downloadAttemptAIReportPdf: async (attemptId, regenerate = false, onProgress = null) => {
     if (!API_BASE) throw new Error("API base URL is not set");
-    const url = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf${regenerate ? "?regenerate=true" : ""}`;
-    const res = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
 
-    if (!res.ok) {
-      const contentType = res.headers.get("content-type") || "";
+    const pdfUrl = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf${regenerate ? "?regenerate=true" : ""}`;
+
+    const fetchPdf = async () => {
+      const r = await fetch(pdfUrl, { method: "GET", credentials: "include" });
+      return r;
+    };
+
+    const parseError = async (r) => {
+      const ct = r.headers.get("content-type") || "";
       let payload = null;
-      if (contentType.includes("application/json")) {
-        try {
-          payload = await res.json();
-        } catch {
-          payload = null;
-        }
-      } else {
-        try {
-          payload = await res.text();
-        } catch {
-          payload = null;
-        }
-      }
+      try {
+        payload = ct.includes("application/json") ? await r.json() : await r.text();
+      } catch { /* ignore */ }
+      return payload?.message || payload?.error || `Download failed (${r.status})`;
+    };
 
-      const message =
-        payload?.message || payload?.error || `Download failed (${res.status})`;
-      const err = new Error(message);
-      err.status = res.status;
-      err.data = payload;
-      throw err;
-    }
+    let res = await fetchPdf();
 
-    // 202 = report generation queued via Celery, need to poll then retry
+    // 202 = report generation queued via Celery
     if (res.status === 202) {
-      const taskData = await res.json();
+      let taskData;
+      try { taskData = await res.json(); } catch { taskData = {}; }
       const taskId = taskData.task_id;
       if (!taskId) throw new Error("Report generation started but no task ID returned");
 
       if (onProgress) onProgress({ status: "generating", message: "Generating AI report..." });
 
-      const MAX_POLL_TIME = 120_000;
-      const POLL_INTERVAL = 2_000;
-      const start = Date.now();
+      const MAX_POLL = 180_000;
+      const INTERVAL = 3_000;
+      const t0 = Date.now();
+      let taskDone = false;
 
-      while (Date.now() - start < MAX_POLL_TIME) {
-        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
-        let statusData;
+      while (Date.now() - t0 < MAX_POLL) {
+        await new Promise((r) => setTimeout(r, INTERVAL));
+        let sd;
         try {
-          const statusRes = await fetch(
+          const sr = await fetch(
             `${API_BASE}/tasks/${encodeURIComponent(taskId)}/status`,
             { method: "GET", credentials: "include" }
           );
-          statusData = await statusRes.json();
+          sd = await sr.json();
         } catch {
           continue;
         }
 
-        if (onProgress) onProgress(statusData);
-
-        if (statusData.status === "completed") {
-          return admin.downloadAttemptAIReportPdf(attemptId, false, null);
+        if (sd.status === "error") {
+          throw new Error(sd.error || "Report generation failed");
         }
-        if (statusData.status === "error") {
-          throw new Error(statusData.error || "Report generation failed");
+
+        if (onProgress) {
+          onProgress({ status: sd.status, message: sd.message || sd.status || "Processing..." });
+        }
+
+        if (sd.status === "completed") {
+          taskDone = true;
+          break;
         }
       }
-      throw new Error("Report generation timed out. Please try again.");
+
+      if (!taskDone) throw new Error("Report generation timed out. Please try again.");
+
+      if (onProgress) onProgress({ status: "downloading", message: "Downloading PDF..." });
+
+      await new Promise((r) => setTimeout(r, 1_500));
+
+      res = await fetchPdf();
+    }
+
+    if (!res.ok) {
+      const msg = await parseError(res);
+      const err = new Error(msg);
+      err.status = res.status;
+      throw err;
     }
 
     const blob = await res.blob();
