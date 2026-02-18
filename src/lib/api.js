@@ -448,12 +448,16 @@ export const admin = {
 
       while (Date.now() - start < MAX_POLL_TIME) {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL));
-        const statusRes = await fetch(
-          `${API_BASE}/tasks/${encodeURIComponent(taskId)}/status`,
-          { method: "GET", credentials: "include" }
-        );
-        if (!statusRes.ok) continue;
-        const statusData = await statusRes.json();
+        let statusData;
+        try {
+          const statusRes = await fetch(
+            `${API_BASE}/tasks/${encodeURIComponent(taskId)}/status`,
+            { method: "GET", credentials: "include" }
+          );
+          statusData = await statusRes.json();
+        } catch {
+          continue;
+        }
 
         if (onProgress) onProgress(statusData);
 
