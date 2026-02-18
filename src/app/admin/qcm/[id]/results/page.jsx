@@ -20,6 +20,7 @@ export default function QcmResultsPage() {
   const [showDashboardDetails, setShowDashboardDetails] = useState(false);
   const [hoveredSegment, setHoveredSegment] = useState(null);
   const [hoveredScoreSegment, setHoveredScoreSegment] = useState(null);
+  const [reportProgress, setReportProgress] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -59,16 +60,15 @@ export default function QcmResultsPage() {
   const handleDownloadReport = async (e, attemptId) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!attemptId || downloadingId) {
-      console.log("[handleDownloadReport] Skipping: attemptId=", attemptId, "downloadingId=", downloadingId);
-      return;
-    }
-    console.log("[handleDownloadReport] Starting download for attempt:", attemptId);
+    if (!attemptId || downloadingId) return;
     try {
       setDownloadingId(attemptId);
-      console.log("[handleDownloadReport] Calling API...");
-      const { blob, filename } = await admin.downloadAttemptAIReportPdf(attemptId);
-      console.log("[handleDownloadReport] Got blob, size:", blob.size, "filename:", filename);
+      setReportProgress(null);
+      const { blob, filename } = await admin.downloadAttemptAIReportPdf(
+        attemptId,
+        false,
+        (progress) => setReportProgress(progress)
+      );
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -77,17 +77,13 @@ export default function QcmResultsPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      console.log("[handleDownloadReport] Download triggered successfully");
     } catch (err) {
       console.error("[handleDownloadReport] Failed to download AI report", err);
-      const message = err?.userMessage || err?.message || "Impossible de télécharger le rapport.";
-      if (typeof window !== "undefined") {
-        alert(message);
-      } else {
-        setError(message);
-      }
+      const message = err?.userMessage || err?.message || "Failed to download the report.";
+      alert(message);
     } finally {
       setDownloadingId(null);
+      setReportProgress(null);
     }
   };
 
@@ -439,7 +435,9 @@ export default function QcmResultsPage() {
                             style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
                             title={!it.has_cv ? "The candidate has not uploaded their CV" : ""}
                           >
-                            {downloadingId === it.attempt_id ? "Downloading…" : "Report"}
+                            {downloadingId === it.attempt_id
+                              ? (reportProgress?.message || reportProgress?.status || "Generating…")
+                              : "Report"}
                           </button>
                         </Td>
                       </tr>

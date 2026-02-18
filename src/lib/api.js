@@ -401,7 +401,7 @@ export const admin = {
   getAttemptAIReport: (attemptId) =>
     apiGet(`/admin/attempts/${encodeURIComponent(attemptId)}/ai_report`),
 
-  downloadAttemptAIReportPdf: async (attemptId, regenerate = false) => {
+  downloadAttemptAIReportPdf: async (attemptId, regenerate = false, onProgress = null) => {
     if (!API_BASE) throw new Error("API base URL is not set");
     const url = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf${regenerate ? "?regenerate=true" : ""}`;
     const res = await fetch(url, {
@@ -427,11 +427,44 @@ export const admin = {
       }
 
       const message =
-        payload?.message || payload?.error || `Téléchargement impossible (${res.status})`;
+        payload?.message || payload?.error || `Download failed (${res.status})`;
       const err = new Error(message);
       err.status = res.status;
       err.data = payload;
       throw err;
+    }
+
+    // 202 = report generation queued via Celery, need to poll then retry
+    if (res.status === 202) {
+      const taskData = await res.json();
+      const taskId = taskData.task_id;
+      if (!taskId) throw new Error("Report generation started but no task ID returned");
+
+      if (onProgress) onProgress({ status: "generating", message: "Generating AI report..." });
+
+      const MAX_POLL_TIME = 120_000;
+      const POLL_INTERVAL = 2_000;
+      const start = Date.now();
+
+      while (Date.now() - start < MAX_POLL_TIME) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+        const statusRes = await fetch(
+          `${API_BASE}/tasks/${encodeURIComponent(taskId)}/status`,
+          { method: "GET", credentials: "include" }
+        );
+        if (!statusRes.ok) continue;
+        const statusData = await statusRes.json();
+
+        if (onProgress) onProgress(statusData);
+
+        if (statusData.status === "completed") {
+          return admin.downloadAttemptAIReportPdf(attemptId, false, null);
+        }
+        if (statusData.status === "error") {
+          throw new Error(statusData.error || "Report generation failed");
+        }
+      }
+      throw new Error("Report generation timed out. Please try again.");
     }
 
     const blob = await res.blob();
