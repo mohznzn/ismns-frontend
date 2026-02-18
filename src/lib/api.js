@@ -404,10 +404,14 @@ export const admin = {
   downloadAttemptAIReportPdf: async (attemptId, regenerate = false, onProgress = null) => {
     if (!API_BASE) throw new Error("API base URL is not set");
 
-    const pdfUrl = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf${regenerate ? "?regenerate=true" : ""}`;
+    const basePdfUrl = `${API_BASE}/admin/attempts/${encodeURIComponent(attemptId)}/ai_report_pdf`;
 
-    const fetchPdf = async () => {
-      const r = await fetch(pdfUrl, { method: "GET", credentials: "include" });
+    const fetchPdf = async (sync = false) => {
+      const params = [];
+      if (regenerate) params.push("regenerate=true");
+      if (sync) params.push("sync=true");
+      const qs = params.length ? `?${params.join("&")}` : "";
+      const r = await fetch(`${basePdfUrl}${qs}`, { method: "GET", credentials: "include" });
       return r;
     };
 
@@ -469,7 +473,7 @@ export const admin = {
 
       await new Promise((r) => setTimeout(r, 1_500));
 
-      res = await fetchPdf();
+      res = await fetchPdf(true);
     }
 
     if (!res.ok) {
@@ -477,6 +481,12 @@ export const admin = {
       const err = new Error(msg);
       err.status = res.status;
       throw err;
+    }
+
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/pdf")) {
+      const msg = await parseError(res);
+      throw new Error(msg || "Server did not return a PDF. Please try again.");
     }
 
     const blob = await res.blob();
