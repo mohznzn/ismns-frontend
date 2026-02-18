@@ -37,14 +37,6 @@ export default function InvitePage() {
       return;
     }
     
-    // Vérifier si ce token a déjà été utilisé (localStorage)
-    const usedTokens = JSON.parse(localStorage.getItem('used_test_tokens') || '[]');
-    if (usedTokens.includes(token)) {
-      setErr("Vous avez déjà utilisé ce lien de test. Chaque candidat ne peut passer le test qu'une seule fois.");
-      setLoading(false);
-      return;
-    }
-    
     (async () => {
       try {
         const url = `${BACKEND}/public/qcm/${encodeURIComponent(token)}`;
@@ -99,13 +91,6 @@ export default function InvitePage() {
     try {
       setLoading(true);
       
-      const usedTokens = JSON.parse(localStorage.getItem('used_test_tokens') || '[]');
-      if (usedTokens.includes(token)) {
-        alert("You have already used this test link.");
-        setLoading(false);
-        return;
-      }
-      
       const res = await fetch(`${BACKEND}/attempts/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,10 +105,6 @@ export default function InvitePage() {
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
       if (!res.ok) throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
-
-      // Marquer le token comme utilisé dans localStorage
-      const updatedTokens = [...usedTokens, token];
-      localStorage.setItem('used_test_tokens', JSON.stringify(updatedTokens));
 
       // Le backend renvoie attempt_id + (optionnellement) qcm/questions "gelés" pour la tentative
       if (data?.questions?.length) {
