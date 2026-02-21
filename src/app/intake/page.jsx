@@ -45,6 +45,8 @@ const INTAKE_I18N = {
     cvFormats: "Accepted formats:",
     cvMax: "max",
     cvSelected: "Selected:",
+    cvBrowse: "Choose file",
+    cvNoFile: "No file selected",
     submit: "Submit",
     submitting: "Submitting\u2026",
     fileRequired: "Please upload your CV.",
@@ -90,6 +92,8 @@ const INTAKE_I18N = {
     cvFormats: "Formats acceptes :",
     cvMax: "max",
     cvSelected: "Selectionne :",
+    cvBrowse: "Choisir un fichier",
+    cvNoFile: "Aucun fichier selectionne",
     submit: "Envoyer",
     submitting: "Envoi en cours\u2026",
     fileRequired: "Veuillez telecharger votre CV.",
@@ -135,6 +139,8 @@ const INTAKE_I18N = {
     cvFormats: "Formatos aceptados:",
     cvMax: "max",
     cvSelected: "Seleccionado:",
+    cvBrowse: "Elegir archivo",
+    cvNoFile: "Ningun archivo seleccionado",
     submit: "Enviar",
     submitting: "Enviando\u2026",
     fileRequired: "Por favor suba su CV.",
@@ -515,13 +521,20 @@ function IntakeInner() {
                 <label className="block text-sm mb-1 font-medium">
                   {t.cvLabel}
                 </label>
-                <input
-                  type="file"
-                  accept={ALLOWED_EXT.join(",")}
-                  onChange={onFileChange}
-                  className="block w-full text-sm file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-black file:text-white hover:file:bg-gray-800"
-                  required
-                />
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer inline-flex items-center px-3 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-800">
+                    {t.cvBrowse}
+                    <input
+                      type="file"
+                      accept={ALLOWED_EXT.join(",")}
+                      onChange={onFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-sm text-gray-500">
+                    {cvFile ? cvFile.name : t.cvNoFile}
+                  </span>
+                </div>
                 <div className="text-xs text-gray-500">
                   {t.cvFormats} {ALLOWED_EXT.join(", ")} ({t.cvMax} {MAX_MB} MB).
                 </div>
