@@ -266,8 +266,9 @@ export const admin = {
   },
 
   // Créer un QCM avec progression en temps réel (retourne task_id)
-  createDraftFromJD: ({ job_description, language = "en", confirmed_skills }) =>
+  createDraftFromJD: ({ job_title, job_description, language = "en", confirmed_skills }) =>
     apiPost(`/qcm/create_draft_from_jd`, {
+      job_title,
       job_description,
       language,
       ...(confirmed_skills ? { confirmed_skills } : {}),
@@ -369,6 +370,9 @@ export const admin = {
   listenToGenerationProgress: (taskId, onProgress, onError) => {
     return admin.listenToTaskProgress(taskId, onProgress, onError);
   },
+
+  updateQcm: (qcmId, data) =>
+    apiPatch(`/qcm/${encodeURIComponent(qcmId)}`, data),
 
   publishQcm: (qcmId, passThreshold) =>
     apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, { pass_threshold: passThreshold }),

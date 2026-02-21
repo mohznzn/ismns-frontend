@@ -14,7 +14,6 @@ export default function ReviewQcmPage() {
   const [error, setError] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [passThreshold, setPassThreshold] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -29,7 +28,7 @@ export default function ReviewQcmPage() {
       } else {
         setPassThreshold("");
       }
-      setJobTitle(data.qcm?.job_title || "");
+      
     } catch (e) {
       setError(e?.message || "Failed to fetch QCM");
     } finally {
@@ -43,7 +42,7 @@ export default function ReviewQcmPage() {
 
   const title = useMemo(() => {
     if (!qcm) return "Review QCM";
-    return `Review QCM • ${qcm.id}`;
+    return qcm.job_title ? `Review • ${qcm.job_title}` : "Review QCM";
   }, [qcm]);
 
   const shareUrl = useMemo(() => {
@@ -72,23 +71,11 @@ export default function ReviewQcmPage() {
     }
   };
 
-  const onSaveTitle = async () => {
-    try {
-      await admin.updateQcm(id, { job_title: jobTitle });
-      setQcm((prev) => prev ? { ...prev, job_title: jobTitle } : prev);
-    } catch (e) {
-      alert(e?.message || "Save failed");
-    }
-  };
-
   const onPublish = async () => {
     const threshold = parseInt(passThreshold, 10);
     if (isNaN(threshold) || threshold < 0 || threshold > 100) {
       alert("Please enter a valid pass threshold between 0 and 100");
       return;
-    }
-    if (jobTitle.trim()) {
-      try { await admin.updateQcm(id, { job_title: jobTitle }); } catch {}
     }
     try {
       setPublishing(true);
@@ -207,22 +194,12 @@ export default function ReviewQcmPage() {
       </div>
 
       {/* Job Title */}
-      <div className="bg-white shadow rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <label className="text-sm font-medium whitespace-nowrap">Job Title:</label>
-        <input
-          type="text"
-          value={jobTitle}
-          onChange={(e) => setJobTitle(e.target.value)}
-          placeholder="e.g. Senior Full Stack Developer"
-          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 w-full"
-        />
-        <button
-          onClick={onSaveTitle}
-          className="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50 whitespace-nowrap"
-        >
-          Save title
-        </button>
-      </div>
+      {qcm.job_title && (
+        <div className="bg-white shadow rounded-2xl p-4 flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-500">Job Title:</span>
+          <span className="text-sm font-semibold">{qcm.job_title}</span>
+        </div>
+      )}
 
       {/* Liste des questions */}
       {questions.length === 0 ? (

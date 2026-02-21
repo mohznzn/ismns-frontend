@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { admin } from "@/lib/api";
 
 export default function NewQcmPage() {
+  const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [language, setLanguage] = useState("en");
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,6 @@ export default function NewQcmPage() {
     try {
       const data = await admin.extractSkillsFromJD({
         job_description: jobDescription.trim(),
-        language: language,
       });
 
       // Si on reçoit un task_id, suivre la progression via SSE
@@ -145,6 +145,7 @@ export default function NewQcmPage() {
     try {
       // Démarrer la génération et récupérer le task_id
       const data = await admin.createDraftFromJD({
+        job_title: jobTitle.trim(),
         job_description: jobDescription.trim(),
         language,
         confirmed_skills: selectedSkills,
@@ -282,6 +283,18 @@ export default function NewQcmPage() {
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
+              <label className="block text-sm mb-1">Job Title <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Senior Full Stack Developer"
+                maxLength={200}
+                required
+                className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+              />
+            </div>
+            <div>
               <label className="block text-sm mb-1">Language</label>
               <select
                 value={language}
@@ -291,9 +304,6 @@ export default function NewQcmPage() {
                 <option value="en">English</option>
                 <option value="fr">Français</option>
                 <option value="es">Español</option>
-                <option value="de">Deutsch</option>
-                <option value="it">Italiano</option>
-                <option value="pt">Português</option>
               </select>
             </div>
           </div>
@@ -319,7 +329,7 @@ export default function NewQcmPage() {
           <div className="pt-2">
             <button
               type="submit"
-              disabled={extractingSkills || !jobDescription.trim()}
+              disabled={extractingSkills || !jobDescription.trim() || !jobTitle.trim()}
               className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-40"
             >
               {extractingSkills ? "Extracting skills…" : "Extract Skills"}
