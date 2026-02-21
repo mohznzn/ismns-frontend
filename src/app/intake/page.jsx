@@ -1,10 +1,148 @@
-﻿"use client";
+"use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const MAX_MB = 15;
 const ALLOWED_EXT = [".pdf", ".doc", ".docx"];
+
+const INTAKE_I18N = {
+  en: {
+    loading: "Loading\u2026",
+    title: "Next steps",
+    missingAttempt: "Missing attempt_id.",
+    thankYou: "Thank you! Your information has been submitted successfully.",
+    aiSummary: "AI Summary",
+    backHome: "Back to Home",
+    apiError: "API error:",
+    firstName: "First Name",
+    lastName: "Last Name",
+    email: "Email",
+    phone: "Phone",
+    location: "Location / City",
+    locationPlaceholder: "e.g. Paris, Casablanca, Remote",
+    salary: "Salary Expectations",
+    salaryPlaceholder: "e.g. 45000",
+    salaryHint: "Gross amount (e.g. 45,000 EUR/year).",
+    periodYear: "/year",
+    periodMonth: "/month",
+    availability: "Availability",
+    selectPlaceholder: "Select...",
+    availImmediate: "Immediate",
+    avail2w: "2 weeks",
+    avail1m: "1 month",
+    avail2m: "2 months",
+    avail3m: "3 months",
+    availOther: "Other",
+    noticePeriod: "Notice Period",
+    noticeNone: "None (can start immediately)",
+    notice1w: "1 week",
+    notice2w: "2 weeks",
+    notice1m: "1 month",
+    notice2m: "2 months",
+    notice3m: "3 months",
+    cvLabel: "CV (required)",
+    cvFormats: "Accepted formats:",
+    cvMax: "max",
+    cvSelected: "Selected:",
+    submit: "Submit",
+    submitting: "Submitting\u2026",
+    fileRequired: "Please upload your CV.",
+    fileUnsupported: "Unsupported file type. Accepted formats:",
+    fileTooLarge: "File too large (max",
+    configError: "Configuration error: backend URL not set.",
+  },
+  fr: {
+    loading: "Chargement\u2026",
+    title: "Etapes suivantes",
+    missingAttempt: "Identifiant de tentative manquant.",
+    thankYou: "Merci ! Vos informations ont ete soumises avec succes.",
+    aiSummary: "Resume IA",
+    backHome: "Retour a l'accueil",
+    apiError: "Erreur API :",
+    firstName: "Prenom",
+    lastName: "Nom",
+    email: "Email",
+    phone: "Telephone",
+    location: "Ville / Localisation",
+    locationPlaceholder: "ex. Paris, Casablanca, Teletravail",
+    salary: "Pretentions salariales",
+    salaryPlaceholder: "ex. 45000",
+    salaryHint: "Montant brut (ex. 45 000 EUR/an).",
+    periodYear: "/an",
+    periodMonth: "/mois",
+    availability: "Disponibilite",
+    selectPlaceholder: "Selectionner...",
+    availImmediate: "Immediate",
+    avail2w: "2 semaines",
+    avail1m: "1 mois",
+    avail2m: "2 mois",
+    avail3m: "3 mois",
+    availOther: "Autre",
+    noticePeriod: "Preavis",
+    noticeNone: "Aucun (disponible immediatement)",
+    notice1w: "1 semaine",
+    notice2w: "2 semaines",
+    notice1m: "1 mois",
+    notice2m: "2 mois",
+    notice3m: "3 mois",
+    cvLabel: "CV (obligatoire)",
+    cvFormats: "Formats acceptes :",
+    cvMax: "max",
+    cvSelected: "Selectionne :",
+    submit: "Envoyer",
+    submitting: "Envoi en cours\u2026",
+    fileRequired: "Veuillez telecharger votre CV.",
+    fileUnsupported: "Type de fichier non supporte. Formats acceptes :",
+    fileTooLarge: "Fichier trop volumineux (max",
+    configError: "Erreur de configuration : URL du serveur non definie.",
+  },
+  es: {
+    loading: "Cargando\u2026",
+    title: "Proximos pasos",
+    missingAttempt: "Falta el identificador de intento.",
+    thankYou: "Gracias! Su informacion ha sido enviada correctamente.",
+    aiSummary: "Resumen IA",
+    backHome: "Volver al inicio",
+    apiError: "Error API:",
+    firstName: "Nombre",
+    lastName: "Apellido",
+    email: "Correo electronico",
+    phone: "Telefono",
+    location: "Ciudad / Ubicacion",
+    locationPlaceholder: "ej. Madrid, Bogota, Remoto",
+    salary: "Expectativa salarial",
+    salaryPlaceholder: "ej. 45000",
+    salaryHint: "Monto bruto (ej. 45,000 EUR/ano).",
+    periodYear: "/ano",
+    periodMonth: "/mes",
+    availability: "Disponibilidad",
+    selectPlaceholder: "Seleccionar...",
+    availImmediate: "Inmediata",
+    avail2w: "2 semanas",
+    avail1m: "1 mes",
+    avail2m: "2 meses",
+    avail3m: "3 meses",
+    availOther: "Otro",
+    noticePeriod: "Periodo de preaviso",
+    noticeNone: "Ninguno (disponible inmediatamente)",
+    notice1w: "1 semana",
+    notice2w: "2 semanas",
+    notice1m: "1 mes",
+    notice2m: "2 meses",
+    notice3m: "3 meses",
+    cvLabel: "CV (obligatorio)",
+    cvFormats: "Formatos aceptados:",
+    cvMax: "max",
+    cvSelected: "Seleccionado:",
+    submit: "Enviar",
+    submitting: "Enviando\u2026",
+    fileRequired: "Por favor suba su CV.",
+    fileUnsupported: "Tipo de archivo no soportado. Formatos aceptados:",
+    fileTooLarge: "Archivo demasiado grande (max",
+    configError: "Error de configuracion: URL del servidor no definida.",
+  },
+};
 
 export default function IntakePage() {
   return (
@@ -17,7 +155,7 @@ export default function IntakePage() {
 function PageFallback() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
-      Loadingâ€¦
+      Loading&hellip;
     </div>
   );
 }
@@ -26,6 +164,11 @@ function IntakeInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const attemptId = useMemo(() => sp.get("attempt_id") || "", [sp]);
+  const lang = useMemo(() => {
+    const l = (sp.get("lang") || "en").toLowerCase().slice(0, 2);
+    return INTAKE_I18N[l] ? l : "en";
+  }, [sp]);
+  const t = INTAKE_I18N[lang];
 
   // Pre-fill from URL params (collected before the test)
   const prefillFirst = useMemo(() => sp.get("first_name") || "", [sp]);
@@ -60,16 +203,16 @@ function IntakeInner() {
   }, [attemptId, prefillFirst, prefillLast, prefillEmail, prefillPhone]);
 
   const validateFile = (file) => {
-    if (!file) return "Please upload your CV.";
+    if (!file) return t.fileRequired;
     const name = file.name || "";
     const dot = name.lastIndexOf(".");
     const ext = dot >= 0 ? name.slice(dot).toLowerCase() : "";
     if (!ALLOWED_EXT.includes(ext)) {
-      return `Unsupported file type. Accepted formats: ${ALLOWED_EXT.join(", ")}`;
+      return `${t.fileUnsupported} ${ALLOWED_EXT.join(", ")}`;
     }
     const sizeMb = file.size / (1024 * 1024);
     if (sizeMb > MAX_MB) {
-      return `File too large (max ${MAX_MB} MB).`;
+      return `${t.fileTooLarge} ${MAX_MB} MB).`;
     }
     return null;
   };
@@ -92,7 +235,7 @@ function IntakeInner() {
 
     const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
     if (!baseUrl) {
-      setErr("Configuration error: backend URL not set.");
+      setErr(t.configError);
       return;
     }
 
@@ -196,21 +339,21 @@ function IntakeInner() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Next steps</h1>
+          <h1 className="text-2xl font-bold">{t.title}</h1>
         </div>
 
         <div className="bg-white shadow rounded-2xl p-6">
           {!attemptId ? (
-            <div className="text-sm text-red-600">Missing attempt_id.</div>
+            <div className="text-sm text-red-600">{t.missingAttempt}</div>
           ) : ok ? (
             <div className="space-y-4">
               <div className="text-green-700 font-medium">
-                Thank you! Your information has been submitted successfully.
+                {t.thankYou}
               </div>
 
               {aiSummary && (
                 <div className="rounded-xl border p-4 space-y-2">
-                  <div className="text-sm font-semibold">AI Summary</div>
+                  <div className="text-sm font-semibold">{t.aiSummary}</div>
                   <AIReportView report={aiSummary} />
                 </div>
               )}
@@ -220,18 +363,18 @@ function IntakeInner() {
                   onClick={() => router.replace("/")}
                   className="mt-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
                 >
-                  Back to Home
+                  {t.backHome}
                 </button>
               </div>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-5">
-              {err && <div className="text-sm text-red-600">API error: {err}</div>}
+              {err && <div className="text-sm text-red-600">{t.apiError} {err}</div>}
 
               {/* Personal info (pre-filled from test entry, read-only) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-1 font-medium">First Name</label>
+                  <label className="block text-sm mb-1 font-medium">{t.firstName}</label>
                   <input
                     type="text"
                     value={firstName}
@@ -241,7 +384,7 @@ function IntakeInner() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1 font-medium">Last Name</label>
+                  <label className="block text-sm mb-1 font-medium">{t.lastName}</label>
                   <input
                     type="text"
                     value={lastName}
@@ -254,7 +397,7 @@ function IntakeInner() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-1 font-medium">Email</label>
+                  <label className="block text-sm mb-1 font-medium">{t.email}</label>
                   <input
                     type="email"
                     value={email}
@@ -264,7 +407,7 @@ function IntakeInner() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1 font-medium">Phone</label>
+                  <label className="block text-sm mb-1 font-medium">{t.phone}</label>
                   <input
                     type="tel"
                     value={phone}
@@ -277,12 +420,12 @@ function IntakeInner() {
 
               {/* Location */}
               <div>
-                <label className="block text-sm mb-1 font-medium">Location / City</label>
+                <label className="block text-sm mb-1 font-medium">{t.location}</label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Paris, Casablanca, Remote"
+                  placeholder={t.locationPlaceholder}
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                 />
               </div>
@@ -290,7 +433,7 @@ function IntakeInner() {
               {/* Salary */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
-                  Salary Expectations
+                  {t.salary}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <input
@@ -298,7 +441,7 @@ function IntakeInner() {
                     inputMode="numeric"
                     step="1"
                     min="0"
-                    placeholder="e.g. 45000"
+                    placeholder={t.salaryPlaceholder}
                     value={salaryAmount}
                     onChange={(e) => setSalaryAmount(e.target.value)}
                     className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
@@ -318,59 +461,59 @@ function IntakeInner() {
                     onChange={(e) => setSalaryPeriod(e.target.value)}
                     className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                   >
-                    <option value="year">/year</option>
-                    <option value="month">/month</option>
+                    <option value="year">{t.periodYear}</option>
+                    <option value="month">{t.periodMonth}</option>
                   </select>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Gross amount (e.g. 45,000 EUR/year).
+                  {t.salaryHint}
                 </p>
               </div>
 
               {/* Availability */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
-                  Availability
+                  {t.availability}
                 </label>
                 <select
                   value={availability}
                   onChange={(e) => setAvailability(e.target.value)}
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                 >
-                  <option value="">Select...</option>
-                  <option value="Immediate">Immediate</option>
-                  <option value="2 weeks">2 weeks</option>
-                  <option value="1 month">1 month</option>
-                  <option value="2 months">2 months</option>
-                  <option value="3 months">3 months</option>
-                  <option value="Other">Other</option>
+                  <option value="">{t.selectPlaceholder}</option>
+                  <option value={t.availImmediate}>{t.availImmediate}</option>
+                  <option value={t.avail2w}>{t.avail2w}</option>
+                  <option value={t.avail1m}>{t.avail1m}</option>
+                  <option value={t.avail2m}>{t.avail2m}</option>
+                  <option value={t.avail3m}>{t.avail3m}</option>
+                  <option value={t.availOther}>{t.availOther}</option>
                 </select>
               </div>
 
               {/* Notice Period */}
               <div>
                 <label className="block text-sm mb-1 font-medium">
-                  Notice Period
+                  {t.noticePeriod}
                 </label>
                 <select
                   value={noticePeriod}
                   onChange={(e) => setNoticePeriod(e.target.value)}
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                 >
-                  <option value="">Select...</option>
-                  <option value="None">None (can start immediately)</option>
-                  <option value="1 week">1 week</option>
-                  <option value="2 weeks">2 weeks</option>
-                  <option value="1 month">1 month</option>
-                  <option value="2 months">2 months</option>
-                  <option value="3 months">3 months</option>
+                  <option value="">{t.selectPlaceholder}</option>
+                  <option value={t.noticeNone}>{t.noticeNone}</option>
+                  <option value={t.notice1w}>{t.notice1w}</option>
+                  <option value={t.notice2w}>{t.notice2w}</option>
+                  <option value={t.notice1m}>{t.notice1m}</option>
+                  <option value={t.notice2m}>{t.notice2m}</option>
+                  <option value={t.notice3m}>{t.notice3m}</option>
                 </select>
               </div>
 
               {/* CV upload */}
               <div className="space-y-2">
                 <label className="block text-sm mb-1 font-medium">
-                  CV (required)
+                  {t.cvLabel}
                 </label>
                 <input
                   type="file"
@@ -380,13 +523,13 @@ function IntakeInner() {
                   required
                 />
                 <div className="text-xs text-gray-500">
-                  Accepted formats: {ALLOWED_EXT.join(", ")} (max {MAX_MB} MB).
+                  {t.cvFormats} {ALLOWED_EXT.join(", ")} ({t.cvMax} {MAX_MB} MB).
                 </div>
                 {cvFile && (
                   <div className="text-xs text-gray-600">
-                    Selected: <b>{cvFile.name}</b>{" "}
+                    {t.cvSelected} <b>{cvFile.name}</b>{" "}
                     <span className="text-gray-400">
-                      ({(cvFile.size / (1024 * 1024)).toFixed(1)} Mo)
+                      ({(cvFile.size / (1024 * 1024)).toFixed(1)} MB)
                     </span>
                   </div>
                 )}
@@ -398,7 +541,7 @@ function IntakeInner() {
                   disabled={loading}
                   className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-40"
                 >
-                  {loading ? "Submittingâ€¦" : "Submit"}
+                  {loading ? t.submitting : t.submit}
                 </button>
               </div>
             </form>

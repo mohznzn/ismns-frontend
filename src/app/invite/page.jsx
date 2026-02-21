@@ -140,6 +140,7 @@ export default function InvitePage() {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: phone.trim(),
+          lang: data.language || qcmMeta?.language || "en",
         });
         router.replace(`/intake?${params.toString()}`);
         return;
@@ -226,8 +227,10 @@ export default function InvitePage() {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
+                    onBlur={() => setFirstName((v) => v.trim().replace(/\b\w/g, c => c.toUpperCase()))}
                     placeholder="John"
                     required
+                    style={{ textTransform: "capitalize" }}
                     className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
                   />
                 </div>
@@ -237,8 +240,10 @@ export default function InvitePage() {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
+                    onBlur={() => setLastName((v) => v.trim().toUpperCase())}
+                    placeholder="DOE"
                     required
+                    style={{ textTransform: "uppercase" }}
                     className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring"
                   />
                 </div>

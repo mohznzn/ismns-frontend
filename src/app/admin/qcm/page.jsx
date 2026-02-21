@@ -16,7 +16,7 @@ export default function MyQCMsPage() {
   const filtered = useMemo(() => {
     return (items || []).filter((q) => {
       const okStatus = status === "all" ? true : (q.status || "").toLowerCase() === status;
-      const haystack = `${q.jd_preview || ""} ${q.language || ""} ${q.status || ""}`.toLowerCase();
+      const haystack = `${q.job_title || ""} ${q.jd_preview || ""} ${q.language || ""} ${q.status || ""}`.toLowerCase();
       const okQuery = haystack.includes((query || "").toLowerCase());
       return okStatus && okQuery;
     });
@@ -135,15 +135,25 @@ export default function MyQCMsPage() {
             return (
               <div key={q.id} className="bg-white shadow rounded-2xl p-4">
                 <div className="grid grid-cols-1 md:grid-cols-[400px_140px_120px_1fr] gap-4 items-start">
-                  {/* JD preview */}
+                  {/* Job title + JD preview */}
                   <div className="min-w-0">
-                    <div className="text-sm text-gray-500 mb-1">Job description</div>
-                    <div
-                      className="font-medium text-gray-900 truncate"
-                      title={q.jd_preview || ""}
-                    >
-                      {q.jd_preview || "—"}
-                    </div>
+                    {q.job_title ? (
+                      <>
+                        <div className="font-medium text-gray-900 truncate" title={q.job_title}>
+                          {q.job_title}
+                        </div>
+                        <div className="text-xs text-gray-400 truncate mt-0.5" title={q.jd_preview || ""}>
+                          {q.jd_preview || ""}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-sm text-gray-500 mb-1">Job description</div>
+                        <div className="font-medium text-gray-900 truncate" title={q.jd_preview || ""}>
+                          {q.jd_preview || "\u2014"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Meta */}
