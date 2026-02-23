@@ -431,7 +431,9 @@ function IntakeInner() {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  onBlur={() => setLocation((v) => v.trim().replace(/\b\w/g, c => c.toUpperCase()))}
                   placeholder={t.locationPlaceholder}
+                  style={{ textTransform: "capitalize" }}
                   className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                 />
               </div>
