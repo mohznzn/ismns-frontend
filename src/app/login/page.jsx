@@ -147,10 +147,15 @@ function LoginForm() {
           </button>
         </form>
 
-        <div className="mt-4 text-sm text-gray-600">
-          No account?{" "}
-          <Link className="text-blue-600 hover:underline" href="/register">
-            Create one
+        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <span>
+            No account?{" "}
+            <Link className="text-blue-600 hover:underline" href="/register">
+              Create one
+            </Link>
+          </span>
+          <Link className="text-blue-600 hover:underline" href="/forgot-password">
+            Forgot password?
           </Link>
         </div>
       </div>
