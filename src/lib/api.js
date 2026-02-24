@@ -192,6 +192,8 @@ export const auth = {
   resendVerificationCode: (email, context = "register") => apiPost(`/auth/resend-verification-code`, { email, context }),
   login: (email, password, verification_code) => apiPost(`/auth/login`, { email, password, verification_code }),
   logout: () => apiPost(`/auth/logout`, {}),
+  forgotPassword: (email) => apiPost(`/auth/forgot-password`, { email }),
+  resetPassword: (email, code, new_password) => apiPost(`/auth/reset-password`, { email, code, new_password }),
   getOpenAIUsage: () => apiGet(`/auth/openai_usage`),
 };
 
