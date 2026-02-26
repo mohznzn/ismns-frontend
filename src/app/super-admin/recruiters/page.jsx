@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -16,10 +15,18 @@ export default function SuperAdminRecruiters() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search]);
 
   useEffect(() => {
     loadUsers();
-  }, [page, search]);
+  }, [page, debouncedSearch]);
 
   async function loadUsers() {
     try {
@@ -28,7 +35,7 @@ export default function SuperAdminRecruiters() {
         page: page.toString(),
         page_size: pageSize.toString(),
       });
-      if (search) params.append("search", search);
+      if (debouncedSearch) params.append("search", debouncedSearch);
       
       const res = await fetch(`${BACKEND}/super-admin/users?${params}`, {
         credentials: "include",
@@ -142,7 +149,13 @@ export default function SuperAdminRecruiters() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                  No recruiters found
+                </td>
+              </tr>
+            ) : users.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {user.email}

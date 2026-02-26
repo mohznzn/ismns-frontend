@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -22,9 +22,18 @@ export default function SuperAdminCandidates() {
     date_to: "",
   });
 
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedFilters(filters), 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [filters]);
+
   useEffect(() => {
     loadAttempts();
-  }, [page, filters]);
+  }, [page, debouncedFilters]);
 
   async function loadAttempts() {
     try {
@@ -33,7 +42,7 @@ export default function SuperAdminCandidates() {
         page: page.toString(),
         page_size: pageSize.toString(),
       });
-      Object.entries(filters).forEach(([key, value]) => {
+      Object.entries(debouncedFilters).forEach(([key, value]) => {
         if (value) params.append(key, value);
       });
       

@@ -13,8 +13,11 @@ export default function SuperAdminConfig() {
 
   useEffect(() => {
     loadConfig();
-    loadInvites();
     loadOpenAIUsage();
+  }, []);
+
+  useEffect(() => {
+    loadInvites();
   }, [inviteFilter]);
 
   async function loadConfig() {

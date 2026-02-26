@@ -129,6 +129,7 @@ export default function SuperAdminQCMs() {
           <option value="">All languages</option>
           <option value="fr">Français</option>
           <option value="en">English</option>
+          <option value="es">Español</option>
         </select>
         <input
           type="text"
