@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
@@ -17,13 +17,16 @@ function LoginForm() {
 
   const router = useRouter();
   const search = useSearchParams();
-  const { refresh } = useAuth(); // ✅ pour maj le header après login
+  const { user, loading: authLoading, refresh } = useAuth();
 
-  // ✅ route par défaut corrigée + on n'autorise que des chemins internes
   const next = (() => {
     const n = search.get("next") || "/admin/qcm";
     return n.startsWith("/") ? n : "/admin/qcm";
   })();
+
+  useEffect(() => {
+    if (!authLoading && user) router.replace(next);
+  }, [authLoading, user, router, next]);
 
   const onSubmit = async (e) => {
     e.preventDefault();

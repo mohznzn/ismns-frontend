@@ -18,8 +18,13 @@ const LINKS = [
 export default function SiteFooter() {
   const pathname = usePathname();
 
-  // Masquer pour le parcours candidat
-  if (pathname?.startsWith("/invite") || pathname?.startsWith("/test")) return null;
+  if (
+    pathname?.startsWith("/invite") ||
+    pathname?.startsWith("/test") ||
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/super-admin") ||
+    pathname?.startsWith("/verify-email")
+  ) return null;
 
   return (
     <footer className="mt-16 border-t">
