@@ -145,42 +145,38 @@ export default function SuperAdminQCMs() {
 
       {/* Liste */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assessment</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recruiter</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Language</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Candidates</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pass Rate</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Average Score</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Assessment</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Recruiter</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Lang</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Cands</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Pass%</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Avg</th>
+              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-100">
             {qcms.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                  No assessments found
-                </td>
-              </tr>
+              <tr><td colSpan="8" className="px-3 py-8 text-center text-gray-400">No assessments found</td></tr>
             ) : (
               qcms.map((qcm) => (
                 <tr key={qcm.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{qcm.jd_preview || "—"}</div>
-                    <div className="text-xs text-gray-500">{qcm.skills_count || 0} skills</div>
+                  <td className="px-3 py-2">
+                    <div className="font-medium text-gray-900 truncate max-w-[200px]">{qcm.jd_preview || "—"}</div>
+                    <div className="text-xs text-gray-400">{qcm.skills_count || 0} skills</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{qcm.owner_email || "—"}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-2 text-gray-500 truncate max-w-[150px]">{qcm.owner_email || "—"}</td>
+                  <td className="px-3 py-2 text-center">
                     <select
                       value={qcm.status || "draft"}
                       onChange={(e) => handleStatusChange(qcm.id, e.target.value)}
-                      className={`text-xs px-2 py-1 rounded ${
-                        qcm.status === "published" ? "bg-green-100 text-green-800" :
-                        qcm.status === "draft" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-gray-100 text-gray-800"
+                      className={`text-xs px-1.5 py-0.5 rounded ${
+                        qcm.status === "published" ? "bg-green-100 text-green-700" :
+                        qcm.status === "draft" ? "bg-yellow-100 text-yellow-700" :
+                        "bg-gray-100 text-gray-700"
                       }`}
                     >
                       <option value="draft">Draft</option>
@@ -188,29 +184,13 @@ export default function SuperAdminQCMs() {
                       <option value="archived">Archived</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{qcm.language || "—"}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {qcm.attempts_finished ?? 0} / {qcm.attempts_total ?? 0}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {(qcm.pass_rate ?? 0).toFixed(1)}%
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {(qcm.avg_score ?? 0).toFixed(1)}%
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm font-medium">
-                    <Link
-                      href={`/admin/qcm/${qcm.id}/results`}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
-                    >
-                      View
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(qcm.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+                  <td className="px-3 py-2 text-center text-gray-500 uppercase">{qcm.language || "—"}</td>
+                  <td className="px-3 py-2 text-center text-gray-500">{qcm.attempts_finished ?? 0}/{qcm.attempts_total ?? 0}</td>
+                  <td className="px-3 py-2 text-center text-gray-500">{(qcm.pass_rate ?? 0).toFixed(0)}%</td>
+                  <td className="px-3 py-2 text-center text-gray-500">{(qcm.avg_score ?? 0).toFixed(0)}%</td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap space-x-1">
+                    <Link href={`/admin/qcm/${qcm.id}/results`} className="text-blue-600 hover:text-blue-900 text-xs font-medium">View</Link>
+                    <button onClick={() => handleDelete(qcm.id)} className="text-red-500 hover:text-red-800 text-xs font-medium">Del</button>
                   </td>
                 </tr>
               ))

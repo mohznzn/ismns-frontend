@@ -139,97 +139,54 @@ export default function SuperAdminRecruiters() {
 
       {/* Liste */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Assessments
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Candidates
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                OpenAI Tokens
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Last Login
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Role</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">QCMs</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Cands</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Tokens</th>
+              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-100">
             {users.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                  No recruiters found
-                </td>
-              </tr>
+              <tr><td colSpan="7" className="px-3 py-8 text-center text-gray-400">No recruiters found</td></tr>
             ) : users.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {user.email}
+                <td className="px-3 py-2">
+                  <div className="font-medium text-gray-900 truncate max-w-[200px]">{user.email}</div>
+                  <div className="text-xs text-gray-400">{user.last_login ? new Date(user.last_login).toLocaleDateString() : "Never"}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    user.role === "super_admin" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"
+                <td className="px-3 py-2 text-center">
+                  <span className={`px-1.5 py-0.5 rounded-full text-xs ${
+                    user.role === "super_admin" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-700"
                   }`}>
-                    {user.role || "user"}
+                    {user.role === "super_admin" ? "Admin" : "User"}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-3 py-2 text-center">
                   {user.is_suspended ? (
-                    <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">Suspended</span>
+                    <span className="px-1.5 py-0.5 rounded-full text-xs bg-red-100 text-red-700">Suspended</span>
                   ) : user.is_active ? (
-                    <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Active</span>
+                    <span className="px-1.5 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Active</span>
                   ) : (
-                    <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Unverified</span>
+                    <span className="px-1.5 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">Unverified</span>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.qcms_count}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.attempts_count}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.openai_tokens.toLocaleString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.last_login ? new Date(user.last_login).toLocaleDateString() : "—"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  <button
-                    onClick={() => loadUserDetails(user.id)}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Details
-                  </button>
-                  <button
-                    onClick={() => handleToggleSuspend(user.id, user.is_suspended)}
-                    className={user.is_suspended ? "text-green-600 hover:text-green-900" : "text-orange-600 hover:text-orange-900"}
-                  >
+                <td className="px-3 py-2 text-center text-gray-500">{user.qcms_count}</td>
+                <td className="px-3 py-2 text-center text-gray-500">{user.attempts_count}</td>
+                <td className="px-3 py-2 text-center text-gray-500">{user.openai_tokens.toLocaleString()}</td>
+                <td className="px-3 py-2 text-right whitespace-nowrap space-x-1">
+                  <button onClick={() => loadUserDetails(user.id)} className="text-blue-600 hover:text-blue-900 text-xs font-medium">Details</button>
+                  <button onClick={() => handleToggleSuspend(user.id, user.is_suspended)}
+                    className={`text-xs font-medium ${user.is_suspended ? "text-green-600 hover:text-green-900" : "text-orange-600 hover:text-orange-900"}`}>
                     {user.is_suspended ? "Enable" : "Suspend"}
                   </button>
-                  <button
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setShowDeleteModal(true);
-                    }}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
+                  <button onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }}
+                    className="text-red-500 hover:text-red-800 text-xs font-medium">Del</button>
                 </td>
               </tr>
             ))}
