@@ -12,7 +12,7 @@ export default function SuperAdminCandidates() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [filters, setFilters] = useState({
-    owner_id: "",
+    owner_email: "",
     qcm_id: "",
     email: "",
     status: "",
@@ -182,10 +182,10 @@ export default function SuperAdminCandidates() {
         />
         <input
           type="text"
-          placeholder="Owner ID"
-          value={filters.owner_id}
+          placeholder="Recruiter email..."
+          value={filters.owner_email}
           onChange={(e) => {
-            setFilters({ ...filters, owner_id: e.target.value });
+            setFilters({ ...filters, owner_email: e.target.value });
             setPage(1);
           }}
           className="px-4 py-2 border border-gray-300 rounded-lg"
@@ -234,12 +234,19 @@ export default function SuperAdminCandidates() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">QCM Score</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overall Score</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Duration</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CV</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {attempts.map((attempt) => (
+            {attempts.length === 0 ? (
+              <tr>
+                <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
+                  No candidates found
+                </td>
+              </tr>
+            ) : attempts.map((attempt) => (
               <tr key={attempt.attempt_id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-gray-900">{attempt.candidate_email || "—"}</td>
                 <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
@@ -267,6 +274,13 @@ export default function SuperAdminCandidates() {
                     }
                     return `${seconds}s`;
                   })()}
+                </td>
+                <td className="px-6 py-4 text-sm text-center">
+                  {attempt.has_cv ? (
+                    <span className="text-green-600" title="CV uploaded">📄</span>
+                  ) : (
+                    <span className="text-gray-300" title="No CV">—</span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {attempt.started_at ? new Date(attempt.started_at).toLocaleDateString() : "—"}

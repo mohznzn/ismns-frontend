@@ -12,7 +12,7 @@ export default function SuperAdminQCMs() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [filters, setFilters] = useState({
-    owner_id: "",
+    owner_email: "",
     status: "",
     language: "",
     search: "",
@@ -29,7 +29,7 @@ export default function SuperAdminQCMs() {
         page: page.toString(),
         page_size: pageSize.toString(),
       });
-      if (filters.owner_id) params.append("owner_id", filters.owner_id);
+      if (filters.owner_email) params.append("owner_email", filters.owner_email);
       if (filters.status) params.append("status", filters.status);
       if (filters.language) params.append("language", filters.language);
       if (filters.search) params.append("search", filters.search);
@@ -133,10 +133,10 @@ export default function SuperAdminQCMs() {
         </select>
         <input
           type="text"
-          placeholder="Owner ID"
-          value={filters.owner_id}
+          placeholder="Recruiter email..."
+          value={filters.owner_email}
           onChange={(e) => {
-            setFilters({ ...filters, owner_id: e.target.value });
+            setFilters({ ...filters, owner_email: e.target.value });
             setPage(1);
           }}
           className="px-4 py-2 border border-gray-300 rounded-lg"

@@ -58,6 +58,7 @@ export default function SuperAdminLayout({ children }) {
     { href: "/super-admin/recruiters", label: "Recruiters", icon: "👥" },
     { href: "/super-admin/qcms", label: "Assessments", icon: "📝" },
     { href: "/super-admin/candidates", label: "Candidates", icon: "🎯" },
+    { href: "/super-admin/activity", label: "Activity", icon: "🕐" },
     { href: "/super-admin/config", label: "Configuration", icon: "⚙️" },
   ];
 

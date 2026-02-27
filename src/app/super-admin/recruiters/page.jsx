@@ -73,13 +73,33 @@ export default function SuperAdminRecruiters() {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || `API error`);
+      }
       setShowDeleteModal(false);
       setSelectedUser(null);
       loadUsers();
     } catch (err) {
       console.error("[Recruiters] Delete failed:", err);
-      alert("Error deleting");
+      alert(err.message || "Error deleting");
+    }
+  }
+
+  async function handleToggleSuspend(userId, currentlySuspended) {
+    const action = currentlySuspended ? "enable" : "suspend";
+    if (!confirm(`Are you sure you want to ${action} this account?`)) return;
+    try {
+      const res = await fetch(`${BACKEND}/super-admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ is_suspended: !currentlySuspended }),
+      });
+      if (!res.ok) throw new Error("Error");
+      loadUsers();
+    } catch (err) {
+      alert("Error updating account status");
     }
   }
 
@@ -168,11 +188,13 @@ export default function SuperAdminRecruiters() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                  }`}>
-                    {user.is_active ? "Active" : "Inactive"}
-                  </span>
+                  {user.is_suspended ? (
+                    <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">Suspended</span>
+                  ) : user.is_active ? (
+                    <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Active</span>
+                  ) : (
+                    <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Unverified</span>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {user.qcms_count}
@@ -186,12 +208,18 @@ export default function SuperAdminRecruiters() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {user.last_login ? new Date(user.last_login).toLocaleDateString() : "—"}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                   <button
                     onClick={() => loadUserDetails(user.id)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
+                    className="text-blue-600 hover:text-blue-900"
                   >
                     Details
+                  </button>
+                  <button
+                    onClick={() => handleToggleSuspend(user.id, user.is_suspended)}
+                    className={user.is_suspended ? "text-green-600 hover:text-green-900" : "text-orange-600 hover:text-orange-900"}
+                  >
+                    {user.is_suspended ? "Enable" : "Suspend"}
                   </button>
                   <button
                     onClick={() => {
@@ -373,6 +401,7 @@ function EditUserModal({ user, onClose, onSuccess }) {
   const [phone, setPhone] = useState(user.phone_number || "");
   const [role, setRole] = useState(user.role || "user");
   const [emailVerified, setEmailVerified] = useState(user.email_verified || false);
+  const [suspended, setSuspended] = useState(user.is_suspended || false);
   const [loading, setLoading] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -385,7 +414,7 @@ function EditUserModal({ user, onClose, onSuccess }) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, phone_number: phone, role, email_verified: emailVerified }),
+        body: JSON.stringify({ email, phone_number: phone, role, email_verified: emailVerified, is_suspended: suspended }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -459,14 +488,25 @@ function EditUserModal({ user, onClose, onSuccess }) {
               <option value="super_admin">Super Admin</option>
             </select>
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              checked={emailVerified}
-              onChange={(e) => setEmailVerified(e.target.checked)}
-              className="mr-2"
-            />
-            <label className="text-sm text-gray-700">Email verified</label>
+          <div className="flex items-center gap-6">
+            <label className="flex items-center text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={emailVerified}
+                onChange={(e) => setEmailVerified(e.target.checked)}
+                className="mr-2"
+              />
+              Email verified
+            </label>
+            <label className="flex items-center text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={suspended}
+                onChange={(e) => setSuspended(e.target.checked)}
+                className="mr-2 accent-red-600"
+              />
+              <span className={suspended ? "text-red-600 font-medium" : ""}>Suspended</span>
+            </label>
           </div>
 
           {/* Réinitialiser le mot de passe */}
