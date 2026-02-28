@@ -21,6 +21,7 @@ export default function SiteFooter() {
   if (
     pathname?.startsWith("/invite") ||
     pathname?.startsWith("/test") ||
+    pathname?.startsWith("/intake") ||
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/super-admin") ||
     pathname?.startsWith("/verify-email")

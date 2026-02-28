@@ -59,6 +59,7 @@ export default function SiteHeader() {
   if (
     pathname?.startsWith("/invite") ||
     pathname?.startsWith("/test") ||
+    pathname?.startsWith("/intake") ||
     pathname?.startsWith("/verify-email")
   ) return null;
 
