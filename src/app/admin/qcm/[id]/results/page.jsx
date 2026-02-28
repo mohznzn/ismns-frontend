@@ -133,11 +133,13 @@ export default function QcmResultsPage() {
 
       {/* QCM meta */}
       {qcm && (
-        <div className="bg-white shadow rounded-xl p-4 flex flex-wrap gap-x-8 gap-y-2 items-center text-sm">
-          <div className="min-w-0 flex-1">
+        <div className="bg-white shadow rounded-xl p-4 flex flex-wrap gap-x-8 gap-y-2 items-center text-sm overflow-hidden">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <span className="text-gray-500">Job: </span>
-            <span className="font-medium text-gray-900 truncate" title={qcm.jd_preview || qcm.id}>
-              {qcm.jd_preview || qcm.id}
+            <span className="font-medium text-gray-900" title={qcm.jd_preview || qcm.id}>
+              {(qcm.jd_preview || qcm.id || "").length > 80
+                ? (qcm.jd_preview || qcm.id).slice(0, 80) + "…"
+                : (qcm.jd_preview || qcm.id)}
             </span>
           </div>
           <div><span className="text-gray-500">Lang: </span><span className="font-semibold">{qcm.language}</span></div>
