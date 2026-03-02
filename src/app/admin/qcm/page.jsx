@@ -174,8 +174,10 @@ export default function MyQCMsPage() {
                       <span className="font-medium">{q.skills_count}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Attempts: </span>
-                      <span className="font-medium">{q.attempts_count}</span>
+                      <span className="text-gray-500">Candidates: </span>
+                      <span className="font-medium">
+                        {q.attempts_count}{q.max_candidates != null ? ` / ${q.max_candidates}` : ""}
+                      </span>
                     </div>
                   </div>
 

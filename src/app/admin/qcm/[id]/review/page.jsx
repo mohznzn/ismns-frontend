@@ -29,7 +29,9 @@ export default function ReviewQcmPage() {
       } else {
         setPassThreshold("");
       }
-      
+      if (data.qcm?.max_candidates != null) {
+        setMaxCandidates(String(data.qcm.max_candidates));
+      }
     } catch (e) {
       setError(e?.message || "Failed to fetch QCM");
     } finally {
@@ -149,9 +151,9 @@ export default function ReviewQcmPage() {
             </span>
           )}
 
-          {qcm.max_candidates && (
+          {qcm.max_candidates != null && qcm.max_candidates > 0 && (
             <span className="px-2 py-1 rounded-lg border bg-white">
-              Slots: <span className="font-medium">{qcm.max_candidates}</span>
+              Max candidates: <span className="font-medium">{qcm.max_candidates}</span>
             </span>
           )}
 
@@ -173,8 +175,8 @@ export default function ReviewQcmPage() {
                 max="10000"
                 value={maxCandidates}
                 onChange={(e) => setMaxCandidates(e.target.value)}
-                placeholder="Max candidates"
-                className="px-3 py-2 rounded-lg border text-sm w-36"
+                placeholder="Max candidates (optional)"
+                className="px-3 py-2 rounded-lg border text-sm w-44"
               />
               <button
                 onClick={onPublish}
@@ -185,24 +187,32 @@ export default function ReviewQcmPage() {
               </button>
             </div>
           ) : (
-            qcm.share_token && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => shareUrl && copy(shareUrl)}
-                  className="px-3 py-2 rounded-lg border hover:bg-gray-50"
-                >
-                  Copy link
-                </button>
-                <a
-                  href={shareUrl || "#"}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
-                >
-                  Open link
-                </a>
-              </div>
-            )
+            <div className="flex items-center gap-2">
+              {qcm.share_token && (
+                <>
+                  <button
+                    onClick={() => shareUrl && copy(shareUrl)}
+                    className="px-3 py-2 rounded-lg border hover:bg-gray-50"
+                  >
+                    Copy link
+                  </button>
+                  <a
+                    href={shareUrl || "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                  >
+                    Open link
+                  </a>
+                </>
+              )}
+              <Link
+                href={`/admin/qcm/${id}/results`}
+                className="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              >
+                View Results
+              </Link>
+            </div>
           )}
 
           <Link
