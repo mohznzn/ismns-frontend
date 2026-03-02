@@ -376,8 +376,14 @@ export const admin = {
   updateQcm: (qcmId, data) =>
     apiPatch(`/qcm/${encodeURIComponent(qcmId)}`, data),
 
-  publishQcm: (qcmId, passThreshold) =>
-    apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, { pass_threshold: passThreshold }),
+  publishQcm: (qcmId, passThreshold, maxCandidates) =>
+    apiPost(`/qcm/${encodeURIComponent(qcmId)}/publish`, {
+      pass_threshold: passThreshold,
+      ...(maxCandidates ? { max_candidates: maxCandidates } : {}),
+    }),
+
+  addCandidateSlots: (qcmId, addSlots) =>
+    apiPatch(`/qcm/${encodeURIComponent(qcmId)}/candidates-quota`, { add_slots: addSlots }),
 
   getQcmAdmin: (qcmId) => apiGet(`/qcm/${encodeURIComponent(qcmId)}/admin`),
 

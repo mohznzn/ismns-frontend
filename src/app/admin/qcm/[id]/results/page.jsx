@@ -18,6 +18,9 @@ export default function QcmResultsPage() {
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [selectedCvUrl, setSelectedCvUrl] = useState(null);
   const [reportProgress, setReportProgress] = useState(null);
+  const [addingSlotsOpen, setAddingSlotsOpen] = useState(false);
+  const [slotsToAdd, setSlotsToAdd] = useState("");
+  const [addingSlotsLoading, setAddingSlotsLoading] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -93,6 +96,22 @@ export default function QcmResultsPage() {
     return { total: items.length, passed: passed.length, failed: failed.length, ongoing: ongoing.length, passRate, avgScore, avgDuration, scoreDist, topCandidates };
   }, [items]);
 
+  const handleAddSlots = async () => {
+    const n = parseInt(slotsToAdd, 10);
+    if (isNaN(n) || n < 1) return;
+    try {
+      setAddingSlotsLoading(true);
+      const res = await admin.addCandidateSlots(id, n);
+      setQcm(prev => prev ? { ...prev, max_candidates: res.max_candidates, candidates_count: res.candidates_count } : prev);
+      setSlotsToAdd("");
+      setAddingSlotsOpen(false);
+    } catch (err) {
+      alert(err?.message || "Error adding slots");
+    } finally {
+      setAddingSlotsLoading(false);
+    }
+  };
+
   const handleViewCv = (e, attemptId) => {
     e.preventDefault();
     e.stopPropagation();
@@ -133,22 +152,60 @@ export default function QcmResultsPage() {
 
       {/* QCM meta */}
       {qcm && (
-        <div className="bg-white shadow rounded-xl p-4 flex flex-wrap gap-x-8 gap-y-2 items-center text-sm overflow-hidden">
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <span className="text-gray-500">Job: </span>
-            <span className="font-medium text-gray-900" title={qcm.jd_preview || qcm.id}>
-              {(qcm.jd_preview || qcm.id || "").length > 80
-                ? (qcm.jd_preview || qcm.id).slice(0, 80) + "…"
-                : (qcm.jd_preview || qcm.id)}
-            </span>
+        <div className="bg-white shadow rounded-xl p-4 space-y-3 overflow-hidden">
+          <div className="flex flex-wrap gap-x-8 gap-y-2 items-center text-sm">
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <span className="text-gray-500">Job: </span>
+              <span className="font-medium text-gray-900" title={qcm.jd_preview || qcm.id}>
+                {(qcm.jd_preview || qcm.id || "").length > 80
+                  ? (qcm.jd_preview || qcm.id).slice(0, 80) + "…"
+                  : (qcm.jd_preview || qcm.id)}
+              </span>
+            </div>
+            <div><span className="text-gray-500">Lang: </span><span className="font-semibold">{qcm.language}</span></div>
+            <div className="flex items-center gap-2">
+              <StatusBadge value={qcm.status} />
+              {typeof qcm.pass_threshold === "number" && (
+                <span className="text-xs text-gray-500">Pass: {qcm.pass_threshold}%</span>
+              )}
+            </div>
           </div>
-          <div><span className="text-gray-500">Lang: </span><span className="font-semibold">{qcm.language}</span></div>
-          <div className="flex items-center gap-2">
-            <StatusBadge value={qcm.status} />
-            {typeof qcm.pass_threshold === "number" && (
-              <span className="text-xs text-gray-500">Pass: {qcm.pass_threshold}%</span>
-            )}
-          </div>
+
+          {/* Quota bar */}
+          {qcm.max_candidates != null && (
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>Candidate slots used</span>
+                  <span className="font-medium">{qcm.candidates_count ?? items.length} / {qcm.max_candidates}</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${
+                    ((qcm.candidates_count ?? items.length) / qcm.max_candidates) >= 1 ? "bg-red-500" :
+                    ((qcm.candidates_count ?? items.length) / qcm.max_candidates) >= 0.8 ? "bg-yellow-500" : "bg-green-500"
+                  }`} style={{ width: `${Math.min(100, ((qcm.candidates_count ?? items.length) / qcm.max_candidates) * 100)}%` }} />
+                </div>
+              </div>
+              {addingSlotsOpen ? (
+                <div className="flex items-center gap-1">
+                  <input type="number" min="1" value={slotsToAdd} onChange={e => setSlotsToAdd(e.target.value)}
+                    placeholder="Qty" className="w-16 px-2 py-1 border rounded text-sm" />
+                  <button onClick={handleAddSlots} disabled={addingSlotsLoading || !slotsToAdd}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs disabled:opacity-50 hover:bg-blue-700">
+                    {addingSlotsLoading ? "..." : "Add"}
+                  </button>
+                  <button onClick={() => setAddingSlotsOpen(false)} className="px-2 py-1 border rounded text-xs hover:bg-gray-50">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setAddingSlotsOpen(true)}
+                  className="px-3 py-1 border border-blue-300 text-blue-600 rounded-lg text-xs hover:bg-blue-50">
+                  + Add slots
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

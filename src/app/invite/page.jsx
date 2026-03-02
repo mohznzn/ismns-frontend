@@ -104,7 +104,13 @@ export default function InvitePage() {
       });
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
-      if (!res.ok) throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+      if (!res.ok) {
+        if (data?.error === "quota_exceeded") {
+          setErr(data?.message || "This assessment has reached its maximum number of candidates. Please contact the recruiter.");
+          return;
+        }
+        throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+      }
 
       // Le backend renvoie attempt_id + (optionnellement) qcm/questions "gelés" pour la tentative
       if (data?.questions?.length) {

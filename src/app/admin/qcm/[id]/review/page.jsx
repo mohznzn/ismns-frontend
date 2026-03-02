@@ -14,6 +14,7 @@ export default function ReviewQcmPage() {
   const [error, setError] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [passThreshold, setPassThreshold] = useState("");
+  const [maxCandidates, setMaxCandidates] = useState("");
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -77,12 +78,17 @@ export default function ReviewQcmPage() {
       alert("Please enter a valid pass threshold between 0 and 100");
       return;
     }
+    const mc = maxCandidates ? parseInt(maxCandidates, 10) : null;
+    if (mc !== null && (isNaN(mc) || mc < 1)) {
+      alert("Max candidates must be at least 1");
+      return;
+    }
     try {
       setPublishing(true);
-      const res = await admin.publishQcm(id, threshold); // { share_url, token }
+      const res = await admin.publishQcm(id, threshold, mc);
       setQcm((prev) =>
         prev
-          ? { ...prev, status: "published", share_token: res?.token || prev.share_token, pass_threshold: threshold }
+          ? { ...prev, status: "published", share_token: res?.token || prev.share_token, pass_threshold: threshold, max_candidates: mc }
           : prev
       );
       const url = res?.share_url || shareUrl;
@@ -143,8 +149,14 @@ export default function ReviewQcmPage() {
             </span>
           )}
 
+          {qcm.max_candidates && (
+            <span className="px-2 py-1 rounded-lg border bg-white">
+              Slots: <span className="font-medium">{qcm.max_candidates}</span>
+            </span>
+          )}
+
           {qcm.status === "draft" ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 type="number"
                 min="0"
@@ -152,8 +164,17 @@ export default function ReviewQcmPage() {
                 value={passThreshold}
                 onChange={(e) => setPassThreshold(e.target.value)}
                 placeholder="Pass threshold (%)"
-                className="px-3 py-2 rounded-lg border text-sm w-32"
+                className="px-3 py-2 rounded-lg border text-sm w-36"
                 required
+              />
+              <input
+                type="number"
+                min="1"
+                max="10000"
+                value={maxCandidates}
+                onChange={(e) => setMaxCandidates(e.target.value)}
+                placeholder="Max candidates"
+                className="px-3 py-2 rounded-lg border text-sm w-36"
               />
               <button
                 onClick={onPublish}
