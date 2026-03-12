@@ -159,74 +159,12 @@ function PricingCalculator() {
           </div>
           <Link
             href="/register"
-            className="inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-lg hover:bg-blue-700 transition-all duration-300 hover:scale-105"
+            className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-lg hover:bg-blue-700 transition-all duration-300 hover:scale-105 gap-2"
           >
-            Start free trial
+            Get started <span className="opacity-90">— €{total}</span>
           </Link>
         </div>
       </div>
-    </div>
-  );
-}
-
-function PricingCards() {
-  return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {/* Assessment unit */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <h3 className="mt-4 text-lg font-bold text-gray-900">Assessment</h3>
-        <div className="mt-2 flex items-baseline gap-1">
-          <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">€25</span>
-          <span className="text-sm text-gray-500">/ test</span>
-        </div>
-        <p className="mt-3 text-sm text-gray-600">AI generates role-specific questions from your job description in seconds.</p>
-        <ul className="mt-4 space-y-2 text-sm text-gray-700">
-          <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> AI-generated QCM</li>
-          <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> Multilingual</li>
-          <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> Shareable link</li>
-          <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> Anti-cheat protection</li>
-        </ul>
-      </div>
-
-      {/* Candidate packs */}
-      {CANDIDATE_PACKS.map((p) => (
-        <div
-          key={p.qty}
-          className={`rounded-2xl border bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300 ${
-            p.popular ? "ring-2 ring-blue-600 border-blue-600" : "border-gray-200"
-          }`}
-        >
-          {p.popular && (
-            <span className="inline-block rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide mb-3">
-              Most popular
-            </span>
-          )}
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          {!p.popular && <div className="h-3" />}
-          <h3 className="mt-4 text-lg font-bold text-gray-900">{p.qty} Candidates</h3>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">€{p.price}</span>
-            <span className="text-sm text-gray-500">/ assessment</span>
-          </div>
-          <p className="mt-1 text-xs text-gray-400">€{p.perCandidate} per candidate</p>
-          <p className="mt-3 text-sm text-gray-600">Up to {p.qty} candidates can take the assessment and receive AI reports.</p>
-          <ul className="mt-4 space-y-2 text-sm text-gray-700">
-            <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> {p.qty} test slots</li>
-            <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> Individual AI reports</li>
-            <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> CV collection</li>
-            <li className="flex items-center gap-2"><span className="text-blue-600">✓</span> Add more slots anytime</li>
-          </ul>
-        </div>
-      ))}
     </div>
   );
 }
@@ -504,11 +442,8 @@ export default function LandingClient() {
           title="Pay only for what you use"
           subtitle="No monthly subscriptions. No hidden fees. Choose the number of assessments and candidates you need — and only pay for that."
         >
-          {/* Product cards */}
-          <PricingCards />
-
           {/* How it works summary */}
-          <div className="mt-8 rounded-xl bg-blue-50 border border-blue-100 p-5 sm:p-6">
+          <div className="rounded-xl bg-blue-50 border border-blue-100 p-5 sm:p-6">
             <h4 className="text-sm font-semibold text-blue-900 mb-3">How it works</h4>
             <div className="grid gap-4 sm:grid-cols-3 text-sm">
               <div className="flex items-start gap-3">
@@ -540,39 +475,6 @@ export default function LandingClient() {
             <PricingCalculator />
           </div>
 
-          {/* Comparison */}
-          <div className="mt-10">
-            <h4 className="text-base font-semibold text-gray-900 mb-4">How we compare</h4>
-            <div className="overflow-x-auto -mx-4 px-4">
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="py-3 pr-4 text-left font-semibold text-gray-900">Feature</th>
-                    <th className="py-3 px-4 text-center font-semibold text-blue-600">ISMNS</th>
-                    <th className="py-3 px-4 text-center font-semibold text-gray-500">TestGorilla</th>
-                    <th className="py-3 px-4 text-center font-semibold text-gray-500 hidden sm:table-cell">Codility</th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-600">
-                  {[
-                    ["1 test + 50 candidates", "€125", "~€400/mo", "~€500/mo"],
-                    ["AI-generated questions", "✓", "✗", "✗"],
-                    ["Individual AI reports", "✓", "Partial", "✗"],
-                    ["No subscription required", "✓", "✗", "✗"],
-                    ["Multilingual", "15+ languages", "Limited", "English"],
-                    ["Add candidates anytime", "✓", "✗", "✗"],
-                  ].map(([feat, ismns, tg, cod]) => (
-                    <tr key={feat} className="border-b border-gray-100">
-                      <td className="py-2.5 pr-4 text-gray-900 font-medium">{feat}</td>
-                      <td className="py-2.5 px-4 text-center text-blue-600 font-semibold">{ismns}</td>
-                      <td className="py-2.5 px-4 text-center">{tg}</td>
-                      <td className="py-2.5 px-4 text-center hidden sm:table-cell">{cod}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </Section>
 
         {/* ───────── TESTIMONIALS ───────── */}
