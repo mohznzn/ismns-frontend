@@ -47,9 +47,7 @@ function PricingCalculator() {
   const [assessments, setAssessments] = useState(1);
   const [packIdx, setPackIdx] = useState(0);
   const pack = CANDIDATE_PACKS[packIdx];
-  const assessmentCost = assessments * 25;
-  const candidateCost = assessments * pack.price;
-  const total = assessmentCost + candidateCost;
+  const total = assessments * pack.price;
   const totalCandidates = assessments * pack.qty;
 
   return (
@@ -83,7 +81,7 @@ function PricingCalculator() {
               +
             </button>
             <span className="text-sm text-gray-500 ml-2">
-              x <span className="font-semibold text-gray-900">€25</span> / assessment
+              assessment{assessments > 1 ? "s" : ""} <span className="font-medium text-green-600">(free)</span>
             </span>
           </div>
         </div>
@@ -130,12 +128,12 @@ function PricingCalculator() {
           <div className="text-sm font-semibold text-gray-900 mb-4">Your estimate</div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">{assessments} assessment{assessments > 1 ? "s" : ""} x €25</span>
-              <span className="font-medium text-gray-900">€{assessmentCost}</span>
+              <span className="text-gray-600">{assessments} assessment{assessments > 1 ? "s" : ""}</span>
+              <span className="font-medium text-green-600">Free</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">{assessments} x {pack.qty} candidates (€{pack.price})</span>
-              <span className="font-medium text-gray-900">€{candidateCost}</span>
+              <span className="text-gray-600">{assessments} x {pack.qty} candidates (€{pack.price} each)</span>
+              <span className="font-medium text-gray-900">€{total}</span>
             </div>
             <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between items-baseline">
               <div>
@@ -450,7 +448,7 @@ export default function LandingClient() {
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">1</div>
                 <div>
                   <div className="font-medium text-gray-900">Create an assessment</div>
-                  <div className="text-gray-600 text-xs mt-0.5">€25 per test — AI generates the questions</div>
+                  <div className="text-gray-600 text-xs mt-0.5">Free — AI generates the questions instantly</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -539,7 +537,7 @@ export default function LandingClient() {
               ],
               [
                 "Is there a monthly subscription?",
-                "No. ISMNS uses a pay-as-you-go model. You pay per assessment (€25) and per candidate pack. No recurring fees, no commitments.",
+                "No. ISMNS uses a pay-as-you-go model. Creating assessments is free — you only pay per candidate pack. No recurring fees, no commitments.",
               ],
             ].map(([q, a]) => (
               <div key={q} className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-md transition-shadow duration-200">
